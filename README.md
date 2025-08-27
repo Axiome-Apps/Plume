@@ -33,7 +33,7 @@ A modern, fast, and intelligent image compression desktop application built with
 brew install plume
 
 # Or download from releases
-# https://github.com/username/plume/releases
+# https://github.com/triplecasquette/plume/releases
 ```
 
 #### Windows
@@ -42,7 +42,7 @@ brew install plume
 choco install plume
 
 # Or download from releases
-# https://github.com/username/plume/releases
+# https://github.com/triplecasquette/plume/releases
 ```
 
 #### Linux
@@ -64,7 +64,7 @@ sudo snap install plume
 #### Development Setup
 ```bash
 # Clone the repository
-git clone https://github.com/username/plume.git
+git clone https://github.com/triplecasquette/plume.git
 cd plume
 
 # Install dependencies
@@ -196,8 +196,8 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 Plume is licensed under **CeCILL v2.1**. For more details, see the [LICENSE](./LICENSE.md) file.
 ## 📞 Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/username/plume/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/username/plume/discussions)  
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/triplecasquette/plume/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/triplecasquette/plume/discussions)  
 - 📖 **Documentation**: [Official Docs](https://plume-docs.com)
 - 💬 **Community**: [Discord](https://discord.gg/plume)
 
