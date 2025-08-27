@@ -1,0 +1,32 @@
+# Directories
+node_modules/
+dist/
+coverage/
+src-tauri/target/
+.git/
+
+# Build files
+*.min.js
+*.min.css
+
+# Logs
+*.log
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+
+# Generated files
+README.md
+CHANGELOG.md
+TODO.md
