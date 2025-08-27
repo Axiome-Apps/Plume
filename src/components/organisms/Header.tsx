@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({
-  title = "Atome",
+  title = "Plume",
   subtitle = "Compresseur d'images intelligent",
   className = "",
 }) => {

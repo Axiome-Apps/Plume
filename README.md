@@ -1,4 +1,4 @@
-# Atome - Smart Image Compression
+# Plume - Smart Image Compression
 
 [![Tauri](https://img.shields.io/badge/Tauri-2.0-blue.svg)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
@@ -30,28 +30,28 @@ A modern, fast, and intelligent image compression desktop application built with
 #### macOS
 ```bash
 # Using Homebrew (coming soon)
-brew install atome
+brew install plume
 
 # Or download from releases
-# https://github.com/username/atome/releases
+# https://github.com/username/plume/releases
 ```
 
 #### Windows
 ```bash
 # Using Chocolatey (coming soon)
-choco install atome
+choco install plume
 
 # Or download from releases
-# https://github.com/username/atome/releases
+# https://github.com/username/plume/releases
 ```
 
 #### Linux
 ```bash
 # Using Snap (coming soon)
-sudo snap install atome
+sudo snap install plume
 
 # Or download AppImage from releases
-# https://github.com/username/atome/releases
+# https://github.com/username/plume/releases
 ```
 
 ### For Developers
@@ -64,8 +64,8 @@ sudo snap install atome
 #### Development Setup
 ```bash
 # Clone the repository
-git clone https://github.com/username/atome.git
-cd atome
+git clone https://github.com/username/plume.git
+cd plume
 
 # Install dependencies
 pnpm install
@@ -79,7 +79,7 @@ pnpm tauri build
 
 ## 🏗️ Architecture
 
-Atome follows clean architecture principles with clear separation of concerns:
+Plume follows clean architecture principles with clear separation of concerns:
 
 ### Frontend (TypeScript/React)
 ```
@@ -184,7 +184,6 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -192,15 +191,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Contributors to oxipng, webp-sys, and other compression libraries
 - The open source community for inspiration and tools
 
+## License
+
+Plume is licensed under **CeCILL v2.1**. For more details, see the [LICENSE](./LICENSE.md) file.
 ## 📞 Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/username/atome/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/username/atome/discussions)  
-- 📖 **Documentation**: [Official Docs](https://atome-docs.com)
-- 💬 **Community**: [Discord](https://discord.gg/atome)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/username/plume/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/username/plume/discussions)  
+- 📖 **Documentation**: [Official Docs](https://plume-docs.com)
+- 💬 **Community**: [Discord](https://discord.gg/plume)
 
 ---
 
 <div align="center">
-  <strong>Made with ❤️ and ⚡ by the Atome community</strong>
+  <strong>Made with ❤️ and ⚡ by the Plume community</strong>
 </div>
