@@ -24,7 +24,7 @@ impl FileService {
         use std::fs;
         use std::env;
 
-        let temp_dir = env::temp_dir().join("atome_dropped");
+        let temp_dir = env::temp_dir().join("plume_dropped");
         if !temp_dir.exists() {
             fs::create_dir_all(&temp_dir)?;
         }
@@ -96,7 +96,7 @@ impl FileService {
 
     /// Nettoie les fichiers temporaires
     pub async fn cleanup_temp_files() -> FileResult<()> {
-        let temp_dir = std::env::temp_dir().join("atome_dropped");
+        let temp_dir = std::env::temp_dir().join("plume_dropped");
         
         if temp_dir.exists() {
             std::fs::remove_dir_all(&temp_dir)?;

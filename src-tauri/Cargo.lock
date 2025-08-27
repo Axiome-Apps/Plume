@@ -360,27 +360,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "atome"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "dirs 5.0.1",
- "image",
- "mozjpeg-sys",
- "oxipng",
- "rfd 0.14.1",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "thiserror 1.0.69",
- "tokio",
- "webp",
-]
-
-[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3395,6 +3374,27 @@ dependencies = [
  "quick-xml 0.38.3",
  "serde",
  "time",
+]
+
+[[package]]
+name = "plume"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "dirs 5.0.1",
+ "image",
+ "mozjpeg-sys",
+ "oxipng",
+ "rfd 0.14.1",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "thiserror 1.0.69",
+ "tokio",
+ "webp",
 ]
 
 [[package]]
