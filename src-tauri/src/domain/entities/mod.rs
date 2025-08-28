@@ -1,5 +1,5 @@
-pub mod image;
 pub mod compression_settings;
+pub mod image;
 
-pub use image::{ImageInfo, DroppedFile};
 pub use compression_settings::{CompressionSettings, OutputFormat};
+pub use image::{DroppedFile, ImageInfo};

@@ -1,12 +1,20 @@
-use crate::domain::services::{ImageCompressor, CompressionOutput, CompressionResult, CompressionError};
 use crate::domain::entities::{CompressionSettings, OutputFormat};
+use crate::domain::services::{
+    CompressionError, CompressionOutput, CompressionResult, ImageCompressor,
+};
 
 pub struct OxipngCompressor;
 
 impl ImageCompressor for OxipngCompressor {
-    fn compress(&self, data: &[u8], settings: &CompressionSettings) -> CompressionResult<CompressionOutput> {
+    fn compress(
+        &self,
+        data: &[u8],
+        settings: &CompressionSettings,
+    ) -> CompressionResult<CompressionOutput> {
         if settings.format != OutputFormat::Png {
-            return Err(CompressionError::UnsupportedFormat("OxipngCompressor only supports PNG".to_string()));
+            return Err(CompressionError::UnsupportedFormat(
+                "OxipngCompressor only supports PNG".to_string(),
+            ));
         }
 
         // Configuration oxipng optimisée pour la performance
@@ -17,7 +25,10 @@ impl ImageCompressor for OxipngCompressor {
 
         match oxipng::optimize_from_memory(data, &options) {
             Ok(compressed_data) => Ok(CompressionOutput::new(data, compressed_data)),
-            Err(e) => Err(CompressionError::CompressionFailed(format!("Oxipng error: {}", e))),
+            Err(e) => Err(CompressionError::CompressionFailed(format!(
+                "Oxipng error: {}",
+                e
+            ))),
         }
     }
 

@@ -1,15 +1,10 @@
+mod commands;
 pub mod domain;
 pub mod infrastructure;
-mod commands;
 
 use commands::{
-    compress_image, 
-    compress_batch, 
-    save_dropped_files, 
-    save_to_downloads, 
-    save_all_to_downloads, 
-    generate_preview,
-    cleanup_temp_files
+    cleanup_temp_files, compress_batch, compress_image, generate_preview, save_all_to_downloads,
+    save_dropped_files, save_to_downloads,
 };
 
 // Garde la fonction greet pour l'instant
@@ -23,15 +18,15 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-          greet,
-          compress_image,
-          compress_batch,
-          save_dropped_files,
-          save_to_downloads,
-          save_all_to_downloads,
-          generate_preview,
-          cleanup_temp_files
-      ])
+            greet,
+            compress_image,
+            compress_batch,
+            save_dropped_files,
+            save_to_downloads,
+            save_all_to_downloads,
+            generate_preview,
+            cleanup_temp_files
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

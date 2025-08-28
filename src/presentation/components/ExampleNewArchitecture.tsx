@@ -25,8 +25,6 @@ export function ExampleNewArchitecture() {
     hasCompletedImages,
     
     // Actions  
-    handleFileSelection,
-    handleExternalDrop,
     startCompression,
     downloadImage,
     downloadAllImages,

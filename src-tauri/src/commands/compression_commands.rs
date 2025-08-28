@@ -7,9 +7,18 @@ static COMPRESSION_SERVICE: OnceLock<CompressionService> = OnceLock::new();
 fn get_compression_service() -> &'static CompressionService {
     COMPRESSION_SERVICE.get_or_init(|| {
         let mut service = CompressionService::new();
-        service.register_compressor(OutputFormat::Png, crate::infrastructure::OxipngCompressor::default());
-        service.register_compressor(OutputFormat::WebP, crate::infrastructure::WebpCompressor::default());
-        service.register_compressor(OutputFormat::Jpeg, crate::infrastructure::JpegCompressor::default());
+        service.register_compressor(
+            OutputFormat::Png,
+            crate::infrastructure::OxipngCompressor::default(),
+        );
+        service.register_compressor(
+            OutputFormat::WebP,
+            crate::infrastructure::WebpCompressor::default(),
+        );
+        service.register_compressor(
+            OutputFormat::Jpeg,
+            crate::infrastructure::JpegCompressor::default(),
+        );
         service
     })
 }
@@ -38,9 +47,11 @@ pub struct CompressionResult {
 
 /// Commande Tauri pour compresser une image
 #[tauri::command]
-pub async fn compress_image(request: CompressImageRequest) -> Result<CompressImageResponse, String> {
+pub async fn compress_image(
+    request: CompressImageRequest,
+) -> Result<CompressImageResponse, String> {
     let service = get_compression_service();
-    
+
     // Lire le fichier
     let input_data = std::fs::read(&request.file_path)
         .map_err(|e| format!("Impossible de lire le fichier: {}", e))?;
@@ -57,12 +68,14 @@ pub async fn compress_image(request: CompressImageRequest) -> Result<CompressIma
                 None => OutputFormat::WebP, // Fallback
             }
         }
-        Some(f) => return Ok(CompressImageResponse {
-            success: false,
-            error: Some(format!("Format non supporté: {}", f)),
-            result: None,
-            output_path: None,
-        }),
+        Some(f) => {
+            return Ok(CompressImageResponse {
+                success: false,
+                error: Some(format!("Format non supporté: {}", f)),
+                result: None,
+                output_path: None,
+            })
+        }
     };
 
     // Créer les paramètres de compression
@@ -116,17 +129,17 @@ pub async fn compress_batch(
     format: Option<String>,
 ) -> Result<Vec<CompressImageResponse>, String> {
     let mut results = Vec::new();
-    
+
     for file_path in file_paths {
         let request = CompressImageRequest {
             file_path,
             quality,
             format: format.clone(),
         };
-        
+
         let result = compress_image(request).await?;
         results.push(result);
     }
-    
+
     Ok(results)
 }

@@ -90,7 +90,7 @@ export function useImageManagement() {
       console.log("🔄 Début compression...");
       const startTime = Date.now();
       
-      const results = await services.managementService.startCompression(
+      await services.managementService.startCompression(
         images,
         compressionSettings,
         {
@@ -102,7 +102,7 @@ export function useImageManagement() {
               img.id === image.id ? image.toProcessing(0) : img
             ));
           },
-          onImageComplete: (compressedImage, index) => {
+          onImageComplete: (compressedImage, _index) => {
             console.log(`✅ Compression terminée: ${compressedImage.name}`);
             
             // Mettre à jour avec l'image compressée
@@ -110,7 +110,7 @@ export function useImageManagement() {
               img.id === compressedImage.id ? compressedImage : img
             ));
           },
-          onImageError: (image, error, index) => {
+          onImageError: (image, error, _index) => {
             console.error(`❌ Erreur compression ${image.name}:`, error);
             
             // Remettre en pending

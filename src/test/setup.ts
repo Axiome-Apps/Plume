@@ -1,3 +1,4 @@
+/* eslint-env node */
 import '@testing-library/jest-dom';
 
 // Mock Tauri API
@@ -14,8 +15,14 @@ Object.defineProperty(window, '__TAURI__', {
   writable: true,
 });
 
+// Extend global object type
+declare global {
+  var mockTauriInvoke: (command: string, response: unknown) => void;
+  var mockTauriInvokeError: (command: string, error: Error) => void;
+}
+
 // Mock functions that are commonly used in tests
-global.mockTauriInvoke = (command: string, response: any) => {
+globalThis.mockTauriInvoke = (command: string, response: unknown) => {
   (mockTauriAPI.invoke as jest.Mock).mockImplementation((cmd: string) => {
     if (cmd === command) {
       return Promise.resolve(response);
@@ -24,7 +31,7 @@ global.mockTauriInvoke = (command: string, response: any) => {
   });
 };
 
-global.mockTauriInvokeError = (command: string, error: Error) => {
+globalThis.mockTauriInvokeError = (command: string, error: Error) => {
   (mockTauriAPI.invoke as jest.Mock).mockImplementation((cmd: string) => {
     if (cmd === command) {
       return Promise.reject(error);

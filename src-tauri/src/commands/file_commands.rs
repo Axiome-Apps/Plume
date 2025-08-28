@@ -1,4 +1,4 @@
-use crate::domain::{FileService, DroppedFile};
+use crate::domain::{DroppedFile, FileService};
 
 /// Commande pour sauvegarder temporairement les fichiers droppés
 #[tauri::command]

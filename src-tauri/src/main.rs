@@ -1,18 +1,13 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod commands;
 pub mod domain;
 pub mod infrastructure;
-mod commands;
 
 use commands::{
-    compress_image, 
-    compress_batch, 
-    save_dropped_files, 
-    save_to_downloads, 
-    save_all_to_downloads, 
-    generate_preview,
-    cleanup_temp_files
+    cleanup_temp_files, compress_batch, compress_image, generate_preview, save_all_to_downloads,
+    save_dropped_files, save_to_downloads,
 };
 
 // Garde la fonction greet pour l'instant

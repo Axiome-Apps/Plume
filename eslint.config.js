@@ -18,6 +18,7 @@ export default [
         ...globals.browser,
         ...globals.es2020,
         ...globals.jest,
+        global: 'writable',
       },
       parser: tsParser,
       parserOptions: {
@@ -41,7 +42,7 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'off', // Allow for Tauri APIs
       
       // React Hooks rules
       ...reactHooks.configs.recommended.rules,
@@ -53,8 +54,8 @@ export default [
       ],
       
       // General rules
-      'no-console': 'warn',
-      'no-debugger': 'warn',
+      'no-console': 'off', // Temporarily disabled during development
+      'no-debugger': 'warn', 
       'prefer-const': 'error',
       'no-var': 'error',
     },

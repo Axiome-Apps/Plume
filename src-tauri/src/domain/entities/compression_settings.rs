@@ -69,7 +69,7 @@ impl CompressionSettings {
             "png" => OutputFormat::WebP, // PNG -> WebP pour de meilleures économies
             "jpg" | "jpeg" => OutputFormat::WebP, // JPEG -> WebP
             "webp" => OutputFormat::WebP, // WebP -> WebP (re-compression)
-            _ => OutputFormat::WebP, // Par défaut WebP
+            _ => OutputFormat::WebP,     // Par défaut WebP
         }
     }
 }

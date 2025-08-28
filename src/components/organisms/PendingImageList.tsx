@@ -1,3 +1,4 @@
+import React from "react";
 import Button from "../atoms/Button";
 import Icon from "../atoms/Icon";
 
@@ -44,7 +45,6 @@ const PendingImageList: React.FC<PendingImageListProps> = ({
   
   // Analyse des types d'images
   const hasPNG = images.some(img => img.format.toLowerCase() === 'png');
-  const hasJPEG = images.some(img => ['jpg', 'jpeg'].includes(img.format.toLowerCase()));
   const hasWebP = images.some(img => img.format.toLowerCase() === 'webp');
   
   // Estimations de compression intelligentes

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Icon from "../atoms/Icon";
 import FileUpload from "../molecules/FileUpload";
 import { saveDroppedFiles } from "../../utils/tauri";

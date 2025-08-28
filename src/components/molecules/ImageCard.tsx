@@ -1,3 +1,4 @@
+import React from "react";
 import Button from "../atoms/Button";
 import Icon from "../atoms/Icon";
 import { ImageData } from "../../types/image";
@@ -33,13 +34,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
     }
   };
 
-  const getStatusIcon = (): "upload" | "image" | "download" | "trash" | "check" => {
-    switch (image.status) {
-      case 'pending': return 'image';
-      case 'processing': return 'upload';
-      case 'completed': return 'check';
-    }
-  };
 
   return (
     <div

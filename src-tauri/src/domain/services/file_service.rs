@@ -1,6 +1,6 @@
 use crate::domain::entities::DroppedFile;
-use std::path::{Path, PathBuf};
 use base64::{engine::general_purpose, Engine as _};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, thiserror::Error)]
 pub enum FileServiceError {
@@ -21,8 +21,8 @@ pub struct FileService;
 impl FileService {
     /// Sauvegarde temporairement les fichiers droppés
     pub async fn save_dropped_files(files: Vec<DroppedFile>) -> FileResult<Vec<String>> {
-        use std::fs;
         use std::env;
+        use std::fs;
 
         let temp_dir = env::temp_dir().join("plume_dropped");
         if !temp_dir.exists() {
@@ -47,7 +47,7 @@ impl FileService {
     /// Génère un preview base64 à partir d'un chemin de fichier
     pub async fn generate_preview(file_path: &str) -> FileResult<String> {
         let path = Path::new(file_path);
-        
+
         if !path.exists() {
             return Err(FileServiceError::InvalidPath(file_path.to_string()));
         }
@@ -55,28 +55,28 @@ impl FileService {
         let file_data = std::fs::read(path)?;
         let mime_type = Self::get_mime_type(path);
         let base64_data = general_purpose::STANDARD.encode(&file_data);
-        
+
         Ok(format!("data:{};base64,{}", mime_type, base64_data))
     }
 
     /// Sauvegarde un fichier dans le dossier Downloads
     pub async fn save_to_downloads(file_path: &str) -> FileResult<String> {
         let source_path = Path::new(file_path);
-        
+
         if !source_path.exists() {
             return Err(FileServiceError::InvalidPath(file_path.to_string()));
         }
 
-        let downloads_dir = dirs::download_dir()
-            .ok_or(FileServiceError::DownloadsNotFound)?;
+        let downloads_dir = dirs::download_dir().ok_or(FileServiceError::DownloadsNotFound)?;
 
-        let file_name = source_path.file_name()
+        let file_name = source_path
+            .file_name()
             .ok_or_else(|| FileServiceError::InvalidPath("Invalid filename".to_string()))?;
 
         let dest_path = downloads_dir.join(file_name);
-        
+
         std::fs::copy(source_path, &dest_path)?;
-        
+
         Ok(dest_path.to_string_lossy().to_string())
     }
 
@@ -97,7 +97,7 @@ impl FileService {
     /// Nettoie les fichiers temporaires
     pub async fn cleanup_temp_files() -> FileResult<()> {
         let temp_dir = std::env::temp_dir().join("plume_dropped");
-        
+
         if temp_dir.exists() {
             std::fs::remove_dir_all(&temp_dir)?;
         }
@@ -140,7 +140,12 @@ impl FileService {
             let new_name = if extension.is_empty() {
                 format!("{}_{}", stem.to_string_lossy(), i)
             } else {
-                format!("{}_{}. {}", stem.to_string_lossy(), i, extension.to_string_lossy())
+                format!(
+                    "{}_{}. {}",
+                    stem.to_string_lossy(),
+                    i,
+                    extension.to_string_lossy()
+                )
             };
 
             let new_path = parent.join(new_name);
@@ -158,7 +163,12 @@ impl FileService {
         if extension.is_empty() {
             parent.join(format!("{}_{}", stem.to_string_lossy(), timestamp))
         } else {
-            parent.join(format!("{}_{}. {}", stem.to_string_lossy(), timestamp, extension.to_string_lossy()))
+            parent.join(format!(
+                "{}_{}. {}",
+                stem.to_string_lossy(),
+                timestamp,
+                extension.to_string_lossy()
+            ))
         }
     }
 }

@@ -43,7 +43,11 @@ impl CompressionOutput {
 }
 
 pub trait ImageCompressor {
-    fn compress(&self, data: &[u8], settings: &CompressionSettings) -> CompressionResult<CompressionOutput>;
+    fn compress(
+        &self,
+        data: &[u8],
+        settings: &CompressionSettings,
+    ) -> CompressionResult<CompressionOutput>;
     fn supports_format(&self, format: OutputFormat) -> bool;
 }
 
@@ -58,23 +62,28 @@ impl CompressionService {
         }
     }
 
-    pub fn register_compressor<C>(&mut self, format: OutputFormat, compressor: C) 
-    where 
-        C: ImageCompressor + Send + Sync + 'static 
+    pub fn register_compressor<C>(&mut self, format: OutputFormat, compressor: C)
+    where
+        C: ImageCompressor + Send + Sync + 'static,
     {
         self.compressors.insert(format, Box::new(compressor));
     }
 
     pub fn compress_image(
-        &self, 
-        image_data: &[u8], 
-        settings: &CompressionSettings
+        &self,
+        image_data: &[u8],
+        settings: &CompressionSettings,
     ) -> CompressionResult<CompressionOutput> {
-        let compressor = self.compressors.get(&settings.format)
+        let compressor = self
+            .compressors
+            .get(&settings.format)
             .ok_or_else(|| CompressionError::UnsupportedFormat(format!("{:?}", settings.format)))?;
 
         if !compressor.supports_format(settings.format) {
-            return Err(CompressionError::UnsupportedFormat(format!("{:?}", settings.format)));
+            return Err(CompressionError::UnsupportedFormat(format!(
+                "{:?}",
+                settings.format
+            )));
         }
 
         compressor.compress(image_data, settings)
@@ -84,11 +93,11 @@ impl CompressionService {
         &self,
         image_data: &[u8],
         input_format: &str,
-        quality: u8
+        quality: u8,
     ) -> CompressionResult<CompressionOutput> {
         let optimal_format = CompressionSettings::optimal_format_for_input(input_format);
         let settings = CompressionSettings::new(quality, optimal_format);
-        
+
         self.compress_image(image_data, &settings)
     }
 
@@ -108,9 +117,7 @@ impl CompressionService {
         }
 
         // WebP signature
-        if data.len() >= 12 && 
-           data.starts_with(b"RIFF") && 
-           &data[8..12] == b"WEBP" {
+        if data.len() >= 12 && data.starts_with(b"RIFF") && &data[8..12] == b"WEBP" {
             return Some("WEBP".to_string());
         }
 
@@ -120,9 +127,10 @@ impl CompressionService {
     pub fn generate_output_path(input_path: &Path, format: OutputFormat) -> std::path::PathBuf {
         let stem = input_path.file_stem().unwrap_or_default();
         let parent = input_path.parent().unwrap_or_else(|| Path::new("."));
-        
-        parent.join(format!("{}_compressed.{}", 
-            stem.to_string_lossy(), 
+
+        parent.join(format!(
+            "{}_compressed.{}",
+            stem.to_string_lossy(),
             format.extension()
         ))
     }

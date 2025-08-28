@@ -1,7 +1,7 @@
 import { Image } from "../entities/Image";
 import { CompressionSettings } from "../entities/CompressionSettings";
 import { CompressImageRequest, CompressImageResponse } from "../schemas/compressionSchemas";
-import { ImageData, DroppedFile } from "../schemas/imageSchemas";
+import { DroppedFile } from "../schemas/imageSchemas";
 
 /**
  * Service de compression d'images - Logique métier pour la compression
@@ -133,7 +133,7 @@ export class ImageCompressionService {
         callbacks.onImageStart?.(image);
         
         // Simuler progression (on pourrait améliorer avec de vrais callbacks Tauri)
-        let processingImage = image.toProcessing(0);
+        const processingImage = image.toProcessing(0);
         callbacks.onImageProgress?.(processingImage, 0);
 
         const compressedImage = await this.compressImage(image, settings);
