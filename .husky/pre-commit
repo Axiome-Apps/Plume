@@ -5,6 +5,6 @@ pnpm lint-staged
 
 # Run tests
 echo "🧪 Running tests..."
-pnpm test --passWithNoTests --bail
+pnpm test
 
 echo "✅ Pre-commit checks passed!"

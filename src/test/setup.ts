@@ -1,11 +1,11 @@
-/* eslint-env node */
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
 
 // Mock Tauri API
 const mockTauriAPI = {
-  invoke: jest.fn(),
-  getCurrentWebview: jest.fn(() => ({
-    onDragDropEvent: jest.fn(),
+  invoke: vi.fn(),
+  getCurrentWebview: vi.fn(() => ({
+    onDragDropEvent: vi.fn(),
   })),
 };
 
@@ -23,7 +23,7 @@ declare global {
 
 // Mock functions that are commonly used in tests
 globalThis.mockTauriInvoke = (command: string, response: unknown) => {
-  (mockTauriAPI.invoke as jest.Mock).mockImplementation((cmd: string) => {
+  mockTauriAPI.invoke.mockImplementation((cmd: string) => {
     if (cmd === command) {
       return Promise.resolve(response);
     }
@@ -32,7 +32,7 @@ globalThis.mockTauriInvoke = (command: string, response: unknown) => {
 };
 
 globalThis.mockTauriInvokeError = (command: string, error: Error) => {
-  (mockTauriAPI.invoke as jest.Mock).mockImplementation((cmd: string) => {
+  mockTauriAPI.invoke.mockImplementation((cmd: string) => {
     if (cmd === command) {
       return Promise.reject(error);
     }
@@ -42,10 +42,10 @@ globalThis.mockTauriInvokeError = (command: string, error: Error) => {
 
 // Reset all mocks before each test
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 // Cleanup after tests
 afterEach(() => {
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });

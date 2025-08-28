@@ -1,12 +1,13 @@
 import { renderHook, act } from '@testing-library/react';
+import { vi } from 'vitest';
 import { useImageManagement } from '../useImageManagement';
 
 // Mock des services Tauri
-jest.mock('../../../infrastructure/tauri/tauriCommands', () => ({
+vi.mock('../../../infrastructure/tauri/tauriCommands', () => ({
   tauriCommands: {
-    compressImage: jest.fn(),
-    saveToDownloads: jest.fn(),
-    saveAllToDownloads: jest.fn(),
+    compressImage: vi.fn(),
+    saveToDownloads: vi.fn(),
+    saveAllToDownloads: vi.fn(),
   },
 }));
 
@@ -15,8 +16,8 @@ const originalConsole = globalThis.console;
 beforeAll(() => {
   globalThis.console = {
     ...originalConsole,
-    log: jest.fn(),
-    error: jest.fn(),
+    log: vi.fn(),
+    error: vi.fn(),
   };
 });
 
@@ -26,12 +27,12 @@ afterAll(() => {
 
 describe('useImageManagement', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('initializes with default state', () => {
     const { result } = renderHook(() => useImageManagement());
-    
+
     expect(result.current.images).toEqual([]);
     expect(result.current.isProcessing).toBe(false);
     expect(result.current.compressionSettings).toBeDefined();
@@ -40,7 +41,7 @@ describe('useImageManagement', () => {
 
   it('calculates stats correctly with empty state', () => {
     const { result } = renderHook(() => useImageManagement());
-    
+
     expect(result.current.pendingImages).toEqual([]);
     expect(result.current.completedImages).toEqual([]);
     expect(result.current.hasPendingImages).toBe(false);
@@ -52,26 +53,26 @@ describe('useImageManagement', () => {
 
   it('provides compression settings controls', () => {
     const { result } = renderHook(() => useImageManagement());
-    
+
     const initialWebPSetting = result.current.compressionSettings.convertToWebP;
     const initialLossySetting = result.current.compressionSettings.lossyMode;
-    
+
     act(() => {
       result.current.toggleWebPConversion(!initialWebPSetting);
     });
-    
+
     expect(result.current.compressionSettings.convertToWebP).toBe(!initialWebPSetting);
-    
+
     act(() => {
       result.current.toggleLossyMode(!initialLossySetting);
     });
-    
+
     expect(result.current.compressionSettings.lossyMode).toBe(!initialLossySetting);
   });
 
   it('provides action methods', () => {
     const { result } = renderHook(() => useImageManagement());
-    
+
     // Vérifier que toutes les méthodes d'action sont disponibles
     expect(typeof result.current.startCompression).toBe('function');
     expect(typeof result.current.downloadImage).toBe('function');
@@ -82,11 +83,11 @@ describe('useImageManagement', () => {
 
   it('clearAllImages resets state', () => {
     const { result } = renderHook(() => useImageManagement());
-    
+
     act(() => {
       result.current.clearAllImages();
     });
-    
+
     expect(result.current.images).toEqual([]);
     expect(result.current.isProcessing).toBe(false);
   });
