@@ -1,7 +1,7 @@
-import { Image } from "../entities/Image";
-import { CompressionSettings } from "../entities/CompressionSettings";
-import { CompressImageRequest, CompressImageResponse } from "../schemas/compressionSchemas";
-import { DroppedFile } from "../schemas/imageSchemas";
+import { Image } from '../entities/Image';
+import { CompressionSettings } from '../entities/CompressionSettings';
+import { CompressImageRequest, CompressImageResponse } from '../schemas/compressionSchemas';
+import { DroppedFile, CompletedImage } from '../schemas/imageSchemas';
 
 /**
  * Service de compression d'images - Logique métier pour la compression
@@ -25,21 +25,24 @@ export class ImageCompressionService {
 
     for (const fileData of files) {
       try {
-        const fileName = fileData.path.split("/").pop() || "image";
+        const fileName = fileData.path.split('/').pop() || 'image';
         const ext = fileName.toLowerCase().split('.').pop() || '';
-        
+
         // Approximation de la taille du fichier depuis base64
         const originalSize = Math.round((fileData.preview.length * 3) / 4);
-        
+
         const estimatedCompression = this.getEstimationForFormat(ext, settings);
-        
-        const image = Image.createPending({
-          name: fileName,
-          originalSize,
-          format: ext.toUpperCase() as any,
-          preview: fileData.preview,
-          path: fileData.path,
-        }, estimatedCompression);
+
+        const image = Image.createPending(
+          {
+            name: fileName,
+            originalSize,
+            format: ext.toUpperCase() as any,
+            preview: fileData.preview,
+            path: fileData.path,
+          },
+          estimatedCompression
+        );
 
         pendingImages.push(image);
       } catch (error) {
@@ -79,7 +82,7 @@ export class ImageCompressionService {
     }
 
     const processingImage = image.toProcessing(0);
-    
+
     try {
       const outputFormat = settings.getOutputFormatForImage(image.format);
       const quality = settings.getQualityForFormat(image.format);
@@ -93,12 +96,9 @@ export class ImageCompressionService {
       const response = await this.tauriCommands.compressImage(request);
 
       if (response.success && response.result) {
-        return processingImage.toCompleted(
-          response.result.compressed_size,
-          response.output_path
-        );
+        return processingImage.toCompleted(response.result.compressed_size, response.output_path);
       } else {
-        throw new Error(response.error || "Compression failed");
+        throw new Error(response.error || 'Compression failed');
       }
     } catch (error) {
       console.error(`Erreur compression image ${image.id}:`, error);
@@ -110,7 +110,7 @@ export class ImageCompressionService {
    * Compresse plusieurs images avec gestion des callbacks de progression
    */
   async compressImages(
-    images: Image[], 
+    images: Image[],
     settings: CompressionSettings,
     callbacks: {
       onImageStart?: (image: Image) => void;
@@ -123,7 +123,7 @@ export class ImageCompressionService {
 
     for (let i = 0; i < images.length; i++) {
       const image = images[i];
-      
+
       if (!image.isPending()) {
         results.push(image);
         continue;
@@ -131,13 +131,13 @@ export class ImageCompressionService {
 
       try {
         callbacks.onImageStart?.(image);
-        
+
         // Simuler progression (on pourrait améliorer avec de vrais callbacks Tauri)
         const processingImage = image.toProcessing(0);
         callbacks.onImageProgress?.(processingImage, 0);
 
         const compressedImage = await this.compressImage(image, settings);
-        
+
         callbacks.onImageComplete?.(compressedImage);
         results.push(compressedImage);
       } catch (error) {
@@ -164,11 +164,13 @@ export class ImageCompressionService {
    * Télécharge toutes les images compressées
    */
   async downloadAllImages(images: Image[]): Promise<string[]> {
-    const completedImages = images.filter(img => img.isCompleted() && img.data.outputPath);
-    const filePaths = completedImages.map(img => img.data.outputPath!);
+    const completedImages = images.filter(
+      img => img.isCompleted() && (img.data as CompletedImage).outputPath
+    );
+    const filePaths = completedImages.map(img => (img.data as CompletedImage).outputPath!);
 
     if (filePaths.length === 0) {
-      throw new Error("Aucune image prête pour téléchargement");
+      throw new Error('Aucune image prête pour téléchargement');
     }
 
     return this.tauriCommands.saveAllToDownloads(filePaths);
@@ -220,16 +222,14 @@ export class ImageCompressionService {
 
   private getEstimationForFormat(format: string, settings: CompressionSettings) {
     const formatLower = format.toLowerCase();
-    
+
     if (settings.shouldConvertToWebP()) {
       if (formatLower === 'png') {
-        return settings.lossyMode 
-          ? { percent: 98, ratio: 0.02 } 
-          : { percent: 43, ratio: 0.57 };
+        return settings.lossyMode ? { percent: 98, ratio: 0.02 } : { percent: 43, ratio: 0.57 };
       } else if (['jpg', 'jpeg'].includes(formatLower)) {
         return { percent: 45, ratio: 0.55 };
       }
-      return { percent: 20, ratio: 0.80 }; // WebP -> WebP
+      return { percent: 20, ratio: 0.8 }; // WebP -> WebP
     } else {
       // Keep original format
       if (formatLower === 'png') {
@@ -237,7 +237,7 @@ export class ImageCompressionService {
       } else if (['jpg', 'jpeg'].includes(formatLower)) {
         return { percent: 25, ratio: 0.75 }; // JPEG optimization
       }
-      return { percent: 10, ratio: 0.90 }; // WebP minimal
+      return { percent: 10, ratio: 0.9 }; // WebP minimal
     }
   }
 }
