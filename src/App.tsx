@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import AppLayout from './components/templates/AppLayout';
 import DropZone from './components/organisms/DropZone';
@@ -21,6 +21,81 @@ function App() {
   );
   const completedImages = images.filter((img): img is CompletedImage => img.status === 'completed');
   const hasAnyImages = images.length > 0;
+
+  // Fonction d'estimation de compression intelligente
+  const getEstimatedCompression = useCallback(
+    (format: string) => {
+      const formatLower = format.toLowerCase();
+
+      if (!keepOriginalFormat) {
+        if (formatLower === 'png') {
+          return lossyMode ? { percent: 98, ratio: 0.02 } : { percent: 43, ratio: 0.57 };
+        } else if (['jpg', 'jpeg'].includes(formatLower)) {
+          return { percent: 45, ratio: 0.55 }; // JPEG -> WebP toujours lossy
+        }
+        return { percent: 20, ratio: 0.8 }; // WebP -> WebP
+      } else {
+        // Garder format original
+        if (formatLower === 'png') {
+          return { percent: 15, ratio: 0.85 }; // PNG oxipng
+        } else if (['jpg', 'jpeg'].includes(formatLower)) {
+          return { percent: 25, ratio: 0.75 }; // JPEG optimisation
+        }
+        return { percent: 10, ratio: 0.9 }; // WebP minimal
+      }
+    },
+    [keepOriginalFormat, lossyMode]
+  );
+
+  const handleFilesSelected = useCallback(
+    async (fileData: { path: string; preview: string }[]) => {
+      console.log('📁 Fichiers sélectionnés:', fileData);
+
+      // Créer les nouvelles images en statut pending
+      const newPendingImages: PendingImage[] = await Promise.all(
+        fileData.map(async ({ path, preview }) => {
+          const fileName = path.split('/').pop() || 'image';
+          const ext = fileName.toLowerCase().split('.').pop() || '';
+
+          // Obtenir la taille du fichier (approximation depuis le base64)
+          const originalSize = Math.round((preview.length * 3) / 4);
+
+          // Normaliser le format d'image
+          const normalizeFormat = (ext: string): 'PNG' | 'JPG' | 'JPEG' | 'WEBP' => {
+            const upper = ext.toUpperCase();
+            switch (upper) {
+              case 'PNG':
+                return 'PNG';
+              case 'JPG':
+                return 'JPG';
+              case 'JPEG':
+                return 'JPEG';
+              case 'WEBP':
+                return 'WEBP';
+              default:
+                return 'JPG'; // fallback
+            }
+          };
+
+          return {
+            id: `${Date.now()}-${Math.random()}`, // ID unique
+            name: fileName,
+            originalSize,
+            format: normalizeFormat(ext),
+            preview,
+            path,
+            status: 'pending' as const,
+            estimatedCompression: getEstimatedCompression(ext),
+          };
+        })
+      );
+
+      // Ajouter les nouvelles images à la liste
+      setImages(prev => [...prev, ...newPendingImages]);
+      console.log('📋 Images ajoutées à la liste:', newPendingImages.length);
+    },
+    [getEstimatedCompression]
+  );
 
   // Setup global drag & drop listeners
   useEffect(() => {
@@ -74,76 +149,7 @@ function App() {
     return () => {
       unlisten?.();
     };
-  }, []);
-
-  // Fonction d'estimation de compression intelligente
-  const getEstimatedCompression = (format: string) => {
-    const formatLower = format.toLowerCase();
-
-    if (!keepOriginalFormat) {
-      if (formatLower === 'png') {
-        return lossyMode ? { percent: 98, ratio: 0.02 } : { percent: 43, ratio: 0.57 };
-      } else if (['jpg', 'jpeg'].includes(formatLower)) {
-        return { percent: 45, ratio: 0.55 }; // JPEG -> WebP toujours lossy
-      }
-      return { percent: 20, ratio: 0.8 }; // WebP -> WebP
-    } else {
-      // Garder format original
-      if (formatLower === 'png') {
-        return { percent: 15, ratio: 0.85 }; // PNG oxipng
-      } else if (['jpg', 'jpeg'].includes(formatLower)) {
-        return { percent: 25, ratio: 0.75 }; // JPEG optimisation
-      }
-      return { percent: 10, ratio: 0.9 }; // WebP minimal
-    }
-  };
-
-  const handleFilesSelected = async (fileData: { path: string; preview: string }[]) => {
-    console.log('📁 Fichiers sélectionnés:', fileData);
-
-    // Créer les nouvelles images en statut pending
-    const newPendingImages: PendingImage[] = await Promise.all(
-      fileData.map(async ({ path, preview }) => {
-        const fileName = path.split('/').pop() || 'image';
-        const ext = fileName.toLowerCase().split('.').pop() || '';
-
-        // Obtenir la taille du fichier (approximation depuis le base64)
-        const originalSize = Math.round((preview.length * 3) / 4);
-
-        // Normaliser le format d'image
-        const normalizeFormat = (ext: string): 'PNG' | 'JPG' | 'JPEG' | 'WEBP' => {
-          const upper = ext.toUpperCase();
-          switch (upper) {
-            case 'PNG':
-              return 'PNG';
-            case 'JPG':
-              return 'JPG';
-            case 'JPEG':
-              return 'JPEG';
-            case 'WEBP':
-              return 'WEBP';
-            default:
-              return 'JPG'; // fallback
-          }
-        };
-
-        return {
-          id: `${Date.now()}-${Math.random()}`, // ID unique
-          name: fileName,
-          originalSize,
-          format: normalizeFormat(ext),
-          preview,
-          path,
-          status: 'pending' as const,
-          estimatedCompression: getEstimatedCompression(ext),
-        };
-      })
-    );
-
-    // Ajouter les nouvelles images à la liste
-    setImages(prev => [...prev, ...newPendingImages]);
-    console.log('📋 Images ajoutées à la liste:', newPendingImages.length);
-  };
+  }, [handleFilesSelected]);
 
   const handleDownload = async (image: CompletedImage) => {
     if (!image.outputPath) {

@@ -1,8 +1,8 @@
-import React from "react";
-import Button from "../atoms/Button";
-import Icon from "../atoms/Icon";
-import ImageCard from "../molecules/ImageCard";
-import { ImageData, PendingImage, ProcessingImage, CompletedImage } from "../../types/image";
+import React from 'react';
+import Button from '../atoms/Button';
+import Icon from '../atoms/Icon';
+import ImageCard from '../molecules/ImageCard';
+import { ImageData, PendingImage, ProcessingImage, CompletedImage } from '../../types/image';
 
 interface UnifiedImageListProps {
   images: ImageData[];
@@ -31,19 +31,21 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
   lossyMode,
   onLossyModeChange,
   isProcessing,
-  className = "",
+  className = '',
 }) => {
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 B";
+    if (bytes === 0) return '0 B';
     const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
+    const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
   // Analyse des états
   const pendingImages = images.filter((img): img is PendingImage => img.status === 'pending');
-  const processingImages = images.filter((img): img is ProcessingImage => img.status === 'processing');
+  const processingImages = images.filter(
+    (img): img is ProcessingImage => img.status === 'processing'
+  );
   const completedImages = images.filter((img): img is CompletedImage => img.status === 'completed');
 
   // Analyse des types
@@ -64,11 +66,19 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
               {hasPendingImages ? 'Images à compresser' : 'Images compressées'}
             </h2>
             <div className="flex flex-wrap gap-4 text-sm text-slate-600">
-              <span>{images.length} image{images.length > 1 ? 's' : ''}</span>
+              <span>
+                {images.length} image{images.length > 1 ? 's' : ''}
+              </span>
               <span>{formatFileSize(totalSize)} au total</span>
-              {pendingImages.length > 0 && <span className="text-orange-600">{pendingImages.length} en attente</span>}
-              {processingImages.length > 0 && <span className="text-blue-600">{processingImages.length} en cours</span>}
-              {completedImages.length > 0 && <span className="text-green-600">{completedImages.length} terminées</span>}
+              {pendingImages.length > 0 && (
+                <span className="text-orange-600">{pendingImages.length} en attente</span>
+              )}
+              {processingImages.length > 0 && (
+                <span className="text-blue-600">{processingImages.length} en cours</span>
+              )}
+              {completedImages.length > 0 && (
+                <span className="text-green-600">{completedImages.length} terminées</span>
+              )}
             </div>
           </div>
 
@@ -76,30 +86,36 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
           {hasPendingImages && (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
               {/* Container pour les switches avec largeur fixe */}
-              <div className={`flex flex-col sm:flex-row gap-3 flex-1 ${
-                convertToWebP ? 'justify-between' : 'justify-start'
-              }`}>
+              <div
+                className={`flex flex-col sm:flex-row gap-3 flex-1 ${
+                  convertToWebP ? 'justify-between' : 'justify-start'
+                }`}
+              >
                 {/* Switch Format WebP (PREMIER - toujours visible) */}
                 <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 flex-1">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={convertToWebP}
-                      onChange={(e) => onConvertToWebPChange(e.target.checked)}
+                      onChange={e => onConvertToWebPChange(e.target.checked)}
                       className="sr-only"
                     />
-                    <div className={`relative w-12 h-6 rounded-full transition-colors ${
-                      convertToWebP ? 'bg-green-500' : 'bg-slate-300'
-                    }`}>
-                      <div className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform top-0.5 ${
-                        convertToWebP ? 'translate-x-6' : 'translate-x-0.5'
-                      }`} />
+                    <div
+                      className={`relative w-12 h-6 rounded-full transition-colors ${
+                        convertToWebP ? 'bg-green-500' : 'bg-slate-300'
+                      }`}
+                    >
+                      <div
+                        className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform top-0.5 ${
+                          convertToWebP ? 'translate-x-6' : 'translate-x-0.5'
+                        }`}
+                      />
                     </div>
                     <span className="text-sm font-medium text-slate-700">
                       {convertToWebP ? 'WebP' : 'Original'}
                     </span>
                   </label>
-                  
+
                   {/* Tooltip Format */}
                   <div className="relative group">
                     <div className="w-5 h-5 rounded-full bg-slate-400 flex items-center justify-center text-white text-xs font-bold cursor-help">
@@ -110,12 +126,14 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
                         <div className="font-semibold mb-1">Format de sortie</div>
                         <div>WebP: Format moderne, -50% plus petit</div>
                         <div>Original: PNG oxipng (-15%), JPEG optimisé (-25%)</div>
-                        {hasPNG && <div className="text-green-300">✓ PNG détectés: WebP très efficace</div>}
+                        {hasPNG && (
+                          <div className="text-green-300">✓ PNG détectés: WebP très efficace</div>
+                        )}
                       </div>
                       <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800" />
                     </div>
                   </div>
-                  
+
                   {/* Badge Recommandé */}
                   {convertToWebP && (
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium">
@@ -131,21 +149,25 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
                       <input
                         type="checkbox"
                         checked={lossyMode}
-                        onChange={(e) => onLossyModeChange(e.target.checked)}
+                        onChange={e => onLossyModeChange(e.target.checked)}
                         className="sr-only"
                       />
-                      <div className={`relative w-12 h-6 rounded-full transition-colors ${
-                        lossyMode ? 'bg-blue-500' : 'bg-slate-300'
-                      }`}>
-                        <div className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform top-0.5 ${
-                          lossyMode ? 'translate-x-6' : 'translate-x-0.5'
-                        }`} />
+                      <div
+                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                          lossyMode ? 'bg-blue-500' : 'bg-slate-300'
+                        }`}
+                      >
+                        <div
+                          className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform top-0.5 ${
+                            lossyMode ? 'translate-x-6' : 'translate-x-0.5'
+                          }`}
+                        />
                       </div>
                       <span className="text-sm font-medium text-slate-700">
                         {lossyMode ? 'Lossy' : 'Lossless'}
                       </span>
                     </label>
-                    
+
                     {/* Tooltip Qualité */}
                     <div className="relative group">
                       <div className="w-5 h-5 rounded-full bg-slate-400 flex items-center justify-center text-white text-xs font-bold cursor-help">
@@ -167,15 +189,11 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
 
               {/* Actions */}
               <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={onClear}
-                  disabled={isProcessing}
-                >
+                <Button variant="secondary" onClick={onClear} disabled={isProcessing}>
                   <Icon name="trash" size={16} className="mr-2" />
                   Vider
                 </Button>
-                
+
                 {hasPendingImages && (
                   <Button
                     onClick={onCompress}
@@ -183,15 +201,14 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Icon name="download" size={16} className="mr-2" />
-                    {isProcessing ? 'Compression...' : `Compresser ${pendingImages.length} image${pendingImages.length > 1 ? 's' : ''}`}
+                    {isProcessing
+                      ? 'Compression...'
+                      : `Compresser ${pendingImages.length} image${pendingImages.length > 1 ? 's' : ''}`}
                   </Button>
                 )}
-                
+
                 {hasCompletedImages && (
-                  <Button
-                    onClick={onDownloadAll}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
+                  <Button onClick={onDownloadAll} className="bg-green-600 hover:bg-green-700">
                     <Icon name="download" size={16} className="mr-2" />
                     Télécharger tout ({completedImages.length})
                   </Button>
@@ -199,27 +216,32 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
               </div>
             </div>
           )}
-
         </div>
       </div>
 
       {/* Liste des images avec ImageCard */}
       <div className="space-y-4">
-        {images.map((image) => (
+        {images.map(image => (
           <ImageCard
             key={image.id}
-            image={{
-              ...image,
-              status: image.status,
-              ...(image.status === 'pending' && { estimatedCompression: image.estimatedCompression }),
-              ...(image.status === 'processing' && { progress: image.progress }),
-              ...(image.status === 'completed' && { 
-                compressedSize: image.compressedSize, 
-                savings: image.savings, 
-                outputPath: image.outputPath 
-              }),
-            } as any} // Type assertion needed due to union complexity
-            onDownload={image.status === 'completed' ? onDownload : undefined}
+            image={
+              {
+                ...image,
+                status: image.status,
+                ...(image.status === 'pending' && {
+                  estimatedCompression: image.estimatedCompression,
+                }),
+                ...(image.status === 'processing' && { progress: image.progress }),
+                ...(image.status === 'completed' && {
+                  compressedSize: image.compressedSize,
+                  savings: image.savings,
+                  outputPath: image.outputPath,
+                }),
+              } as ImageData
+            } // Type assertion for union complexity
+            onDownload={
+              image.status === 'completed' ? () => onDownload(image as CompletedImage) : undefined
+            }
             onRemove={onRemoveImage}
             convertToWebP={convertToWebP}
           />
@@ -238,18 +260,12 @@ const UnifiedImageList: React.FC<UnifiedImageListProps> = ({
             </p>
           </div>
           <div className="flex justify-center gap-3">
-            <Button
-              onClick={onDownloadAll}
-              className="bg-green-600 hover:bg-green-700"
-            >
+            <Button onClick={onDownloadAll} className="bg-green-600 hover:bg-green-700">
               <Icon name="download" size={16} className="mr-2" />
               Télécharger tout ({completedImages.length})
             </Button>
-            
-            <Button
-              variant="secondary"
-              onClick={onClear}
-            >
+
+            <Button variant="secondary" onClick={onClear}>
               <Icon name="trash" size={16} className="mr-2" />
               Recommencer
             </Button>

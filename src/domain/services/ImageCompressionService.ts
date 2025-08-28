@@ -37,7 +37,7 @@ export class ImageCompressionService {
           {
             name: fileName,
             originalSize,
-            format: ext.toUpperCase() as any,
+            format: ext.toUpperCase() as 'PNG' | 'JPG' | 'JPEG' | 'WEBP',
             preview: fileData.preview,
             path: fileData.path,
           },

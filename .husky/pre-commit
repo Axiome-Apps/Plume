@@ -6,8 +6,8 @@ echo "🔍 Running pre-commit checks..."
 # Run lint-staged
 pnpm lint-staged
 
-# Run tests on staged files
+# Run tests
 echo "🧪 Running tests..."
-pnpm test --passWithNoTests --findRelatedTests --bail
+pnpm test --passWithNoTests --bail
 
 echo "✅ Pre-commit checks passed!"

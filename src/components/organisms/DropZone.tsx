@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from "react";
-import Icon from "../atoms/Icon";
-import FileUpload from "../molecules/FileUpload";
-import { saveDroppedFiles } from "../../utils/tauri";
+import React, { useCallback, useState } from 'react';
+import Icon from '../atoms/Icon';
+import FileUpload from '../molecules/FileUpload';
+import { saveDroppedFiles } from '../../utils/tauri';
 
 interface FileData {
   path: string;
@@ -16,8 +16,8 @@ interface DropZoneProps {
 
 const DropZone: React.FC<DropZoneProps> = ({
   onFilesDropped,
-  acceptedTypes = ["image/png", "image/jpeg", "image/webp"],
-  className = "",
+  acceptedTypes = ['image/png', 'image/jpeg', 'image/webp'],
+  className = '',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -52,9 +52,12 @@ const DropZone: React.FC<DropZoneProps> = ({
     // The actual file handling will be done by Tauri's drag-drop event
   };
 
-  const filterValidFiles = (files: File[]) => {
-    return files.filter((file) => acceptedTypes.includes(file.type));
-  };
+  const filterValidFiles = useCallback(
+    (files: File[]) => {
+      return files.filter(file => acceptedTypes.includes(file.type));
+    },
+    [acceptedTypes]
+  );
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
@@ -63,10 +66,10 @@ const DropZone: React.FC<DropZoneProps> = ({
         try {
           // Créer des previews base64 pour les fichiers
           const filesWithPreviews = await Promise.all(
-            validFiles.map(async (file) => {
+            validFiles.map(async file => {
               const reader = new FileReader();
-              return new Promise<{ file: File; preview: string }>((resolve) => {
-                reader.onload = (e) => {
+              return new Promise<{ file: File; preview: string }>(resolve => {
+                reader.onload = e => {
                   resolve({
                     file,
                     preview: e.target?.result as string,
@@ -87,26 +90,25 @@ const DropZone: React.FC<DropZoneProps> = ({
             onFilesDropped(fileData);
           }
         } catch (error) {
-          console.error("❌ Erreur traitement fichiers sélectionnés:", error);
+          console.error('❌ Erreur traitement fichiers sélectionnés:', error);
         }
       }
     },
-    [acceptedTypes, onFilesDropped]
+    [onFilesDropped, filterValidFiles]
   );
 
   const getAcceptedFormats = () => {
-    return acceptedTypes
-      .map((type) => type.split("/")[1].toUpperCase())
-      .join(", ");
+    return acceptedTypes.map(type => type.split('/')[1].toUpperCase()).join(', ');
   };
 
   return (
     <div
       className={`
         border-2 border-dashed rounded-xl p-16 text-center bg-white transition-all duration-300
-        ${isDragging 
-          ? 'border-blue-500 bg-blue-100 scale-105 shadow-xl' 
-          : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50 hover:-translate-y-1 hover:shadow-lg'
+        ${
+          isDragging
+            ? 'border-blue-500 bg-blue-100 scale-105 shadow-xl'
+            : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50 hover:-translate-y-1 hover:shadow-lg'
         }
         ${className}
       `}
@@ -125,10 +127,7 @@ const DropZone: React.FC<DropZoneProps> = ({
         {isDragging ? 'Relâchez pour ajouter les fichiers' : `${getAcceptedFormats()} supportés`}
       </p>
 
-      <FileUpload
-        onFilesSelected={handleFilesSelected}
-        accept={acceptedTypes.join(",")}
-      />
+      <FileUpload onFilesSelected={handleFilesSelected} accept={acceptedTypes.join(',')} />
     </div>
   );
 };
