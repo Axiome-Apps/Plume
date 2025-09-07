@@ -401,7 +401,7 @@ mod tests {
         let metadata = ImageMetadata::new("png".to_string(), dims, ColorSpace::RGB, 30000);
 
         let data = vec![128u8; 30000];
-        let (cropped_data, new_dims) = auto_crop(&data, &metadata, 10).unwrap();
+        let (cropped_data, new_dims) = auto_crop(&data, &metadata).unwrap();
 
         assert!(new_dims.width < metadata.dimensions.width);
         assert!(new_dims.height < metadata.dimensions.height);
@@ -410,20 +410,17 @@ mod tests {
 
     #[test]
     fn test_apply_sharpening() {
-        let dims = Dimensions::new(10, 10).unwrap();
-        let metadata = ImageMetadata::new("png".to_string(), dims, ColorSpace::RGB, 300);
-
         let data = vec![128u8; 300]; // Neutral gray
 
         // No sharpening
-        let result = apply_sharpening(&data, &metadata, 0.0).unwrap();
+        let result = apply_sharpening(&data, 0.0).unwrap();
         assert_eq!(result, data);
 
         // Some sharpening
-        let result = apply_sharpening(&data, &metadata, 0.5).unwrap();
+        let result = apply_sharpening(&data, 0.5).unwrap();
         assert_eq!(result.len(), data.len());
 
         // Invalid strength should error
-        assert!(apply_sharpening(&data, &metadata, 1.5).is_err());
+        assert!(apply_sharpening(&data, 1.5).is_err());
     }
 }

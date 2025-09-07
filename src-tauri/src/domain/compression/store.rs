@@ -4,7 +4,7 @@ use crate::domain::compression::{
     settings::CompressionSettings,
     stats::{CompressionStat, EstimationQuery, EstimationResult},
 };
-use rusqlite::{Connection, OptionalExtension, Row};
+use rusqlite::{Connection, OptionalExtension};
 
 /// Trait for storing and retrieving compression statistics
 pub trait StatsStore {
@@ -71,23 +71,6 @@ impl SqliteStatsStore {
             .map_err(|e| StatsError::DatabaseError(e.to_string()))?;
 
         Ok(())
-    }
-
-    fn row_to_stat(row: &Row) -> rusqlite::Result<CompressionStat> {
-        Ok(CompressionStat {
-            id: Some(row.get("id")?),
-            input_format: row.get("input_format")?,
-            output_format: row.get("output_format")?,
-            input_size_range: row.get("input_size_range")?,
-            quality_setting: row.get("quality_setting")?,
-            lossy_mode: row.get("lossy_mode")?,
-            size_reduction_percent: row.get("size_reduction_percent")?,
-            original_size: row.get("original_size")?,
-            compressed_size: row.get("compressed_size")?,
-            compression_time_ms: row.get("compression_time_ms")?,
-            timestamp: row.get("timestamp")?,
-            image_type: row.get("image_type")?,
-        })
     }
 }
 

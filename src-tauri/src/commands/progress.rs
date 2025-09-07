@@ -1,10 +1,9 @@
-use crate::domain::{SqliteStatsStore};
+use crate::domain::SqliteStatsStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
 use crate::domain::compression::{
-    EasingFunction, ProgressConfig, ProgressEstimation, ProgressEstimationQuery,
-    ProgressEstimationService,
+    EasingFunction, ProgressConfig, ProgressEstimationQuery, ProgressEstimationService,
 };
 
 // Global stats store for progress estimation (same as in stats.rs)

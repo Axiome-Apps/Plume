@@ -20,7 +20,7 @@
     "format:check": "prettier --check .",
     "prepare": "husky install",
     "pre-commit": "lint-staged",
-    "rust-check": "cargo fmt --manifest-path src-tauri/Cargo.toml && cargo clippy --manifest-path src-tauri/Cargo.toml --fix"
+    "rust-check": "cargo fmt --manifest-path src-tauri/Cargo.toml && cargo clippy --manifest-path src-tauri/Cargo.toml --fix --allow-dirty --allow-staged"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",

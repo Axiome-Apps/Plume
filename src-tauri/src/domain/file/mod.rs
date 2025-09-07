@@ -124,9 +124,13 @@ mod integration_tests {
 
         // Write compressed version
         let compressed_data = b"fake compressed data";
-        let output_path =
-            write_compressed_image(&test_path, compressed_data, "webp", Some(temp_dir.path()))
-                .unwrap();
+        let output_path = write_compressed_image(
+            &test_path,
+            compressed_data,
+            "webp",
+            Some(&temp_dir.path().to_path_buf()),
+        )
+        .unwrap();
 
         assert!(std::path::Path::new(&output_path).exists());
         assert!(output_path.ends_with(".webp"));

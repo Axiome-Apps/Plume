@@ -144,7 +144,7 @@ impl ImageMetadata {
             ImageType::Photo => true,
             ImageType::Screenshot => false,
             ImageType::Logo => false,
-            ImageType::Graphic => self.estimated_colors.map_or(true, |colors| colors > 256),
+            ImageType::Graphic => self.estimated_colors.is_none_or(|colors| colors > 256),
             ImageType::Unknown => self.dimensions.pixel_count() > 10000, // Heuristic
         }
     }
@@ -335,14 +335,14 @@ mod tests {
         let small_metadata =
             ImageMetadata::new("png".to_string(), small_dims, ColorSpace::RGBA, 1000);
 
-        assert_eq!(classify_image_type(&small_metadata, &[]), ImageType::Logo);
+        assert_eq!(classify_image_type(&small_metadata), ImageType::Logo);
 
         let screenshot_dims = Dimensions::new(1920, 1080).unwrap();
         let screenshot_metadata =
             ImageMetadata::new("png".to_string(), screenshot_dims, ColorSpace::RGB, 100000);
 
         assert_eq!(
-            classify_image_type(&screenshot_metadata, &[]),
+            classify_image_type(&screenshot_metadata),
             ImageType::Screenshot
         );
     }

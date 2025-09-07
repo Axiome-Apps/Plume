@@ -6,7 +6,7 @@ pub mod stats;
 
 pub use compression::{compress_batch, compress_image};
 pub use database::{
-    get_compression_prediction, get_database_stats, init_database, record_compression_result,
+    get_compression_prediction, init_database, record_compression_result,
     seed_compression_database, test_compression_prediction, test_database_connection,
 };
 pub use file::{

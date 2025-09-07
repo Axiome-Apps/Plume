@@ -108,23 +108,23 @@ pub fn analyze_colors(metadata: &ImageMetadata) -> ImageResult<ColorAnalysis> {
     let unique_color_estimate = match metadata.image_type {
         ImageType::Logo => {
             // Logos typically have few colors
-            (pixel_count / 1000).min(64).max(2) as u32
+            (pixel_count / 1000).clamp(2, 64) as u32
         }
         ImageType::Screenshot => {
             // Screenshots have moderate color variety
-            (pixel_count / 100).min(1024).max(16) as u32
+            (pixel_count / 100).clamp(16, 1024) as u32
         }
         ImageType::Photo => {
             // Photos have rich color palettes
-            (pixel_count / 10).min(65536).max(1000) as u32
+            (pixel_count / 10).clamp(1000, 65536) as u32
         }
         ImageType::Graphic => {
             // Graphics vary widely
-            (pixel_count / 50).min(4096).max(32) as u32
+            (pixel_count / 50).clamp(32, 4096) as u32
         }
         ImageType::Unknown => {
             // Conservative estimate
-            (pixel_count / 100).min(2048).max(16) as u32
+            (pixel_count / 100).clamp(16, 2048) as u32
         }
     };
 
@@ -245,7 +245,7 @@ fn estimate_savings_percent(
     };
 
     let result: f64 = base_savings * type_multiplier;
-    result.min(90.0).max(5.0)
+    result.clamp(5.0, 90.0)
 }
 
 fn recommend_quality_level(
@@ -320,10 +320,10 @@ mod tests {
         );
         metadata.image_type = ImageType::Photo;
 
-        let quality = assess_image_quality(&[], &metadata).unwrap();
+        let quality = assess_image_quality(&metadata).unwrap();
         assert!(quality.overall_quality > 0.0);
 
-        let colors = analyze_colors(&[], &metadata).unwrap();
+        let colors = analyze_colors(&metadata).unwrap();
         assert!(colors.unique_color_estimate > 1000);
 
         let compression = analyze_compression_potential(&metadata, &quality, &colors);
@@ -343,8 +343,8 @@ mod tests {
         metadata.image_type = ImageType::Logo;
         metadata.has_transparency = true;
 
-        let quality = assess_image_quality(&[], &metadata).unwrap();
-        let colors = analyze_colors(&[], &metadata).unwrap();
+        let quality = assess_image_quality(&metadata).unwrap();
+        let colors = analyze_colors(&metadata).unwrap();
         let compression = analyze_compression_potential(&metadata, &quality, &colors);
 
         assert!(!compression.lossy_suitable); // Logos should not use lossy
@@ -363,8 +363,8 @@ mod tests {
         );
         metadata.image_type = ImageType::Screenshot;
 
-        let colors = analyze_colors(&[], &metadata).unwrap();
-        let quality = assess_image_quality(&[], &metadata).unwrap();
+        let colors = analyze_colors(&metadata).unwrap();
+        let quality = assess_image_quality(&metadata).unwrap();
         let compression = analyze_compression_potential(&metadata, &quality, &colors);
 
         assert!(!compression.lossy_suitable); // Screenshots should preserve UI clarity

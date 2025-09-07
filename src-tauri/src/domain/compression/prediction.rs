@@ -11,12 +11,12 @@ pub struct CompressionPredictionService {
 impl CompressionPredictionService {
     /// Creates a new prediction service instance
     pub fn new(app: &AppHandle) -> DomainResult<Self> {
-        let db_manager = DatabaseManager::new(app)
-            .map_err(|e| crate::domain::shared::DomainError::Internal(e))?;
+        let db_manager =
+            DatabaseManager::new(app).map_err(crate::domain::shared::DomainError::Internal)?;
 
         db_manager
             .connect()
-            .map_err(|e| crate::domain::shared::DomainError::Internal(e))?;
+            .map_err(crate::domain::shared::DomainError::Internal)?;
 
         Ok(Self { db_manager })
     }
@@ -32,7 +32,7 @@ impl CompressionPredictionService {
         let historical_avg = self
             .db_manager
             .get_average_compression(input_format, output_format)
-            .map_err(|e| crate::domain::shared::DomainError::Internal(e))?;
+            .map_err(crate::domain::shared::DomainError::Internal)?;
 
         // If no historical data, use conservative defaults
         let (base_reduction, confidence) = if historical_avg == 0.0 {
@@ -87,7 +87,7 @@ impl CompressionPredictionService {
         let id = self
             .db_manager
             .insert_compression_record(&record)
-            .map_err(|e| crate::domain::shared::DomainError::Internal(e))?;
+            .map_err(crate::domain::shared::DomainError::Internal)?;
 
         // Auto-cleanup old records to prevent database growth
         let _ = self.db_manager.cleanup_old_records(1000);
@@ -104,7 +104,7 @@ impl CompressionPredictionService {
         let avg_compression = self
             .db_manager
             .get_average_compression(input_format, output_format)
-            .map_err(|e| crate::domain::shared::DomainError::Internal(e))?;
+            .map_err(crate::domain::shared::DomainError::Internal)?;
 
         let sample_count = self.estimate_sample_count(input_format, output_format);
 

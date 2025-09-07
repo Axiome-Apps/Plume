@@ -261,7 +261,6 @@ fn generate_event_id() -> String {
 }
 
 /// Convenience functions for creating common events
-
 pub fn file_processed_event(
     path: String,
     size: u64,

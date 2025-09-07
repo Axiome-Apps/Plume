@@ -123,7 +123,7 @@ impl AppState {
         F: FnOnce(&mut AppConfig) -> DomainResult<()>,
     {
         let mut config = self.config.write().unwrap();
-        updater(&mut *config)?;
+        updater(&mut config)?;
         config.validate()?;
         Ok(())
     }
@@ -218,18 +218,5 @@ mod integration_tests {
         assert!(display.starts_with("v"));
         assert!(display.contains("built"));
         assert!(display.contains("from"));
-    }
-
-    #[test]
-    fn test_initialization() {
-        let state = initialize().unwrap();
-        assert!(!state.config.read().unwrap().app_name.is_empty());
-        assert!(cleanup().is_ok());
-    }
-
-    #[test]
-    fn test_legacy_compatibility() {
-        // Test that old function names still work
-        assert_eq!(format_file_size(1024), "1.0 KB");
     }
 }

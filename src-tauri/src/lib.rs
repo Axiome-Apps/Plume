@@ -3,16 +3,16 @@ pub mod database;
 pub mod domain;
 
 use commands::{
-    clear_app_temporary_files, compress_batch, compress_image, create_progress_config, generate_preview,
-    get_compression_estimation, get_compression_prediction, get_database_stats, get_default_compression_times,
-    get_file_information, get_progress_estimation, get_stats_count, get_stats_summary, init_database,
-    record_compression_result, record_compression_result_with_time, record_compression_stat, reset_compression_stats,
+    clear_app_temporary_files, compress_batch, compress_image, create_progress_config,
+    generate_preview, get_compression_estimation, get_compression_prediction,
+    get_default_compression_times, get_file_information, get_progress_estimation, get_stats_count,
+    get_stats_summary, init_database, record_compression_result,
+    record_compression_result_with_time, record_compression_stat, reset_compression_stats,
     save_all_to_downloads, save_to_downloads, seed_compression_database, select_image_files,
     test_compression_prediction, test_database_connection,
 };
 
 use crate::domain::initialize;
-
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

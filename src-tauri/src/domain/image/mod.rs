@@ -202,11 +202,11 @@ mod integration_tests {
         let fake_data = vec![0u8; 30000]; // Simulates 100x100 RGB
         let target = Dimensions::new(200, 150).unwrap();
 
-        let result = smart_resize(&fake_data, "png", target, true);
+        let result = smart_resize(&fake_data, "png", target.clone(), true);
         assert!(result.is_ok());
 
         let (resized_data, final_dims) = result.unwrap();
-        assert!(resized_data.len() > 0);
+        assert!(!resized_data.is_empty());
         // With aspect ratio preservation, one dimension should match target
         assert!(final_dims.width <= target.width);
         assert!(final_dims.height <= target.height);

@@ -139,9 +139,8 @@ pub async fn compress_image(
                 .extension
                 .clone()
                 .unwrap_or_else(|| "webp".to_string());
-            let format =
-                crate::domain::CompressionSettings::preserve_input_format(&input_extension);
-            format
+
+            crate::domain::CompressionSettings::preserve_input_format(&input_extension)
         }
         _ => {
             // Aucun format spécifié ou format inconnu : utiliser WebP optimal
@@ -149,9 +148,8 @@ pub async fn compress_image(
                 .extension
                 .clone()
                 .unwrap_or_else(|| "webp".to_string());
-            let format =
-                crate::domain::CompressionSettings::optimal_format_for_input(&input_extension);
-            format
+
+            crate::domain::CompressionSettings::optimal_format_for_input(&input_extension)
         }
     };
 

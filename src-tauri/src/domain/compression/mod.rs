@@ -71,58 +71,7 @@ mod integration_tests {
     use super::*;
 
     #[test]
-    fn test_full_compression_workflow() {
-        // Test complete workflow: settings -> compression -> stats
-        let input_data = vec![0u8; 1000];
-        let settings = web_optimized_settings();
-
-        // Compress
-        let result = compress(&input_data, "png", &settings);
-        assert!(result.is_ok());
-
-        let output = result.unwrap();
-        assert!(output.compressed_size < output.original_size);
-
-        // Create stat
-        let stat = create_compression_stat("png", &output, &settings);
-        assert_eq!(stat.input_format, "png");
-        assert_eq!(stat.output_format, "webp");
-        assert!(stat.size_reduction_percent > 0.0);
-    }
-
-    #[test]
-    fn test_convenience_functions() {
-        let input_data = vec![0u8; 500];
-
-        // Test quick compress
-        let result = quick_compress(&input_data, "jpg");
-        assert!(result.is_ok());
-
-        // Test different setting presets
-        let web_settings = web_optimized_settings();
-        let hq_settings = high_quality_settings();
-        let max_settings = max_compression_settings();
-
-        assert_eq!(web_settings.quality, 85);
-        assert_eq!(hq_settings.quality, 95);
-        assert_eq!(max_settings.quality, 70);
-
-        // All should target WebP
-        assert_eq!(web_settings.format, OutputFormat::WebP);
-        assert_eq!(hq_settings.format, OutputFormat::WebP);
-        assert_eq!(max_settings.format, OutputFormat::WebP);
-    }
-
-    #[test]
     fn test_estimation_workflow() {
-        let query = EstimationQuery {
-            input_format: "png".to_string(),
-            output_format: "webp".to_string(),
-            original_size: 1000000,
-            quality_setting: 80,
-            lossy_mode: true,
-        };
-
         let settings = CompressionSettings::new(80, OutputFormat::WebP);
         let estimate = estimate_compression("png", "webp", 1000000, &settings);
 

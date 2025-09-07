@@ -26,10 +26,10 @@ impl PathUtils {
             let pictures_dir = dirs::picture_dir();
 
             let is_temp = path_ref.starts_with(&temp_dir);
-            let is_downloads = downloads_dir.map_or(false, |d| path_ref.starts_with(d));
-            let is_home = home_dir.map_or(false, |d| path_ref.starts_with(d));
-            let is_desktop = desktop_dir.map_or(false, |d| path_ref.starts_with(d));
-            let is_pictures = pictures_dir.map_or(false, |d| path_ref.starts_with(d));
+            let is_downloads = downloads_dir.is_some_and(|d| path_ref.starts_with(d));
+            let is_home = home_dir.is_some_and(|d| path_ref.starts_with(d));
+            let is_desktop = desktop_dir.is_some_and(|d| path_ref.starts_with(d));
+            let is_pictures = pictures_dir.is_some_and(|d| path_ref.starts_with(d));
 
             // Allow access to user directories for reading image files
             if !is_temp && !is_downloads && !is_home && !is_desktop && !is_pictures {

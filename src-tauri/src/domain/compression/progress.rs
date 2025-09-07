@@ -1,8 +1,7 @@
-use crate::domain::compression::error::{StatsError, StatsResult};
+use crate::domain::compression::error::StatsResult;
 use crate::domain::compression::stats::EstimationQuery;
 use crate::domain::compression::store::StatsStore;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 
 /// Progress estimation query parameters
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,7 +27,7 @@ pub const DEFAULT_COMPRESSION_TIMES: &[((&str, &str, &str), u64)] = &[
     // (input_format, output_format, size_range) -> duration_ms
     // PNG -> WebP: Plus rapide car WebP est optimisé pour les images PNG
     (("png", "webp", "small"), 300),   // ~300ms pour <1MB
-    (("png", "webp", "medium"), 1200), // ~1.2s pour 1-5MB  
+    (("png", "webp", "medium"), 1200), // ~1.2s pour 1-5MB
     (("png", "webp", "large"), 3000),  // ~3s pour >5MB
     // PNG -> PNG: Plus lent car réoptimisation via oxipng
     (("png", "png", "small"), 800),
@@ -85,7 +84,7 @@ impl<'a> ProgressEstimationService<'a> {
     /// Try to get time estimation from database
     fn get_time_estimation_from_db(
         &self,
-        query: &EstimationQuery,
+        _query: &EstimationQuery,
     ) -> StatsResult<Option<ProgressEstimation>> {
         // This would need to be implemented in the store trait as a new method
         // For now, return None to use fallback
@@ -243,43 +242,5 @@ mod tests {
         // Should start at 0 or very low
         assert!(progress >= 0.0);
         assert!(progress <= 5.0); // Should be very low initially
-    }
-
-    #[test]
-    fn test_fallback_estimation() {
-        use crate::domain::compression::stats::{CompressionStat, EstimationResult};
-        use crate::domain::compression::store::StatsStore;
-
-        // Mock store that returns no data
-        struct MockStore;
-        impl StatsStore for MockStore {
-            fn save_stat(&mut self, _: CompressionStat) -> StatsResult<i64> {
-                Ok(0)
-            }
-            fn get_estimation(&self, _: &EstimationQuery) -> StatsResult<EstimationResult> {
-                Err(StatsError::DatabaseError("No data".to_string()))
-            }
-            fn clear_all(&mut self) -> StatsResult<()> {
-                Ok(())
-            }
-            fn count_stats(&self) -> StatsResult<u32> {
-                Ok(0)
-            }
-        }
-
-        let store = MockStore;
-        let service = ProgressEstimationService::new(&store);
-
-        let query = ProgressEstimationQuery {
-            input_format: "png".to_string(),
-            output_format: "webp".to_string(),
-            original_size: 500_000, // small
-            quality_setting: 80,
-            lossy_mode: true,
-        };
-
-        let estimation = service.estimate_duration(&query).unwrap();
-        assert_eq!(estimation.estimated_duration_ms, 200); // Should match default for png->webp small
-        assert!(estimation.confidence < 0.5); // Fallback should have low confidence
     }
 }

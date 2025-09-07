@@ -22,7 +22,7 @@ pub async fn init_database(app: AppHandle) -> Result<String, String> {
     db_manager.connect()?;
 
     // Crée les tables si nécessaires
-    db_manager.with_connection(|conn| migrations::initialize_database(conn))?;
+    db_manager.with_connection(migrations::initialize_database)?;
 
     let count = db_manager.count_records()?;
     let message = format!("Database initialized successfully with {} records", count);
@@ -88,14 +88,6 @@ pub async fn record_compression_result(
     db_manager.cleanup_old_records(1000)?;
 
     Ok(format!("Compression result recorded with ID: {}", id))
-}
-
-/// Obtient le nombre d'enregistrements dans la base
-#[tauri::command]
-pub async fn get_database_stats(app: AppHandle) -> Result<i64, String> {
-    let db_manager = DatabaseManager::new(&app)?;
-    db_manager.connect()?;
-    db_manager.count_records()
 }
 
 /// Peuple la base de données avec des statistiques réalistes de compression

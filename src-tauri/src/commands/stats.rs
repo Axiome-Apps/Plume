@@ -179,7 +179,7 @@ pub async fn get_stats_summary(_state: State<'_, AppState>) -> Result<StatsSumma
             quality_setting: 80,
             lossy_mode: true,
         })
-        .unwrap_or_else(|_| EstimationResult {
+        .unwrap_or(EstimationResult {
             percent: 0.0,
             ratio: 1.0,
             confidence: 0.0,
