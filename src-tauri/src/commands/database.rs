@@ -1,6 +1,15 @@
 use crate::database::{migrations, DatabaseManager};
 use tauri::AppHandle;
 
+/// Test database connection
+#[tauri::command]
+pub async fn test_database_connection(app: AppHandle) -> Result<String, String> {
+    println!("Testing database connection...");
+    let db_manager = DatabaseManager::new(&app)?;
+    db_manager.connect()?;
+    Ok("Database connection successful".to_string())
+}
+
 /// Initialise la base de données au démarrage de l'application
 #[tauri::command]
 pub async fn init_database(app: AppHandle) -> Result<String, String> {

@@ -3,30 +3,16 @@ pub mod database;
 pub mod domain;
 
 use commands::{
-    clear_app_temporary_files, compress_batch, compress_image, generate_preview,
-    get_compression_estimation, get_file_information, get_stats_count, get_stats_summary,
-    record_compression_stat, reset_compression_stats, save_all_to_downloads, save_to_downloads,
-    select_image_files,
+    clear_app_temporary_files, compress_batch, compress_image, create_progress_config, generate_preview,
+    get_compression_estimation, get_compression_prediction, get_database_stats, get_default_compression_times,
+    get_file_information, get_progress_estimation, get_stats_count, get_stats_summary, init_database,
+    record_compression_result, record_compression_result_with_time, record_compression_stat, reset_compression_stats,
+    save_all_to_downloads, save_to_downloads, seed_compression_database, select_image_files,
+    test_compression_prediction, test_database_connection,
 };
 
 use crate::domain::initialize;
 
-// Commande de test simple pour la database
-#[tauri::command]
-async fn test_database_connection(app: tauri::AppHandle) -> Result<String, String> {
-    use crate::database::{migrations, DatabaseManager};
-
-    let db_manager = DatabaseManager::new(&app)?;
-    db_manager.connect()?;
-
-    db_manager.with_connection(|conn| migrations::create_tables(conn))?;
-
-    let count = db_manager.count_records()?;
-    Ok(format!(
-        "Database connection successful! Tables created, {} records found",
-        count
-    ))
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -49,9 +35,18 @@ pub fn run() {
             get_stats_count,
             get_stats_summary,
             get_compression_estimation,
+            get_compression_prediction,
             record_compression_stat,
+            record_compression_result_with_time,
             reset_compression_stats,
-            test_database_connection
+            get_progress_estimation,
+            create_progress_config,
+            get_default_compression_times,
+            init_database,
+            seed_compression_database,
+            test_compression_prediction,
+            test_database_connection,
+            record_compression_result
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

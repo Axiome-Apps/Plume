@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 import { ImageEntity } from '@/domain/image/entity';
 import { ImageType } from '@/domain/image/schema';
 import { detectImageFormat } from '@/domain/constants';
-import { progressService } from '@/domain/progress';
+import { AdaptiveProgressManager } from '@/domain/progress/adaptiveProgress';
+import { sizePredictionService } from '@/domain/size-prediction';
 
 // Types pour les réponses Tauri
 interface CompressImageResponse {
@@ -42,6 +43,7 @@ interface ImageStore {
   isProcessing: boolean;
   compressionSettings: CompressionSettings;
   progressState: Record<string, { progress: number }>;
+  progressManagers: Record<string, AdaptiveProgressManager>;
 
   // Actions internes
   initializeProgressListener: () => void;
@@ -92,6 +94,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     keepOriginalFormat: false,
   },
   progressState: {},
+  progressManagers: {},
 
   // Computed getters - Utiliser des fonctions au lieu de getters
   currentView: (): AppView => {
@@ -153,6 +156,35 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           console.warn(`Impossible de récupérer les informations pour ${filePath}:`, error);
         }
 
+        // Obtenir l'estimation de compression depuis le service
+        let estimatedCompression;
+        try {
+          const format = detectImageFormat(fileName);
+          const estimation = await sizePredictionService.getEstimation(
+            format,
+            'webp', // Format de sortie par défaut
+            fileSize,
+            80, // Qualité par défaut
+            true // Mode lossy par défaut
+          );
+          // Extraire les propriétés compatibles avec EstimationResultType
+          estimatedCompression = {
+            percent: estimation.percent,
+            ratio: estimation.ratio,
+            confidence: estimation.confidence,
+            sample_count: estimation.sample_count,
+          };
+        } catch (error) {
+          console.warn(`Impossible d'obtenir l'estimation pour ${filePath}:`, error);
+          // Fallback avec valeurs par défaut
+          estimatedCompression = {
+            percent: 65,
+            ratio: 0.35,
+            confidence: 0.5,
+            sample_count: 0,
+          };
+        }
+
         const imageData: ImageType = {
           id: tempId,
           name: fileName,
@@ -161,12 +193,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           format: detectImageFormat(fileName),
           preview: `asset://localhost/${filePath}`,
           status: 'pending',
-          estimatedCompression: {
-            percent: 65,
-            ratio: 0.35,
-            confidence: 0.5,
-            sample_count: 10,
-          },
+          estimatedCompression,
         };
         newImages.push(ImageEntity.fromData(imageData));
       }
@@ -191,10 +218,15 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   },
 
   clearImages: () => {
+    const { progressManagers } = get();
+    // Arrêter tous les gestionnaires de progression avant de nettoyer
+    Object.values(progressManagers).forEach(manager => manager.stop());
+
     set({
       images: [],
       compressionState: 'idle',
       progressState: {},
+      progressManagers: {},
     });
   },
 
@@ -245,29 +277,67 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             images: state.images.map(img => (img.id === image.id ? img.toProcessing(0) : img)),
           }));
 
-          console.log(`🎯 Starting smooth progress for ${image.name}`);
+          console.log(`🎯 Starting adaptive progress for ${image.name}`);
 
-          // Démarrer la progression fluide avec estimation intelligente
+          // Obtenir l'estimation de durée depuis le service Rust
           const outputFormat = compressionSettings.keepOriginalFormat ? image.format : 'webp';
-          await progressService.startSmartProgress(
-            image.id,
-            image.format,
-            outputFormat,
-            image.originalSize,
-            compressionSettings.quality,
-            {
-              onProgress: (imageId, progress) => {
-                console.log(`📊 Smooth progress update: ${imageId} -> ${progress}%`);
-                get().updateImageProgress(imageId, progress);
-              },
-              onComplete: imageId => {
-                console.log(`✅ Smooth progress completed for ${imageId}`);
-              },
-              onError: (imageId, error) => {
-                console.error(`❌ Smooth progress error for ${imageId}:`, error);
-              },
-            }
-          );
+          let estimatedDurationMs = 1000; // Fallback par défaut
+
+          try {
+            const estimation = await invoke<{
+              estimated_duration_ms: number;
+              confidence: number;
+              sample_count: number;
+            }>('get_progress_estimation', {
+              input_format: image.format,
+              output_format: outputFormat,
+              original_size: image.originalSize,
+              quality_setting: compressionSettings.quality,
+              lossy_mode: compressionSettings.quality < 90,
+            });
+            estimatedDurationMs = estimation.estimated_duration_ms;
+            console.log(
+              `⏱️ Estimated compression time: ${estimatedDurationMs}ms (confidence: ${estimation.confidence})`
+            );
+          } catch (error) {
+            console.warn(`⚠️ Could not get time estimation, using fallback: ${error}`);
+          }
+
+          // Créer et démarrer le gestionnaire de progression adaptatif
+          const progressManager = new AdaptiveProgressManager(image.id, estimatedDurationMs);
+
+          // Stocker le gestionnaire pour pouvoir le contrôler plus tard
+          set(state => ({
+            progressManagers: {
+              ...state.progressManagers,
+              [image.id]: progressManager,
+            },
+          }));
+
+          progressManager.start({
+            onProgress: (imageId, progress) => {
+              console.log(`📊 Adaptive progress update: ${imageId} -> ${progress}%`);
+              get().updateImageProgress(imageId, progress);
+            },
+            onComplete: imageId => {
+              console.log(`✅ Adaptive progress completed for ${imageId}`);
+              // Nettoyer le gestionnaire
+              set(state => ({
+                progressManagers: Object.fromEntries(
+                  Object.entries(state.progressManagers).filter(([id]) => id !== imageId)
+                ),
+              }));
+            },
+            onError: (imageId, error) => {
+              console.error(`❌ Adaptive progress error for ${imageId}:`, error);
+              // Nettoyer le gestionnaire
+              set(state => ({
+                progressManagers: Object.fromEntries(
+                  Object.entries(state.progressManagers).filter(([id]) => id !== imageId)
+                ),
+              }));
+            },
+          });
 
           console.log(`📞 Calling compress_image for ${image.name}`, {
             path: image.path,
@@ -275,6 +345,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             format: compressionSettings.keepOriginalFormat ? 'auto' : 'webp',
             imageId: image.id,
           });
+
+          // Signaler le début de la compression au gestionnaire adaptatif
+          const currentManager = get().progressManagers[image.id];
+          if (currentManager) {
+            currentManager.onCompressionStarted();
+          }
 
           const startTime = Date.now();
           const response = await invoke<CompressImageResponse>('compress_image', {
@@ -287,9 +363,18 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           });
           const compressionTimeMs = Date.now() - startTime;
 
+          // Signaler la fin de la compression au gestionnaire adaptatif
+          const finalManager = get().progressManagers[image.id];
+          if (finalManager) {
+            finalManager.onCompressionCompleted();
+          }
+
           if (response.success && response.result) {
-            // Forcer la complétion de la progression fluide
-            progressService.completeImageProgress(image.id);
+            // Forcer la complétion avec le nouveau gestionnaire adaptatif
+            const completedManager = get().progressManagers[image.id];
+            if (completedManager) {
+              completedManager.complete();
+            }
 
             set(state => ({
               images: state.images.map(img =>
@@ -335,8 +420,11 @@ export const useImageStore = create<ImageStore>((set, get) => ({
               }
             }
           } else {
-            // Signaler l'erreur à la progression fluide
-            progressService.errorImageProgress(image.id, response.error || 'Compression failed');
+            // Signaler l'erreur au gestionnaire adaptatif
+            const errorManager = get().progressManagers[image.id];
+            if (errorManager) {
+              errorManager.error(response.error || 'Compression failed');
+            }
 
             set(state => ({
               images: state.images.map(img => (img.id === image.id ? img.toError() : img)),
@@ -344,8 +432,11 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             toast.error(`Erreur compression ${image.name}: ${response.error}`);
           }
         } catch (error) {
-          // Signaler l'erreur à la progression fluide
-          progressService.errorImageProgress(image.id, String(error));
+          // Signaler l'erreur au gestionnaire adaptatif
+          const catchErrorManager = get().progressManagers[image.id];
+          if (catchErrorManager) {
+            catchErrorManager.error(String(error));
+          }
 
           set(state => ({
             images: state.images.map(img => (img.id === image.id ? img.toError() : img)),

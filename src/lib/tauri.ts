@@ -143,3 +143,130 @@ export async function generatePreview(filePath: string): Promise<string> {
     throw new Error(`Impossible de générer le preview: ${error}`);
   }
 }
+
+// ====== DATABASE STATS ======
+
+export interface StatsSummary {
+  total_compressions: number;
+  webp_estimation_percent: number;
+  webp_confidence: number;
+  sample_count: number;
+}
+
+/**
+ * Teste la connexion à la base de données
+ */
+export async function testDatabaseConnection(): Promise<string> {
+  try {
+    const result = await invoke<string>('test_database_connection');
+    return result;
+  } catch (error) {
+    console.error('Erreur test connexion database:', error);
+    throw new Error(`Impossible de tester la connexion: ${error}`);
+  }
+}
+
+/**
+ * Obtient le nombre total de statistiques dans la base
+ */
+export async function getStatsCount(): Promise<number> {
+  try {
+    const count = await invoke<number>('get_stats_count');
+    return count;
+  } catch (error) {
+    console.error('Erreur récupération count stats:', error);
+    throw new Error(`Impossible de récupérer le count: ${error}`);
+  }
+}
+
+/**
+ * Obtient un résumé des statistiques de compression
+ */
+export async function getStatsSummary(): Promise<StatsSummary> {
+  try {
+    const summary = await invoke<StatsSummary>('get_stats_summary');
+    return summary;
+  } catch (error) {
+    console.error('Erreur récupération summary stats:', error);
+    throw new Error(`Impossible de récupérer le summary: ${error}`);
+  }
+}
+
+/**
+ * Obtient les stats de la database (legacy - compatibilité)
+ */
+export async function getDatabaseStats(): Promise<number> {
+  try {
+    const stats = await invoke<number>('get_database_stats');
+    return stats;
+  } catch (error) {
+    console.error('Erreur récupération database stats:', error);
+    throw new Error(`Impossible de récupérer les database stats: ${error}`);
+  }
+}
+
+/**
+ * Initialise la base de données
+ */
+export async function initDatabase(): Promise<string> {
+  try {
+    const result = await invoke<string>('init_database');
+    return result;
+  } catch (error) {
+    console.error('Erreur initialisation database:', error);
+    throw new Error(`Impossible d'initialiser la database: ${error}`);
+  }
+}
+
+/**
+ * Remplir la base de données avec des données de test réalistes
+ */
+export async function seedCompressionDatabase(): Promise<string> {
+  try {
+    const result = await invoke<string>('seed_compression_database');
+    return result;
+  } catch (error) {
+    console.error('Erreur seed database:', error);
+    throw new Error(`Impossible de remplir la database: ${error}`);
+  }
+}
+
+/**
+ * Obtient une prédiction de compression basée sur l'historique
+ */
+export async function getCompressionPrediction(
+  inputFormat: string,
+  outputFormat: string
+): Promise<number> {
+  try {
+    const prediction = await invoke<number>('get_compression_prediction', {
+      input_format: inputFormat,
+      output_format: outputFormat,
+    });
+    return prediction;
+  } catch (error) {
+    console.error('Erreur prédiction compression:', error);
+    throw new Error(`Impossible de récupérer la prédiction: ${error}`);
+  }
+}
+
+/**
+ * Teste la prédiction de compression avec des détails
+ */
+export async function testCompressionPrediction(
+  inputFormat: string,
+  outputFormat: string,
+  originalSize: number
+): Promise<string> {
+  try {
+    const result = await invoke<string>('test_compression_prediction', {
+      input_format: inputFormat,
+      output_format: outputFormat,
+      original_size: originalSize,
+    });
+    return result;
+  } catch (error) {
+    console.error('Erreur test prédiction:', error);
+    throw new Error(`Impossible de tester la prédiction: ${error}`);
+  }
+}

@@ -1,9 +1,15 @@
+#!/usr/bin/env bash
+
 echo "🔍 Running pre-commit checks..."
 
-# Run lint-staged
+# TS/JS/Prettier via lint-staged
 pnpm lint-staged
 
-# Run type checking
+# Rust
+echo "🔍 Running Rust checks..."
+pnpm rust-check
+
+# TypeScript
 echo "🔍 Running type check..."
 pnpm type-check
 

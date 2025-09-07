@@ -8,11 +8,11 @@ pub mod domain;
 use crate::domain::initialize;
 use commands::{
     clear_app_temporary_files, compress_batch, compress_image, create_progress_config,
-    generate_preview, get_compression_estimation, get_default_compression_times,
+    generate_preview, get_compression_estimation, get_compression_prediction, get_default_compression_times,
     get_file_information, get_progress_estimation, get_stats_count, get_stats_summary,
     init_database, record_compression_result, record_compression_result_with_time,
     record_compression_stat, reset_compression_stats, save_all_to_downloads, save_to_downloads,
-    seed_compression_database, select_image_files, test_compression_prediction,
+    seed_compression_database, select_image_files, test_compression_prediction, test_database_connection,
 };
 
 // Garde la fonction greet pour l'instant
@@ -42,6 +42,7 @@ fn main() {
             get_stats_count,
             get_stats_summary,
             get_compression_estimation,
+            get_compression_prediction,
             record_compression_stat,
             record_compression_result_with_time,
             reset_compression_stats,
@@ -51,6 +52,7 @@ fn main() {
             init_database,
             seed_compression_database,
             test_compression_prediction,
+            test_database_connection,
             record_compression_result
         ])
         .run(tauri::generate_context!())

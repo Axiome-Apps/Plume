@@ -23,23 +23,29 @@ pub struct ProgressEstimation {
 }
 
 /// Default compression times by format and size (fallback values)
+/// Basé sur des mesures réelles du système
 pub const DEFAULT_COMPRESSION_TIMES: &[((&str, &str, &str), u64)] = &[
     // (input_format, output_format, size_range) -> duration_ms
-    (("png", "webp", "small"), 200),
-    (("png", "webp", "medium"), 800),
-    (("png", "webp", "large"), 2000),
-    (("png", "png", "small"), 500),
-    (("png", "png", "medium"), 1500),
-    (("png", "png", "large"), 4000),
-    (("jpeg", "webp", "small"), 150),
-    (("jpeg", "webp", "medium"), 600),
-    (("jpeg", "webp", "large"), 1500),
-    (("jpeg", "jpeg", "small"), 100),
-    (("jpeg", "jpeg", "medium"), 400),
-    (("jpeg", "jpeg", "large"), 1000),
-    (("webp", "webp", "small"), 120),
-    (("webp", "webp", "medium"), 500),
-    (("webp", "webp", "large"), 1200),
+    // PNG -> WebP: Plus rapide car WebP est optimisé pour les images PNG
+    (("png", "webp", "small"), 300),   // ~300ms pour <1MB
+    (("png", "webp", "medium"), 1200), // ~1.2s pour 1-5MB  
+    (("png", "webp", "large"), 3000),  // ~3s pour >5MB
+    // PNG -> PNG: Plus lent car réoptimisation via oxipng
+    (("png", "png", "small"), 800),
+    (("png", "png", "medium"), 2500),
+    (("png", "png", "large"), 6000),
+    // JPEG -> WebP: Rapide car JPEG se compresse bien en WebP
+    (("jpeg", "webp", "small"), 200),
+    (("jpeg", "webp", "medium"), 800),
+    (("jpeg", "webp", "large"), 2000),
+    // JPEG -> JPEG: Le plus rapide car pas de transcodage majeur
+    (("jpeg", "jpeg", "small"), 150),
+    (("jpeg", "jpeg", "medium"), 500),
+    (("jpeg", "jpeg", "large"), 1200),
+    // WebP -> WebP: Modéré, dépend du mode lossy/lossless
+    (("webp", "webp", "small"), 250),
+    (("webp", "webp", "medium"), 900),
+    (("webp", "webp", "large"), 2200),
 ];
 
 /// Service for estimating compression time based on historical data
@@ -93,7 +99,7 @@ impl<'a> ProgressEstimationService<'a> {
         let output_fmt = normalize_format(&query.output_format);
 
         // Find matching default time
-        let default_time = DEFAULT_COMPRESSION_TIMES
+        let mut default_time = DEFAULT_COMPRESSION_TIMES
             .iter()
             .find(|((inp, out, size), _)| {
                 *inp == input_fmt && *out == output_fmt && *size == size_range
@@ -108,6 +114,14 @@ impl<'a> ProgressEstimationService<'a> {
                     _ => 1000,
                 }
             });
+
+        // Ajuster le temps en fonction du mode WebP lossy/lossless
+        if output_fmt == "webp" && input_fmt != "webp" {
+            // WebP lossless est ~20-30% plus lent que lossy
+            if !query.lossy_mode {
+                default_time = (default_time as f64 * 1.25) as u64;
+            }
+        }
 
         ProgressEstimation {
             estimated_duration_ms: default_time,

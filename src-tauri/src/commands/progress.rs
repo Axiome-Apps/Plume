@@ -74,7 +74,7 @@ pub async fn get_progress_estimation(
         estimated_duration_ms: estimation.estimated_duration_ms,
         update_interval_ms: 50, // Smooth 20fps updates
         easing_function: EasingFunction::EaseOut,
-        completion_threshold: 95.0,
+        completion_threshold: 92.0, // Réduire le seuil pour moins de délai
     };
 
     let response = GetProgressEstimationResponse {
@@ -119,7 +119,7 @@ pub async fn create_progress_config(
         estimated_duration_ms,
         update_interval_ms: update_interval_ms.unwrap_or(50),
         easing_function: easing,
-        completion_threshold: completion_threshold.unwrap_or(95.0),
+        completion_threshold: completion_threshold.unwrap_or(92.0),
     };
 
     Ok(ProgressConfigResponse {

@@ -179,3 +179,6 @@ export class CompressionEstimationService {
     return 'graphic'; // Par défaut
   }
 }
+
+// Instance singleton
+export const sizePredictionService = new CompressionEstimationService();
