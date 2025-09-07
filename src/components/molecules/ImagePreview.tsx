@@ -1,70 +1,42 @@
-import React from "react";
-import Button from "../atoms/Button";
-import Icon from "../atoms/Icon";
-
-interface CompressedImage {
-  name: string;
-  originalSize: number;
-  compressedSize: number;
-  savings: number;
-  preview: string;
-}
+import { StatusBadge } from '@/components/atoms/StatusBadge';
+import type { ImageStatus } from '@/domain/image';
 
 interface ImagePreviewProps {
-  image: CompressedImage;
-  onDownload: (image: CompressedImage) => void;
+  imageUrl?: string;
+  status: ImageStatus;
   className?: string;
 }
 
-const ImagePreview: React.FC<ImagePreviewProps> = ({
-  image,
-  onDownload,
-  className = "",
-}) => {
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-  };
-
+export function ImagePreview({ imageUrl, status, className }: ImagePreviewProps) {
   return (
-    <div
-      className={`grid grid-cols-1 md:grid-cols-[80px_1fr_auto] gap-4 items-center p-4 border border-slate-200 rounded-lg hover:shadow-md hover:-translate-y-0.5 transition-all ${className}`}
-    >
-      {/* Image Thumbnail */}
-      <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-100 mx-auto md:mx-0">
-        <img
-          src={image.preview}
-          alt={image.name}
-          className="w-full h-full object-cover"
-        />
+    <div className={`relative aspect-square ${className}`}>
+      <div className="w-full h-full bg-gray-100 rounded-lg overflow-hidden">
+        {imageUrl ? (
+          <img src={imageUrl} alt="Image preview" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+            <div className="w-12 h-12 bg-gray-300 rounded-lg flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Image Info */}
-      <div className="text-center md:text-left">
-        <h4 className="font-medium text-slate-800 mb-2 truncate">
-          {image.name}
-        </h4>
-        <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-slate-600">
-          <span>
-            {formatFileSize(image.originalSize)} →{" "}
-            {formatFileSize(image.compressedSize)}
-          </span>
-          <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
-            -{image.savings}%
-          </span>
-        </div>
+      <div className="absolute top-2 right-2">
+        <StatusBadge status={status} />
       </div>
-
-      {/* Download Button */}
-      <Button onClick={() => onDownload(image)} className="md:justify-self-end">
-        <Icon name="download" size={16} className="mr-2" />
-        Télécharger
-      </Button>
     </div>
   );
-};
-
-export default ImagePreview;
+}

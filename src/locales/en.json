@@ -1,0 +1,90 @@
+{
+  "app": {
+    "name": "Plume",
+    "description": "Compress your images with optimal quality"
+  },
+  "header": {
+    "title": {
+      "pending": "Images to compress",
+      "processing": "Images being compressed",
+      "completed": "Images compressed"
+    },
+    "recommended": "Recommended",
+    "empty": "Clear",
+    "downloadAll": "Download all",
+    "totalSize": "total",
+    "compression": {
+      "pending": "Compress all",
+      "active": "Compressing...",
+      "completed": "Completed"
+    },
+    "tooltips": {
+      "format": {
+        "title": "Output format",
+        "description": "WebP: Modern format, 50% smaller<br/>Original: PNG oxipng (-15%), optimized JPEG (-25%)",
+        "info": "✓ PNG detected: WebP highly efficient"
+      },
+      "strategy": {
+        "title": "WebP quality",
+        "description": "Lossy: Ultra compact (-98%) but slightly blurry<br/>Lossless: Perfect quality (-43%)",
+        "info": "Only applies to PNGs"
+      }
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "download": "Download",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "supported": "supported",
+    "browse": "Click to browse"
+  },
+  "compression": {
+    "start": "Start compression",
+    "selectFiles": "Select or drop files",
+    "dropFiles": "Drop your images here",
+    "pending": "Pending",
+    "processing": "Processing...",
+    "progress": "Compressing...",
+    "completed": "Completed",
+    "failed": "failed",
+    "error": "Error"
+  },
+  "formats": {
+    "png": "PNG",
+    "jpeg": "JPEG",
+    "webp": "WebP",
+    "auto": "Auto"
+  },
+  "errors": {
+    "fileTooBig": "File is too large",
+    "invalidFormat": "Unsupported file format",
+    "compressionFailed": "Compression error",
+    "networkError": "Network error"
+  },
+  "stats": {
+    "originalSize": "Original size",
+    "compressedSize": "Compressed size",
+    "reduction": "Reduction",
+    "savings": "Savings",
+    "finalSize": "Final size:",
+    "economy": "Economy:",
+    "estimation": "Estimation:"
+  },
+  "settings": {
+    "quality": "Quality",
+    "format": "Format",
+    "outputPath": "Output folder",
+    "advanced": "Advanced"
+  },
+  "success": {
+    "title": "All images have been successfully compressed!",
+    "description": "You can download your images or start over with brand new.",
+    "download": "Download all",
+    "startOver": "Start over"
+  }
+}

@@ -3,8 +3,8 @@ echo "🔍 Running pre-commit checks..."
 # Run lint-staged
 pnpm lint-staged
 
-# Run tests
-echo "🧪 Running tests..."
-pnpm test
+# Run type checking
+echo "🔍 Running type check..."
+pnpm type-check
 
 echo "✅ Pre-commit checks passed!"

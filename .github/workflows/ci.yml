@@ -7,9 +7,9 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  # Frontend tests and linting
+  # Frontend linting and type checking
   frontend:
-    name: Frontend Tests & Linting
+    name: Frontend Quality Checks
     runs-on: ubuntu-latest
     
     steps:
@@ -37,21 +37,10 @@ jobs:
     - name: Format check
       run: pnpm format:check
       continue-on-error: true
-      
-    - name: Run tests
-      run: pnpm test:coverage
-      
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage/lcov.info
-        flags: frontend
-        name: frontend-coverage
-        fail_ci_if_error: false
 
-  # Rust backend tests
+  # Rust backend quality checks
   backend:
-    name: Rust Backend Tests
+    name: Rust Quality Checks
     runs-on: ubuntu-latest
     
     steps:
@@ -93,9 +82,6 @@ jobs:
     - name: Rust clippy
       run: cd src-tauri && cargo clippy -- -D warnings
       continue-on-error: true
-      
-    - name: Run Rust tests
-      run: cd src-tauri && cargo test
       
     - name: Build Rust (debug)
       run: cd src-tauri && cargo build

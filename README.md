@@ -101,18 +101,32 @@ src/
 ```
 src-tauri/src/
 ├── commands/            # Tauri command handlers
-├── domain/              # Business entities and services
-│   ├── entities/        # Core domain objects  
-│   └── services/        # Business logic services
+├── domain/              # Business domains (functional architecture)
+│   ├── compression/     # Image compression domain
+│   │   ├── settings.rs  # CompressionSettings struct
+│   │   ├── formats.rs   # OutputFormat enum
+│   │   ├── engine.rs    # fn compress(), fn decompress()
+│   │   ├── stats.rs     # fn estimate(), CompressionStat
+│   │   ├── store.rs     # trait StatsStore + impls
+│   │   └── error.rs     # CompressionError enum
+│   ├── image/           # Image processing domain  
+│   │   ├── metadata.rs  # ImageInfo, ImageMetadata structs
+│   │   ├── process.rs   # fn resize(), fn optimize()
+│   │   └── error.rs     # ImageError enum
+│   └── file/            # File handling domain
+│       ├── info.rs      # FileInfo struct
+│       ├── process.rs   # fn validate_file(), fn save_file()
+│       └── error.rs     # FileError enum
 └── infrastructure/      # Technical implementations
-    └── compression/     # Format-specific compressors
+    └── compression/     # Format-specific algorithms
 ```
 
 ### Key Design Patterns
+- **Functional Architecture**: Pure functions + data structures (Rust)
+- **Domain-Driven Design**: Rich domain models with business logic (TypeScript)
 - **Clean Architecture**: Dependencies point inward to the domain
-- **Strategy Pattern**: Pluggable compression algorithms
-- **Domain-Driven Design**: Rich domain models with business logic
-- **CQRS**: Separate read/write operations for better performance
+- **Strategy Pattern**: Pluggable compression algorithms via traits
+- **Zero-cost abstractions**: Rust's performance without overhead
 
 ## 🧪 Testing
 

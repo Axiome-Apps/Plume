@@ -27,6 +27,4 @@ yarn.lock
 .idea/
 
 # Generated files
-README.md
 CHANGELOG.md
-TODO.md
