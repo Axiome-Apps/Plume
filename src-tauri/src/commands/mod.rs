@@ -13,10 +13,8 @@ pub use file::{
     clear_app_temporary_files, generate_preview, get_file_information, save_all_to_downloads,
     save_to_downloads, select_image_files,
 };
-pub use progress::{
-    create_progress_config, get_default_compression_times, get_progress_estimation,
-};
+// Progress-related functions are now handled by the AdaptiveProgressManager in TypeScript
 pub use stats::{
     get_compression_estimation, get_stats_count, get_stats_summary,
-    record_compression_result_with_time, record_compression_stat, reset_compression_stats,
+    record_compression_stat, reset_compression_stats,
 };

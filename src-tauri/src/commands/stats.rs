@@ -1,4 +1,3 @@
-use crate::domain::compression::stats::create_stat_with_time;
 use crate::domain::{AppState, EstimationQuery, EstimationResult, SqliteStatsStore, StatsStore};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -96,44 +95,7 @@ pub async fn record_compression_stat(
         .map_err(|e| format!("Failed to save stat: {}", e))
 }
 
-/// Record a compression statistic with timing for learning
-#[tauri::command]
-pub async fn record_compression_result_with_time(
-    input_format: String,
-    output_format: String,
-    original_size: u64,
-    compressed_size: u64,
-    compression_time_ms: u64,
-    tool_version: String,
-    _state: State<'_, AppState>,
-) -> Result<i64, String> {
-    let output_format_enum = match output_format.to_lowercase().as_str() {
-        "webp" => crate::domain::OutputFormat::WebP,
-        "png" => crate::domain::OutputFormat::Png,
-        "jpg" | "jpeg" => crate::domain::OutputFormat::Jpeg,
-        _ => crate::domain::OutputFormat::WebP,
-    };
-
-    let compression_settings = crate::domain::CompressionSettings::new(80, output_format_enum);
-
-    let stat = create_stat_with_time(
-        input_format,
-        output_format,
-        original_size,
-        compressed_size,
-        compression_time_ms,
-        &compression_settings,
-        tool_version,
-    );
-
-    let mut store = STATS_STORE
-        .lock()
-        .map_err(|_| "Failed to acquire stats store lock".to_string())?;
-
-    store
-        .save_stat(stat)
-        .map_err(|e| format!("Failed to save stat with timing: {}", e))
-}
+// record_compression_result_with_time function removed - was unused
 
 /// Reset all compression statistics
 #[tauri::command]

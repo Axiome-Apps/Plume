@@ -78,23 +78,41 @@ impl DatabaseManager {
     }
 
     /// Récupère la moyenne de compression pour une combinaison de formats donnée
+    /// Utilise maintenant le nouveau schéma unifié compression_stats
     pub fn get_average_compression(
         &self,
         input_format: &str,
         output_format: &str,
     ) -> Result<f64, String> {
         self.with_connection(|conn| {
+            // Essaie d'abord avec la nouvelle table compression_stats
             let mut stmt = conn.prepare(
-                "SELECT AVG((CAST(original_size - compressed_size AS REAL) / original_size) * 100) as avg_compression
-                 FROM compression_records 
-                 WHERE input_format = ?1 AND output_format = ?2 AND original_size > 0"
+                "SELECT AVG(size_reduction_percent) as avg_compression
+                 FROM compression_stats 
+                 WHERE input_format = ?1 AND output_format = ?2"
             )?;
 
-            let result: f64 = stmt.query_row((input_format, output_format), |row| {
+            let result: Result<f64, _> = stmt.query_row((input_format, output_format), |row| {
                 Ok(row.get(0).unwrap_or(0.0))
-            })?;
+            });
 
-            Ok(result)
+            match result {
+                Ok(avg) => Ok(avg),
+                Err(_) => {
+                    // Fallback vers l'ancienne table si pas de données dans la nouvelle
+                    let mut fallback_stmt = conn.prepare(
+                        "SELECT AVG((CAST(original_size - compressed_size AS REAL) / original_size) * 100) as avg_compression
+                         FROM compression_records 
+                         WHERE input_format = ?1 AND output_format = ?2 AND original_size > 0"
+                    )?;
+
+                    let fallback_result: f64 = fallback_stmt.query_row((input_format, output_format), |row| {
+                        Ok(row.get(0).unwrap_or(0.0))
+                    })?;
+
+                    Ok(fallback_result)
+                }
+            }
         })
     }
 

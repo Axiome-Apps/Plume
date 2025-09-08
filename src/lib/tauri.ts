@@ -193,11 +193,11 @@ export async function getStatsSummary(): Promise<StatsSummary> {
 }
 
 /**
- * Obtient les stats de la database (legacy - compatibilité)
+ * Obtient les stats de la database (utilise le nouveau système unifié)
  */
 export async function getDatabaseStats(): Promise<number> {
   try {
-    const stats = await invoke<number>('get_database_stats');
+    const stats = await invoke<number>('get_stats_count');
     return stats;
   } catch (error) {
     console.error('Erreur récupération database stats:', error);

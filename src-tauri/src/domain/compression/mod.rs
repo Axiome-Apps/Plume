@@ -34,11 +34,8 @@ pub use store::{SqliteStatsStore, StatsStore};
 // Prediction service for size estimation
 pub use prediction::{create_prediction_query, CompressionPredictionService};
 
-// Progress estimation service for timing predictions
-pub use progress::{
-    EasingFunction, ProgressCalculator, ProgressConfig, ProgressEstimation,
-    ProgressEstimationQuery, ProgressEstimationService,
-};
+// Progress types (legacy - functionality moved to TypeScript AdaptiveProgressManager)
+pub use progress::{EasingFunction, ProgressConfig, ProgressEstimation, ProgressEstimationQuery};
 
 // Convenience functions for common operations
 
