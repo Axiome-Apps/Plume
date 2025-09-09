@@ -182,6 +182,7 @@ Deliver a native desktop app that combines cutting-edge compression algorithms w
 
 - [ ] App store submissions (Mac, Windows, Linux)
 - [ ] Package managers (Homebrew, Chocolatey, APT)
+- [ ] Flatpak distribution for modern Linux ecosystem
 - [ ] Web version (Progressive Web App)
 - [ ] Marketing and user acquisition
 

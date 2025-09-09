@@ -113,7 +113,7 @@ impl AppState {
     }
 
     /// Get configuration (read-only)
-    pub fn get_config(&self) -> std::sync::RwLockReadGuard<AppConfig> {
+    pub fn get_config(&self) -> std::sync::RwLockReadGuard<'_, AppConfig> {
         self.config.read().unwrap()
     }
 
