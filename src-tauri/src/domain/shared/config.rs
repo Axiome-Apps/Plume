@@ -412,15 +412,19 @@ mod tests {
         assert!(config.validate().is_ok());
 
         // Update config
-        let mut new_config = AppConfig::default();
-        new_config.max_file_size = 2048;
+        let new_config = AppConfig {
+            max_file_size: 2048,
+            ..Default::default()
+        };
 
         assert!(manager.update_config(new_config).is_ok());
         assert_eq!(manager.get_config().max_file_size, 2048);
 
         // Try to update with invalid config
-        let mut invalid_config = AppConfig::default();
-        invalid_config.max_file_size = 0;
+        let invalid_config = AppConfig {
+            max_file_size: 0,
+            ..Default::default()
+        };
 
         assert!(manager.update_config(invalid_config).is_err());
         // Should still have the previous valid config
