@@ -59,7 +59,8 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev \
             libasound2-dev \
-            libjavascriptcoregtk-4.1-dev
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev
 
       - name: Install frontend dependencies
         run: pnpm install

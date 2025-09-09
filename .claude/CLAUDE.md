@@ -107,3 +107,23 @@ Immutable conventions and best practices guide for Plume development.
 - **Modules by responsibility** (engine.rs, store.rs, error.rs)
 - **Composition via traits** for extensibility
 - **Zero-cost abstractions**
+
+## Release Management
+
+### GitHub Releases Best Practices
+
+- **ALWAYS** use draft releases for testing builds before publication
+- **Test Linux dependencies** with draft releases to avoid public failures
+- **Release workflow**: Draft → CI builds → Verify all platforms → Publish
+- **Version tags**: Only create final tags after successful draft validation
+
+```bash
+# Correct workflow
+gh release create v0.5.0 --draft --title "..." --notes "..."
+# Wait for all CI builds to complete and verify
+gh release edit v0.5.0 --draft=false  # Publish when ready
+```
+
+- **Linux dependencies**: Always verify new Tauri/system dependencies in CI
+- **Multi-platform validation**: Ensure all target platforms build successfully
+- **Release notes**: Include clear download instructions per platform
