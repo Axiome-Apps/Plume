@@ -73,7 +73,10 @@ pub fn initialize_database(conn: &Connection) -> SqlResult<()> {
         println!("Database is empty, will be seeded with initial data");
         // La logique de seeding sera appelée depuis le gestionnaire principal
     } else {
-        println!("Database already contains {} compression stats records", count);
+        println!(
+            "Database already contains {} compression stats records",
+            count
+        );
     }
 
     Ok(())

@@ -15,6 +15,6 @@ pub use file::{
 };
 // Progress-related functions are now handled by the AdaptiveProgressManager in TypeScript
 pub use stats::{
-    get_compression_estimation, get_stats_count, get_stats_summary,
-    record_compression_stat, reset_compression_stats,
+    get_compression_estimation, get_stats_count, get_stats_summary, record_compression_stat,
+    reset_compression_stats,
 };
