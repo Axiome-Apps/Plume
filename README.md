@@ -21,38 +21,33 @@ A modern, fast, and intelligent image compression desktop application built with
 
 ## 🎬 Demo
 
-*Screenshots and demo GIFs will be added here*
+*Coming soon*
 
 ## 📥 Installation
 
 ### For Users
 
-#### macOS
-```bash
-# Using Homebrew (coming soon)
-brew install plume
+### For macOS Users
 
-# Or download from releases
-# https://github.com/triplecasquette/plume/releases
+### macOS
+
+If macOS blocks the app, run in Terminal:
+```bash
+xattr -rd com.apple.quarantine /Applications/Plume.app
 ```
 
-#### Windows
-```bash
-# Using Chocolatey (coming soon)
-choco install plume
+### Windows
 
-# Or download from releases
-# https://github.com/triplecasquette/plume/releases
+If SmartScreen blocks the app, click "More info" → "Run anyway".
+
+### Linux
+
+If needed, make the file executable:
+```bash
+chmod +x ./Plume*.AppImage
 ```
 
-#### Linux
-```bash
-# Using Snap (coming soon)
-sudo snap install plume
-
-# Or download AppImage from releases
-# https://github.com/username/plume/releases
-```
+This removes the quarantine flag while preserving other file metadata.
 
 ### For Developers
 
@@ -163,10 +158,6 @@ See [TODO.md](./TODO.md) for detailed development plans.
 - [ ] HEIF/HEIC support for iPhone users
 - [ ] AVIF format support  
 - [ ] Video compression
-- [ ] Advanced batch processing with progress
-- [ ] Plugin architecture for custom compressors
-- [ ] CLI version
-- [ ] Web version
 
 ## 🤝 Contributing
 
@@ -195,8 +186,6 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 - [Rust](https://www.rust-lang.org/) - Systems programming language
 - [oxipng](https://github.com/shssoichiro/oxipng) - PNG optimization
 - [webp](https://developers.google.com/speed/webp/) - Modern image format
-
-## 📄 License
 
 
 ## 🙏 Acknowledgments
