@@ -200,9 +200,7 @@ Plume is licensed under **CeCILL v2.1**. For more details, see the [LICENSE](./L
 ## 📞 Support
 
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/triplecasquette/plume/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/triplecasquette/plume/discussions)  
-- 📖 **Documentation**: [Official Docs](https://plume-docs.com)
-- 💬 **Community**: [Discord](https://discord.gg/plume)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/triplecasquette/plume/discussions) 
 
 ---
 
