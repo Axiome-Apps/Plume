@@ -35,31 +35,36 @@ brew install --cask axiome-apps/tap/plume
 
 #### Direct Download
 
-| Architecture             | Download                                                                            |
-|--------------------------|-------------------------------------------------------------------------------------|
-| Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_aarch64.dmg |
-| Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.dmg     |
+| Architecture             | Download                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_aarch64.dmg |
+| Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_x64.dmg     |
 
 ⚠️ Direct download only: macOS blocks unsigned apps. Run this command to unblock:
+
 ```bash
 xattr -dr com.apple.quarantine /Applications/Plume.app
 ```
 
 ### Windows
 
-| Architecture | Download                                                                        |
-|--------------|---------------------------------------------------------------------------------|
-| 64-bit       | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.msi |
+| Format | Download                                                                                |
+| ------ | --------------------------------------------------------------------------------------- |
+| MSI    | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_x64_en-US.msi |
+| EXE    | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_x64-setup.exe |
 
 ⚠️ If SmartScreen blocks the app, click "More info" → "Run anyway".
 
 ### Linux
 
-| Format   | Download                                                                         |
-|----------|----------------------------------------------------------------------------------|
-| AppImage | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0.AppImage |
+| Format   | Download                                                                                 |
+| -------- | ---------------------------------------------------------------------------------------- |
+| AppImage | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_amd64.AppImage |
+| Deb      | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_amd64.deb      |
+| RPM      | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume-0.1.0-1.x86_64.rpm   |
 
-Make the file executable if needed:
+For AppImage, make it executable:
+
 ```bash
 chmod +x ./Plume*.AppImage
 ```

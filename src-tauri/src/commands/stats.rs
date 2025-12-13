@@ -32,16 +32,6 @@ pub struct RecordStatRequest {
     pub lossy_mode: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RecordStatWithTimeRequest {
-    pub input_format: String,
-    pub output_format: String,
-    pub original_size: u64,
-    pub compressed_size: u64,
-    pub compression_time_ms: u64,
-    pub tool_version: String,
-}
-
 /// Get compression estimation based on historical data
 #[tauri::command]
 pub async fn get_compression_estimation(
