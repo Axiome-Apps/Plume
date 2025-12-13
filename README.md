@@ -25,40 +25,41 @@ A modern, fast, and intelligent image compression desktop application built with
 
 ## 📥 Installation
 
-### For Users
+  ### macOS
 
-Direct Download
-
-  | OS      | Architecture             | Télécharger                                                                         |
-  |---------|--------------------------|-------------------------------------------------------------------------------------|
-  | macOS   | Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_aarch64.dmg |
-  | macOS   | Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.dmg     |
-  | Windows | 64-bit                   | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.msi     |
-  | Linux   | AppImage                 | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0.AppImage    |
-
-### For macOS Users
-
-If the app is "damaged" -> fake apple, run :
+  #### Homebrew (recommended)
 
   ```bash
-xattr -dr com.apple.quarantine /Applications/Plume.app
-  ```
-  moves the quarantine flag while preserving other file metadata.
-
-  Or use brew to install instead of direct download
-```bash
- brew install --cask axiome-apps/tap/plume
+  brew install --cask axiome-apps/tap/plume
 ```
 
-### Windows
+#### Direct Download
 
-If SmartScreen blocks the app, click "More info" → "Run anyway".
+  | Architecture             | Download                                                                            |
+  |--------------------------|-------------------------------------------------------------------------------------|
+  | Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_aarch64.dmg |
+  | Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.dmg     |
 
-### Linux
+  ⚠️ Direct download only: macOS blocks unsigned apps. Run this command to unblock:
+  xattr -dr com.apple.quarantine /Applications/Plume.app
 
-If needed, make the file executable:
-```bash
-chmod +x ./Plume*.AppImage
+  ### Windows
+
+  | Architecture | Download                                                                        |
+  |--------------|---------------------------------------------------------------------------------|
+  | 64-bit       | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.msi |
+
+  ⚠️ If SmartScreen blocks the app, click "More info" → "Run anyway".
+
+  ### Linux
+
+  | Format   | Download                                                                         |
+  |----------|----------------------------------------------------------------------------------|
+  | AppImage | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0.AppImage |
+
+  Make the file executable if needed:
+  ```
+  chmod +x ./Plume*.AppImage
 ```
 
 ### For Developers
@@ -217,5 +218,5 @@ Plume is licensed under **CeCILL v2.1**. For more details, see the [LICENSE](./L
 ---
 
 <div align="center">
-  <strong>Made with ❤️ and ⚡ by the Plume community</strong>
+  <strong>Made with ❤️ and ⚡ by the Axiome app community</strong>
 </div>
