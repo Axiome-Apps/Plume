@@ -27,13 +27,26 @@ A modern, fast, and intelligent image compression desktop application built with
 
 ### For Users
 
+Direct Download
+
+  | OS      | Architecture             | Télécharger                                                                         |
+  |---------|--------------------------|-------------------------------------------------------------------------------------|
+  | macOS   | Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_aarch64.dmg |
+  | macOS   | Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.dmg     |
+  | Windows | 64-bit                   | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.msi     |
+  | Linux   | AppImage                 | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0.AppImage    |
+
+  ⚠️ macOS (Direct Download) : If the app is "damaged" -> fake apple, run :
+
+  ```bash
+xattr -dr com.apple.quarantine /Applications/Plume.app
+  ```
+  moves the quarantine flag while preserving other file metadata.
+
 ### For macOS Users
 
-### macOS
-
-If macOS blocks the app, run in Terminal:
 ```bash
-xattr -rd com.apple.quarantine /Applications/Plume.app
+ brew install --cask axiome-apps/tap/plume
 ```
 
 ### Windows
@@ -46,8 +59,6 @@ If needed, make the file executable:
 ```bash
 chmod +x ./Plume*.AppImage
 ```
-
-This removes the quarantine flag while preserving other file metadata.
 
 ### For Developers
 
