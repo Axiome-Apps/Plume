@@ -36,15 +36,16 @@ Direct Download
   | Windows | 64-bit                   | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.msi     |
   | Linux   | AppImage                 | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0.AppImage    |
 
-  ⚠️ macOS (Direct Download) : If the app is "damaged" -> fake apple, run :
+### For macOS Users
+
+If the app is "damaged" -> fake apple, run :
 
   ```bash
 xattr -dr com.apple.quarantine /Applications/Plume.app
   ```
   moves the quarantine flag while preserving other file metadata.
 
-### For macOS Users
-
+  Or use brew to install instead of direct download
 ```bash
  brew install --cask axiome-apps/tap/plume
 ```
