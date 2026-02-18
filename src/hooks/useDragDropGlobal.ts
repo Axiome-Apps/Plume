@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { DragDropEventEntity } from '@/domain/drag-drop/entity';
 
 /**
@@ -6,47 +6,43 @@ import { DragDropEventEntity } from '@/domain/drag-drop/entity';
  * Encapsule toute la logique d'écoute des événements Tauri
  */
 export function useDragDropGlobal(onFilesDropped: (paths: string[]) => void) {
+  const callbackRef = useRef(onFilesDropped);
+  callbackRef.current = onFilesDropped;
+
   useEffect(() => {
     let unlisten: (() => void) | undefined;
-    let isSetup = false;
+    let cancelled = false;
 
     const setupListener = async () => {
       try {
-        // Nettoyer l'ancien listener s'il existe
-        if (unlisten) {
-          unlisten();
-          unlisten = undefined;
-        }
-
         const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+
+        if (cancelled) return;
+
         unlisten = await getCurrentWebviewWindow().onDragDropEvent(rawEvent => {
           try {
             const dragDropEvent = DragDropEventEntity.fromRawEvent(rawEvent);
             const validImagePaths = dragDropEvent.processDropEvent();
 
             if (validImagePaths && validImagePaths.length > 0) {
-              onFilesDropped(validImagePaths);
+              callbackRef.current(validImagePaths);
             }
           } catch (error) {
-            console.error('❌ useDragDropGlobal: Événement drag & drop invalide:', error);
+            console.error('useDragDropGlobal: Invalid drag & drop event:', error);
           }
         });
-        isSetup = true;
-        console.log('✅ useDragDropGlobal: Listener setup successfully');
       } catch (error) {
-        console.error('❌ useDragDropGlobal: Erreur setup listener:', error);
+        console.error('useDragDropGlobal: Listener setup error:', error);
       }
     };
 
     setupListener();
 
     return () => {
-      if (unlisten && isSetup) {
-        console.log('🧹 useDragDropGlobal: Cleaning up listener');
+      cancelled = true;
+      if (unlisten) {
         unlisten();
-        unlisten = undefined;
-        isSetup = false;
       }
     };
-  }, [onFilesDropped]);
+  }, []);
 }

@@ -31,8 +31,8 @@ export const ImageListHeader: FC = () => {
 
   const imageData = images.map(img => img.data);
   const hasPNG = ImageEntity.hasPNG(imageData);
-  const hasWebP = ImageEntity.hasWebP(imageData);
   const hasHEIC = ImageEntity.hasHEIC(imageData);
+  const hasOnlyWebP = ImageEntity.hasOnlyWebP(imageData);
 
   const totalSize = images.reduce((sum, img) => sum + img.originalSize, 0);
   const formatFileSize = ImageEntity.formatFileSize;
@@ -89,8 +89,8 @@ export const ImageListHeader: FC = () => {
             convertToWebP={convertToWebP}
             lossyMode={lossyMode}
             hasPNG={hasPNG}
-            hasWebP={hasWebP}
             hasHEIC={hasHEIC}
+            hasOnlyWebP={hasOnlyWebP}
             heicOutputFormat={compressionSettings.heicOutputFormat}
             onToggleWebPConversion={toggleWebPConversion}
             onToggleLossyMode={toggleLossyMode}

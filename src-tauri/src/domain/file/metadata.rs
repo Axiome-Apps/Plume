@@ -82,7 +82,12 @@ impl FileMetadata {
             && self
                 .extension
                 .as_ref()
-                .map(|ext| matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"))
+                .map(|ext| {
+                    matches!(
+                        ext.as_str(),
+                        "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"
+                    )
+                })
                 .unwrap_or(false)
     }
 
@@ -141,7 +146,12 @@ pub fn get_file_extension<P: AsRef<Path>>(path: P) -> Option<String> {
 /// Check if path is a supported image file
 pub fn is_supported_image_file<P: AsRef<Path>>(path: P) -> bool {
     get_file_extension(path)
-        .map(|ext| matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"))
+        .map(|ext| {
+            matches!(
+                ext.as_str(),
+                "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"
+            )
+        })
         .unwrap_or(false)
 }
 

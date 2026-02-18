@@ -42,18 +42,32 @@ export function ImageCard({ image, onDownload, onRemove, onCompress, className }
             </div>
           )}
 
-          {/* image.status === 'pending' && image.estimatedCompression && (
-            <div className="text-sm text-gray-500">
-              Économie estimée: ~{image.estimatedCompression.percent}%
+          {image.status === 'pending' && image.estimatedCompression && (
+            <div className="flex items-center justify-center md:justify-start gap-2 text-sm">
+              {image.estimatedCompression.percent < 10 ? (
+                <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-medium">
+                  Déjà optimisé — gain estimé ~{image.estimatedCompression.percent.toFixed(0)}%
+                </span>
+              ) : (
+                <span className="text-slate-500">
+                  Économie estimée : ~{image.estimatedCompression.percent.toFixed(0)}%
+                </span>
+              )}
             </div>
-          ) */}
+          )}
 
-          {image.status === 'completed' && image.savings && image.compressedSize && (
+          {image.status === 'completed' && image.compressedSize !== undefined && (
             <div className="flex items-center justify-center md:justify-start gap-2 text-sm">
               <span className="text-gray-600">→ {formatFileSize(image.compressedSize)}</span>
-              <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">
-                -{image.savings}%
-              </span>
+              {image.savings && image.savings > 0 ? (
+                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">
+                  -{image.savings}%
+                </span>
+              ) : (
+                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-medium">
+                  Déjà optimisé
+                </span>
+              )}
             </div>
           )}
         </div>

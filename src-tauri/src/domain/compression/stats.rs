@@ -64,7 +64,7 @@ pub fn estimate_compression(
                 (43.0, 0.8) // PNG->WebP lossless
             }
         }
-        ("jpg" | "jpeg", "webp") => (25.0, 0.7), // JPEG->WebP
+        ("jpg" | "jpeg", "webp") => (8.0, 0.5), // JPEG->WebP (already lossy, marginal gains)
         ("png", "png") => (15.0, 0.9),           // PNG optimization
         ("jpg" | "jpeg", "jpg" | "jpeg") => (20.0, 0.8), // JPEG optimization
         ("webp", "webp") => (10.0, 0.6),         // WebP re-compression

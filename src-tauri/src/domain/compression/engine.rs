@@ -9,11 +9,12 @@ use std::path::Path;
 
 /// Decode a HEIC/HEIF file into a DynamicImage using libheif-rs (public for preview)
 pub fn decode_heic_public(input_data: &[u8]) -> CompressionResult<DynamicImage> {
-    decode_heic(input_data)
+    let (img, _icc) = decode_heic(input_data)?;
+    Ok(img)
 }
 
-/// Decode a HEIC/HEIF file into a DynamicImage using libheif-rs
-fn decode_heic(input_data: &[u8]) -> CompressionResult<DynamicImage> {
+/// Decode a HEIC/HEIF file into a DynamicImage + optional ICC profile using libheif-rs
+fn decode_heic(input_data: &[u8]) -> CompressionResult<(DynamicImage, Option<Vec<u8>>)> {
     let lib_heif = libheif_rs::LibHeif::new();
 
     let ctx = libheif_rs::HeifContext::read_from_bytes(input_data).map_err(|e| {
@@ -24,8 +25,15 @@ fn decode_heic(input_data: &[u8]) -> CompressionResult<DynamicImage> {
         CompressionError::ProcessingError(format!("Failed to get HEIC primary image: {}", e))
     })?;
 
+    // Extract ICC profile BEFORE decode (original, untransformed profile)
+    let icc_profile = handle.color_profile_raw().map(|p| p.data);
+
     let heif_image = lib_heif
-        .decode(&handle, libheif_rs::ColorSpace::Rgb(libheif_rs::RgbChroma::Rgba), None)
+        .decode(
+            &handle,
+            libheif_rs::ColorSpace::Rgb(libheif_rs::RgbChroma::Rgba),
+            None,
+        )
         .map_err(|e| {
             CompressionError::ProcessingError(format!("Failed to decode HEIC image: {}", e))
         })?;
@@ -34,13 +42,9 @@ fn decode_heic(input_data: &[u8]) -> CompressionResult<DynamicImage> {
     let height = handle.height();
 
     let planes = heif_image.planes();
-    let plane = planes
-        .interleaved
-        .ok_or_else(|| {
-            CompressionError::ProcessingError(
-                "HEIC image has no interleaved plane data".to_string(),
-            )
-        })?;
+    let plane = planes.interleaved.ok_or_else(|| {
+        CompressionError::ProcessingError("HEIC image has no interleaved plane data".to_string())
+    })?;
 
     let stride = plane.stride;
     let plane_data = plane.data;
@@ -53,14 +57,51 @@ fn decode_heic(input_data: &[u8]) -> CompressionResult<DynamicImage> {
         rgba_data.extend_from_slice(&plane_data[row_start..row_end]);
     }
 
-    let img_buf: image::RgbaImage =
-        image::ImageBuffer::from_raw(width, height, rgba_data).ok_or_else(|| {
+    let img_buf: image::RgbaImage = image::ImageBuffer::from_raw(width, height, rgba_data)
+        .ok_or_else(|| {
             CompressionError::ProcessingError(
                 "Failed to create image buffer from HEIC data".to_string(),
             )
         })?;
 
-    Ok(DynamicImage::ImageRgba8(img_buf))
+    Ok((DynamicImage::ImageRgba8(img_buf), icc_profile))
+}
+
+/// Decode any supported image format, returning the image + optional ICC profile
+fn decode_image_with_icc(
+    input_data: &[u8],
+    input_format: &str,
+) -> CompressionResult<(DynamicImage, Option<Vec<u8>>)> {
+    use image::ImageFormat;
+
+    match input_format.to_lowercase().as_str() {
+        "heic" | "heif" => decode_heic(input_data),
+        "png" => {
+            let img = image::load_from_memory_with_format(input_data, ImageFormat::Png)
+                .map_err(|e| {
+                    CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
+                })?;
+            Ok((img, None))
+        }
+        "jpg" | "jpeg" => {
+            let img = image::load_from_memory_with_format(input_data, ImageFormat::Jpeg)
+                .map_err(|e| {
+                    CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
+                })?;
+            Ok((img, None))
+        }
+        "webp" => {
+            let img = image::load_from_memory_with_format(input_data, ImageFormat::WebP)
+                .map_err(|e| {
+                    CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
+                })?;
+            Ok((img, None))
+        }
+        _ => Err(CompressionError::UnsupportedFormat(format!(
+            "Format {} non supporté",
+            input_format
+        ))),
+    }
 }
 
 /// Result of a compression operation
@@ -81,7 +122,7 @@ impl CompressionOutput {
         format: OutputFormat,
     ) -> Self {
         let savings_percent = if original_size > 0 {
-            ((original_size - compressed_size) as f64 / original_size as f64) * 100.0
+            ((original_size as f64 - compressed_size as f64) / original_size as f64) * 100.0
         } else {
             0.0
         };
@@ -198,44 +239,33 @@ fn compress_to_webp_file(
     input_format: &str,
     settings: &CompressionSettings,
 ) -> CompressionResult<()> {
-    // Read image file data
     let input_data = std::fs::read(input_path)
         .map_err(|e| CompressionError::IoError(format!("Failed to read input file: {}", e)))?;
-    use image::ImageFormat;
 
-    // Décode l'image selon le format d'entrée
-    let img = match input_format.to_lowercase().as_str() {
-        "png" => image::load_from_memory_with_format(&input_data, ImageFormat::Png)
-            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
-        "jpg" | "jpeg" => image::load_from_memory_with_format(&input_data, ImageFormat::Jpeg)
-            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
-        "webp" => image::load_from_memory_with_format(&input_data, ImageFormat::WebP)
-            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
-        "heic" | "heif" => decode_heic(&input_data),
-        _ => {
-            return Err(CompressionError::UnsupportedFormat(format!(
-                "Format {} non supporté",
-                input_format
-            )))
-        }
-    }?;
+    let (img, icc_profile) = decode_image_with_icc(&input_data, input_format)?;
 
-    // Encode en WebP avec webp crate
-    let rgba_img = img.to_rgba8();
-    let (width, height) = rgba_img.dimensions();
+    // Encode en WebP avec webp crate + WebPConfig optimisé
+    let has_alpha = img.color().has_alpha();
 
-    let encoder = webp::Encoder::from_rgba(rgba_img.as_raw(), width, height);
-
-    let encoded = if settings.quality >= 90 {
-        // Mode lossless pour qualité élevée
-        encoder.encode_lossless()
+    let encoded = if has_alpha {
+        let rgba_img = img.to_rgba8();
+        let (width, height) = rgba_img.dimensions();
+        let encoder = webp::Encoder::from_rgba(rgba_img.as_raw(), width, height);
+        encode_webp_advanced(&encoder, settings)?
     } else {
-        // Mode lossy avec qualité spécifiée
-        encoder.encode(settings.quality as f32)
+        let rgb_img = img.to_rgb8();
+        let (width, height) = rgb_img.dimensions();
+        let encoder = webp::Encoder::from_rgb(rgb_img.as_raw(), width, height);
+        encode_webp_advanced(&encoder, settings)?
     };
 
-    // Write directly to output file
-    std::fs::write(output_path, &*encoded)
+    // Inject ICC profile into WebP RIFF container if present
+    let output_data = match icc_profile {
+        Some(ref icc) => inject_icc_into_webp(&encoded, icc),
+        None => encoded.to_vec(),
+    };
+
+    std::fs::write(output_path, &output_data)
         .map_err(|e| CompressionError::IoError(format!("Failed to write output file: {}", e)))?;
 
     Ok(())
@@ -247,79 +277,48 @@ fn compress_to_png_file(
     input_format: &str,
     _settings: &CompressionSettings,
 ) -> CompressionResult<()> {
-    use image::ImageFormat;
-
     match input_format.to_lowercase().as_str() {
         "png" => {
-            // Pour PNG -> PNG, utilise oxipng directement sur les fichiers
-            let options = oxipng::Options::from_preset(3); // Preset 3 = bon compromis vitesse/compression
+            // Pour PNG -> PNG, utilise oxipng directement (preserves existing ICC chunks)
+            let options = oxipng::Options::from_preset(3);
             let input_data = std::fs::read(input_path).map_err(|e| {
                 CompressionError::IoError(format!("Failed to read PNG file: {}", e))
             })?;
             match oxipng::optimize_from_memory(&input_data, &options) {
                 Ok(optimized_data) => {
-                    // Écrire les données optimisées vers le fichier de sortie
                     std::fs::write(output_path, optimized_data).map_err(|e| {
                         CompressionError::IoError(format!("Failed to write optimized PNG: {}", e))
                     })?;
-                    return Ok(());
                 }
                 Err(_) => {
-                    // Fallback: copie le fichier original
                     std::fs::copy(input_path, output_path).map_err(|e| {
                         CompressionError::IoError(format!("Failed to copy PNG file: {}", e))
                     })?;
-                    return Ok(());
                 }
             }
+            Ok(())
         }
-        "jpg" | "jpeg" | "webp" | "heic" | "heif" => {
-            // Pour autres formats -> PNG, on doit décoder/encoder
+        _ => {
             let input_data = std::fs::read(input_path).map_err(|e| {
                 CompressionError::IoError(format!("Failed to read input file: {}", e))
             })?;
 
-            let img = match input_format {
-                "heic" | "heif" => decode_heic(&input_data)?,
-                _ => {
-                    let img_format = match input_format {
-                        "jpg" | "jpeg" => ImageFormat::Jpeg,
-                        "webp" => ImageFormat::WebP,
-                        _ => unreachable!(),
-                    };
-                    image::load_from_memory_with_format(&input_data, img_format).map_err(|e| {
-                        CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
-                    })?
-                }
-            };
+            let (img, icc_profile) = decode_image_with_icc(&input_data, input_format)?;
 
-            // Encode en PNG directement vers le fichier
-            let output_file = std::fs::File::create(output_path).map_err(|e| {
-                CompressionError::IoError(format!("Failed to create output file: {}", e))
-            })?;
+            // Encode PNG with ICC profile using PngEncoder
+            encode_png_with_icc(&img, output_path, icc_profile.as_deref())?;
 
-            let mut writer = std::io::BufWriter::new(output_file);
-            img.write_to(&mut writer, ImageFormat::Png).map_err(|e| {
-                CompressionError::ProcessingError(format!("Erreur encodage PNG: {}", e))
-            })?;
-
-            // Optimise le fichier PNG généré avec oxipng
+            // Optimize with oxipng (preserves iCCP chunks by default)
             let options = oxipng::Options::from_preset(3);
             if let Ok(png_data) = std::fs::read(output_path) {
                 if let Ok(optimized_data) = oxipng::optimize_from_memory(&png_data, &options) {
-                    let _ = std::fs::write(output_path, optimized_data); // Ignore les erreurs d'optimisation
+                    let _ = std::fs::write(output_path, optimized_data);
                 }
             }
-        }
-        _ => {
-            return Err(CompressionError::UnsupportedFormat(format!(
-                "Format {} non supporté pour PNG",
-                input_format
-            )))
+
+            Ok(())
         }
     }
-
-    Ok(())
 }
 
 fn compress_to_jpeg_file(
@@ -328,36 +327,18 @@ fn compress_to_jpeg_file(
     input_format: &str,
     settings: &CompressionSettings,
 ) -> CompressionResult<()> {
-    use image::ImageFormat;
-
-    // Read input file data
     let input_data = std::fs::read(input_path)
         .map_err(|e| CompressionError::IoError(format!("Failed to read input file: {}", e)))?;
 
-    // Décode l'image selon le format d'entrée
-    let img = match input_format.to_lowercase().as_str() {
-        "png" => image::load_from_memory_with_format(&input_data, ImageFormat::Png)
-            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
-        "jpg" | "jpeg" => image::load_from_memory_with_format(&input_data, ImageFormat::Jpeg)
-            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
-        "webp" => image::load_from_memory_with_format(&input_data, ImageFormat::WebP)
-            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
-        "heic" | "heif" => decode_heic(&input_data),
-        _ => {
-            return Err(CompressionError::UnsupportedFormat(format!(
-                "Format {} non supporté pour JPEG",
-                input_format
-            )))
-        }
-    }?;
+    let (img, icc_profile) = decode_image_with_icc(&input_data, input_format)?;
 
-    // Convertit en RGB (JPEG ne supporte pas la transparence)
+    // Convert to RGB (JPEG does not support transparency)
     let rgb_img = img.to_rgb8();
     let (width, height) = rgb_img.dimensions();
     let pixels = rgb_img.as_raw();
 
-    // Encode with mozjpeg for better compression (10-20% smaller than libjpeg)
-    let jpeg_data = encode_jpeg_mozjpeg(pixels, width, height, settings.quality)?;
+    let jpeg_data =
+        encode_jpeg_mozjpeg(pixels, width, height, settings.quality, icc_profile.as_deref())?;
 
     std::fs::write(output_path, &jpeg_data)
         .map_err(|e| CompressionError::IoError(format!("Failed to write JPEG file: {}", e)))?;
@@ -365,12 +346,43 @@ fn compress_to_jpeg_file(
     Ok(())
 }
 
-/// Encode RGB pixels to JPEG using mozjpeg for better compression
+/// Encode a DynamicImage to PNG with optional ICC profile
+fn encode_png_with_icc(
+    img: &DynamicImage,
+    output_path: &Path,
+    icc_profile: Option<&[u8]>,
+) -> CompressionResult<()> {
+    use image::ImageEncoder;
+
+    let output_file = std::fs::File::create(output_path).map_err(|e| {
+        CompressionError::IoError(format!("Failed to create output file: {}", e))
+    })?;
+    let writer = std::io::BufWriter::new(output_file);
+
+    let mut encoder = image::codecs::png::PngEncoder::new(writer);
+
+    if let Some(icc) = icc_profile {
+        let _ = encoder.set_icc_profile(icc.to_vec());
+    }
+
+    let rgba = img.to_rgba8();
+    let (width, height) = rgba.dimensions();
+    encoder
+        .write_image(rgba.as_raw(), width, height, image::ExtendedColorType::Rgba8)
+        .map_err(|e| {
+            CompressionError::ProcessingError(format!("Erreur encodage PNG: {}", e))
+        })?;
+
+    Ok(())
+}
+
+/// Encode RGB pixels to JPEG using mozjpeg with optional ICC profile
 fn encode_jpeg_mozjpeg(
     pixels: &[u8],
     width: u32,
     height: u32,
     quality: u8,
+    icc_profile: Option<&[u8]>,
 ) -> CompressionResult<Vec<u8>> {
     unsafe {
         let mut cinfo: mozjpeg_sys::jpeg_compress_struct = std::mem::zeroed();
@@ -379,7 +391,7 @@ fn encode_jpeg_mozjpeg(
         cinfo.common.err = mozjpeg_sys::jpeg_std_error(&mut jerr);
         mozjpeg_sys::jpeg_CreateCompress(
             &mut cinfo,
-            mozjpeg_sys::JPEG_LIB_VERSION as i32,
+            mozjpeg_sys::JPEG_LIB_VERSION,
             std::mem::size_of::<mozjpeg_sys::jpeg_compress_struct>(),
         );
 
@@ -397,6 +409,15 @@ fn encode_jpeg_mozjpeg(
         mozjpeg_sys::jpeg_set_quality(&mut cinfo, quality as i32, true as i32);
 
         mozjpeg_sys::jpeg_start_compress(&mut cinfo, true as i32);
+
+        // Write ICC profile after start_compress, before scanlines
+        if let Some(icc) = icc_profile {
+            mozjpeg_sys::jpeg_write_icc_profile(
+                &mut cinfo,
+                icc.as_ptr(),
+                icc.len() as std::ffi::c_uint,
+            );
+        }
 
         let row_stride = width as usize * 3;
         while cinfo.next_scanline < cinfo.image_height {
@@ -436,7 +457,200 @@ unsafe fn libc_free(ptr: *mut std::ffi::c_void) {
     free(ptr);
 }
 
+/// Inject an ICC profile into a WebP RIFF container.
+///
+/// WebP files use the RIFF container format. To embed ICC, we need the
+/// extended format (VP8X header) with an ICCP chunk.
+///
+/// Layout: RIFF [size] WEBP VP8X [flags] ICCP [icc_data] VP8/VP8L [payload]
+fn inject_icc_into_webp(webp_data: &[u8], icc_data: &[u8]) -> Vec<u8> {
+    // Minimum valid WebP: "RIFF" + size(4) + "WEBP" + chunk = 12+ bytes
+    if webp_data.len() < 12 {
+        return webp_data.to_vec();
+    }
+
+    // Parse existing RIFF header
+    let fourcc = &webp_data[8..12];
+    if fourcc != b"WEBP" {
+        return webp_data.to_vec();
+    }
+
+    // Identify the payload chunk type starting at offset 12
+    let chunk_type = &webp_data[12..16];
+
+    // Build padded ICCP chunk (RIFF chunks must be even-aligned)
+    let icc_chunk = build_riff_chunk(b"ICCP", icc_data);
+
+    let result = if chunk_type == b"VP8X" {
+        // Already extended format: inject ICCP flag + chunk after VP8X
+        inject_icc_into_extended_webp(webp_data, &icc_chunk)
+    } else {
+        // Simple format (VP8 or VP8L): wrap in VP8X + ICCP
+        wrap_simple_webp_with_icc(webp_data, &icc_chunk, chunk_type)
+    };
+
+    result
+}
+
+/// Build a RIFF chunk: FourCC + LE32 size + data + optional padding byte
+fn build_riff_chunk(fourcc: &[u8; 4], data: &[u8]) -> Vec<u8> {
+    let mut chunk = Vec::with_capacity(8 + data.len() + 1);
+    chunk.extend_from_slice(fourcc);
+    chunk.extend_from_slice(&(data.len() as u32).to_le_bytes());
+    chunk.extend_from_slice(data);
+    if data.len() % 2 != 0 {
+        chunk.push(0); // RIFF padding
+    }
+    chunk
+}
+
+/// Inject ICCP into an already-extended WebP (has VP8X)
+fn inject_icc_into_extended_webp(webp_data: &[u8], icc_chunk: &[u8]) -> Vec<u8> {
+    // VP8X chunk is at offset 12, payload at 20, flags at byte 20
+    // VP8X payload is always 10 bytes
+    let vp8x_end = 12 + 8 + 10; // 30
+
+    if webp_data.len() < vp8x_end {
+        return webp_data.to_vec();
+    }
+
+    // Set ICC flag (bit 5 of flags byte at offset 20)
+    let mut flags_byte = webp_data[20];
+    flags_byte |= 0b0010_0000; // ICC profile flag
+
+    let mut result = Vec::with_capacity(webp_data.len() + icc_chunk.len());
+    // RIFF header placeholder (we'll fix the size later)
+    result.extend_from_slice(&webp_data[..20]);
+    result.push(flags_byte);
+    result.extend_from_slice(&webp_data[21..vp8x_end]);
+    // Insert ICCP chunk right after VP8X
+    result.extend_from_slice(icc_chunk);
+    // Rest of the file (VP8/VP8L/ALPH etc.)
+    result.extend_from_slice(&webp_data[vp8x_end..]);
+
+    // Fix RIFF file size (bytes 4..8 = total size - 8)
+    let riff_size = (result.len() - 8) as u32;
+    result[4..8].copy_from_slice(&riff_size.to_le_bytes());
+
+    result
+}
+
+/// Wrap a simple WebP (VP8/VP8L) into extended format with VP8X + ICCP
+fn wrap_simple_webp_with_icc(
+    webp_data: &[u8],
+    icc_chunk: &[u8],
+    chunk_type: &[u8],
+) -> Vec<u8> {
+    // Read canvas dimensions from the bitstream
+    let (canvas_w, canvas_h) = read_webp_dimensions(webp_data, chunk_type);
+
+    // VP8X flags: bit 5 = ICC
+    let mut vp8x_payload = [0u8; 10];
+    vp8x_payload[0] = 0b0010_0000; // ICC flag
+
+    // If source is VP8L (lossless), also set the alpha flag since VP8L may contain alpha
+    if chunk_type == b"VP8L" {
+        vp8x_payload[0] |= 0b0001_0000; // Alpha flag
+    }
+
+    // Canvas size is stored as (width-1) and (height-1) in 24-bit LE
+    let w_minus_1 = canvas_w.saturating_sub(1);
+    let h_minus_1 = canvas_h.saturating_sub(1);
+    vp8x_payload[4] = (w_minus_1 & 0xFF) as u8;
+    vp8x_payload[5] = ((w_minus_1 >> 8) & 0xFF) as u8;
+    vp8x_payload[6] = ((w_minus_1 >> 16) & 0xFF) as u8;
+    vp8x_payload[7] = (h_minus_1 & 0xFF) as u8;
+    vp8x_payload[8] = ((h_minus_1 >> 8) & 0xFF) as u8;
+    vp8x_payload[9] = ((h_minus_1 >> 16) & 0xFF) as u8;
+
+    let vp8x_chunk = build_riff_chunk(b"VP8X", &vp8x_payload);
+
+    // Payload = everything after "RIFF....WEBP" (offset 12)
+    let payload = &webp_data[12..];
+
+    let total_size = 4 + vp8x_chunk.len() + icc_chunk.len() + payload.len(); // "WEBP" + chunks
+    let mut result = Vec::with_capacity(8 + total_size);
+    result.extend_from_slice(b"RIFF");
+    result.extend_from_slice(&(total_size as u32).to_le_bytes());
+    result.extend_from_slice(b"WEBP");
+    result.extend_from_slice(&vp8x_chunk);
+    result.extend_from_slice(icc_chunk);
+    result.extend_from_slice(payload);
+
+    result
+}
+
+/// Read canvas dimensions from a WebP bitstream
+fn read_webp_dimensions(webp_data: &[u8], chunk_type: &[u8]) -> (u32, u32) {
+    // Default fallback
+    let default = (1, 1);
+
+    if webp_data.len() < 30 {
+        return default;
+    }
+
+    // Chunk data starts at offset 20 (12 RIFF header + 4 FourCC + 4 size)
+    let chunk_data_offset = 20;
+
+    if chunk_type == b"VP8 " {
+        // VP8 lossy: dimensions at bytes 6-9 of frame data (after 3-byte frame tag)
+        // Frame header: [frame_tag(3)] [start_code(3): 0x9D 0x01 0x2A] [width(2)] [height(2)]
+        let offset = chunk_data_offset;
+        if webp_data.len() < offset + 10 {
+            return default;
+        }
+        let width = u16::from_le_bytes([webp_data[offset + 6], webp_data[offset + 7]]) & 0x3FFF;
+        let height = u16::from_le_bytes([webp_data[offset + 8], webp_data[offset + 9]]) & 0x3FFF;
+        (width as u32, height as u32)
+    } else if chunk_type == b"VP8L" {
+        // VP8L lossless: signature byte (0x2F) then 32-bit LE with packed w/h
+        let offset = chunk_data_offset;
+        if webp_data.len() < offset + 5 {
+            return default;
+        }
+        let bits = u32::from_le_bytes([
+            webp_data[offset + 1],
+            webp_data[offset + 2],
+            webp_data[offset + 3],
+            webp_data[offset + 4],
+        ]);
+        let width = (bits & 0x3FFF) + 1;
+        let height = ((bits >> 14) & 0x3FFF) + 1;
+        (width, height)
+    } else {
+        default
+    }
+}
+
 // Helper functions
+
+fn encode_webp_advanced(
+    encoder: &webp::Encoder,
+    settings: &CompressionSettings,
+) -> CompressionResult<webp::WebPMemory> {
+    let mut config = webp::WebPConfig::new().map_err(|_| {
+        CompressionError::ProcessingError("Failed to create WebPConfig".to_string())
+    })?;
+
+    if settings.quality == 100 {
+        // Lossless mode
+        config.lossless = 1;
+        config.quality = 75.0;
+        config.alpha_compression = 0;
+    } else {
+        // Lossy mode with optimized settings
+        config.lossless = 0;
+        config.quality = settings.quality as f32;
+        config.method = 4; // Good quality/speed tradeoff
+        config.use_sharp_yuv = 1; // Precise RGB→YUV, fixes color desaturation
+        config.alpha_quality = 100; // Don't degrade alpha channel
+        config.autofilter = 1; // Auto deblocking filter
+    }
+
+    encoder.encode_advanced(&config).map_err(|e| {
+        CompressionError::ProcessingError(format!("WebP encoding failed: {:?}", e))
+    })
+}
 
 fn validate_settings(settings: &CompressionSettings) -> CompressionResult<()> {
     if !settings.is_valid() {
@@ -463,8 +677,6 @@ mod tests {
         assert!(output.savings_percent > 99.0); // 995/1000 * 100
     }
 
-    // Note: file-based tests would require actual test files
-    // These are placeholder tests - real tests should use temporary files
     #[test]
     fn test_settings_validation() {
         let settings = CompressionSettings::new(80, OutputFormat::WebP);
@@ -473,5 +685,34 @@ mod tests {
         let mut invalid_settings = CompressionSettings::new(80, OutputFormat::WebP);
         invalid_settings.quality = 200; // Invalid quality
         assert!(validate_settings(&invalid_settings).is_err());
+    }
+
+    #[test]
+    fn test_build_riff_chunk() {
+        let data = b"test data";
+        let chunk = build_riff_chunk(b"ICCP", data);
+        assert_eq!(&chunk[0..4], b"ICCP");
+        let size = u32::from_le_bytes([chunk[4], chunk[5], chunk[6], chunk[7]]);
+        assert_eq!(size, 9);
+        assert_eq!(&chunk[8..17], data);
+        // Odd size → padding byte
+        assert_eq!(chunk.len(), 18);
+        assert_eq!(chunk[17], 0);
+    }
+
+    #[test]
+    fn test_build_riff_chunk_even() {
+        let data = b"test";
+        let chunk = build_riff_chunk(b"ICCP", data);
+        // Even size → no padding
+        assert_eq!(chunk.len(), 12);
+    }
+
+    #[test]
+    fn test_inject_icc_into_webp_too_small() {
+        let small = vec![0u8; 5];
+        let icc = vec![1, 2, 3];
+        let result = inject_icc_into_webp(&small, &icc);
+        assert_eq!(result, small);
     }
 }

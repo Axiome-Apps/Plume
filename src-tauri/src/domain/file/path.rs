@@ -36,7 +36,13 @@ impl PathUtils {
                 || path_ref.starts_with("/mnt/");
 
             // Allow access to user directories and external volumes for reading image files
-            if !is_temp && !is_downloads && !is_home && !is_desktop && !is_pictures && !is_external_volume {
+            if !is_temp
+                && !is_downloads
+                && !is_home
+                && !is_desktop
+                && !is_pictures
+                && !is_external_volume
+            {
                 return Err(FileError::SecurityViolation(
                     "Absolute paths not allowed".to_string(),
                 ));

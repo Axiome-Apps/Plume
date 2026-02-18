@@ -27,7 +27,7 @@ tauri-plugin-dialog = "2"
 # Compression d'images
 oxipng = "9.1"
 image = "0.25"
-mozjpeg-sys = "2.2"
+mozjpeg-sys = { version = "2.2", features = ["icc_io"] }
 webp = "0.3"
 libheif-rs = "2.6"
 libheif-sys = { version = "5.2", features = ["embedded-libheif"] }

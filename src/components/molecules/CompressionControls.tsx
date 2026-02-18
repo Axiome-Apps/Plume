@@ -16,8 +16,8 @@ interface CompressionControlsProps {
   convertToWebP: boolean;
   lossyMode: boolean;
   hasPNG: boolean;
-  hasWebP: boolean;
   hasHEIC: boolean;
+  hasOnlyWebP: boolean;
   heicOutputFormat: HeicOutputFormat;
   onToggleWebPConversion: () => void;
   onToggleLossyMode: () => void;
@@ -35,8 +35,8 @@ export const CompressionControls: FC<CompressionControlsProps> = ({
   convertToWebP,
   lossyMode,
   hasPNG,
-  hasWebP,
   hasHEIC,
+  hasOnlyWebP,
   heicOutputFormat,
   onToggleWebPConversion,
   onToggleLossyMode,
@@ -54,12 +54,16 @@ export const CompressionControls: FC<CompressionControlsProps> = ({
         }`}
       >
         <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 flex-1">
-          <Switch
-            checked={convertToWebP}
-            onChange={onToggleWebPConversion}
-            checkedLabel="WebP"
-            uncheckedLabel="Original"
-          />
+          {hasOnlyWebP ? (
+            <span className="text-sm font-semibold text-slate-700 px-2">WebP</span>
+          ) : (
+            <Switch
+              checked={convertToWebP}
+              onChange={onToggleWebPConversion}
+              checkedLabel="WebP"
+              uncheckedLabel={hasHEIC ? 'Autre' : 'Original'}
+            />
+          )}
 
           <Tooltip title={t('header.tooltips.format.title')}>
             <div dangerouslySetInnerHTML={{ __html: t('header.tooltips.format.description') }} />
@@ -73,10 +77,10 @@ export const CompressionControls: FC<CompressionControlsProps> = ({
             )}
           </Tooltip>
 
-          {convertToWebP && <Badge color="green">{t('header.recommended')}</Badge>}
+          {(convertToWebP || hasOnlyWebP) && <Badge color="green">{t('header.recommended')}</Badge>}
         </div>
 
-        {convertToWebP && (hasPNG || hasWebP) && (
+        {(convertToWebP || hasOnlyWebP) && (
           <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
             <Switch
               checked={lossyMode}
