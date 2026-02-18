@@ -239,13 +239,15 @@ fn find_libheif_embedded() -> Vec<String> {
     #[cfg(all(target_os = "windows", target_env = "msvc"))]
     {
         let heif_pc_path = compile_libheif();
-        let heif_lib_dir = PathBuf::from(&heif_pc_path)
-            .parent()
+        // heif_pc_path = "<OUT_DIR>/libheif_build/lib/pkgconfig"
+        let heif_prefix = PathBuf::from(&heif_pc_path)
+            .parent() // lib/pkgconfig -> lib
             .unwrap()
-            .parent()
+            .parent() // lib -> prefix
             .unwrap()
             .to_path_buf();
-        let heif_include_dir = heif_lib_dir.parent().unwrap().join("include");
+        let heif_lib_dir = heif_prefix.join("lib");
+        let heif_include_dir = heif_prefix.join("include");
 
         let out_path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
         let de265_lib_dir = out_path.join("libde265_build").join("lib");
@@ -254,8 +256,6 @@ fn find_libheif_embedded() -> Vec<String> {
         println!("cargo:rustc-link-search=native={}", de265_lib_dir.display());
         println!("cargo:rustc-link-lib=static=heif");
         println!("cargo:rustc-link-lib=static=de265");
-        // C++ runtime on MSVC
-        println!("cargo:rustc-link-lib=dylib=c++");
 
         vec![heif_include_dir.to_string_lossy().to_string()]
     }
