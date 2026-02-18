@@ -68,6 +68,9 @@ pub fn estimate_compression(
         ("png", "png") => (15.0, 0.9),           // PNG optimization
         ("jpg" | "jpeg", "jpg" | "jpeg") => (20.0, 0.8), // JPEG optimization
         ("webp", "webp") => (10.0, 0.6),         // WebP re-compression
+        ("heic" | "heif", "webp") => (70.0, 0.7), // HEIC->WebP (similar to PNG->WebP)
+        ("heic" | "heif", "jpg" | "jpeg") => (50.0, 0.7), // HEIC->JPEG
+        ("heic" | "heif", "png") => (10.0, 0.5), // HEIC->PNG (lossless, limited gains)
         _ => (5.0, 0.3),                         // Fallback for unknown combinations
     };
 

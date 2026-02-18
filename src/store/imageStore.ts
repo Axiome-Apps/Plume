@@ -31,9 +31,12 @@ interface CompressionProgressEvent {
 type CompressionState = 'idle' | 'processing' | 'completed' | 'error';
 type AppView = 'drop' | 'list' | 'success';
 
+type HeicOutputFormat = 'jpeg' | 'png';
+
 interface CompressionSettings {
   quality: number;
   keepOriginalFormat: boolean;
+  heicOutputFormat: HeicOutputFormat;
 }
 
 interface ImageStore {
@@ -76,6 +79,7 @@ interface ImageStore {
   toggleWebPConversion: () => void;
   toggleLossyMode: () => void;
   setQuality: (quality: number) => void;
+  setHeicOutputFormat: (format: HeicOutputFormat) => void;
 
   // Actions pour le drag & drop
   handleExternalDrop: (filePaths: string[]) => Promise<void>;
@@ -92,6 +96,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   compressionSettings: {
     quality: 80,
     keepOriginalFormat: false,
+    heicOutputFormat: 'jpeg',
   },
   progressState: {},
   progressManagers: {},
@@ -339,10 +344,21 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             },
           });
 
+          // Determine output format per image:
+          // - WebP mode: everything goes to WebP (including HEIC)
+          // - Original mode: keep format, but HEIC -> heicOutputFormat (jpeg/png)
+          const isHeic = image.format.toUpperCase() === 'HEIC';
+          let outputFormatForImage: string;
+          if (compressionSettings.keepOriginalFormat) {
+            outputFormatForImage = isHeic ? compressionSettings.heicOutputFormat : 'auto';
+          } else {
+            outputFormatForImage = 'webp';
+          }
+
           console.log(`📞 Calling compress_image for ${image.name}`, {
             path: image.path,
             quality: compressionSettings.quality,
-            format: compressionSettings.keepOriginalFormat ? 'auto' : 'webp',
+            format: outputFormatForImage,
             imageId: image.id,
           });
 
@@ -357,7 +373,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             request: {
               file_path: image.path,
               quality: compressionSettings.quality,
-              format: compressionSettings.keepOriginalFormat ? 'auto' : 'webp',
+              format: outputFormatForImage,
             },
             imageId: image.id,
           });
@@ -386,9 +402,10 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
             // Enregistrer le résultat de compression avec timing dans la base de données
             try {
-              const outputFormat = compressionSettings.keepOriginalFormat
-                ? image.format.toUpperCase()
-                : 'WEBP';
+              const outputFormat =
+                outputFormatForImage === 'auto'
+                  ? image.format.toUpperCase()
+                  : outputFormatForImage.toUpperCase();
 
               await invoke('record_compression_result_with_time', {
                 inputFormat: image.format.toUpperCase(),
@@ -408,9 +425,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
               try {
                 await invoke('record_compression_result', {
                   inputFormat: image.format.toUpperCase(),
-                  outputFormat: compressionSettings.keepOriginalFormat
-                    ? image.format.toUpperCase()
-                    : 'WEBP',
+                  outputFormat: outputFormat,
                   originalSize: image.originalSize,
                   compressedSize: response.result.compressed_size,
                   toolVersion: 'plume-v0.1.0',
@@ -513,6 +528,15 @@ export const useImageStore = create<ImageStore>((set, get) => ({
       compressionSettings: {
         ...state.compressionSettings,
         quality: Math.max(1, Math.min(100, quality)),
+      },
+    }));
+  },
+
+  setHeicOutputFormat: (format: HeicOutputFormat) => {
+    set(state => ({
+      compressionSettings: {
+        ...state.compressionSettings,
+        heicOutputFormat: format,
       },
     }));
   },

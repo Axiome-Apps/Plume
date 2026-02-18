@@ -4,7 +4,64 @@ use crate::domain::compression::{
     settings::CompressionSettings,
     stats::{create_stat, CompressionStat},
 };
+use image::DynamicImage;
 use std::path::Path;
+
+/// Decode a HEIC/HEIF file into a DynamicImage using libheif-rs (public for preview)
+pub fn decode_heic_public(input_data: &[u8]) -> CompressionResult<DynamicImage> {
+    decode_heic(input_data)
+}
+
+/// Decode a HEIC/HEIF file into a DynamicImage using libheif-rs
+fn decode_heic(input_data: &[u8]) -> CompressionResult<DynamicImage> {
+    let lib_heif = libheif_rs::LibHeif::new();
+
+    let ctx = libheif_rs::HeifContext::read_from_bytes(input_data).map_err(|e| {
+        CompressionError::ProcessingError(format!("Failed to read HEIC context: {}", e))
+    })?;
+
+    let handle = ctx.primary_image_handle().map_err(|e| {
+        CompressionError::ProcessingError(format!("Failed to get HEIC primary image: {}", e))
+    })?;
+
+    let heif_image = lib_heif
+        .decode(&handle, libheif_rs::ColorSpace::Rgb(libheif_rs::RgbChroma::Rgba), None)
+        .map_err(|e| {
+            CompressionError::ProcessingError(format!("Failed to decode HEIC image: {}", e))
+        })?;
+
+    let width = handle.width();
+    let height = handle.height();
+
+    let planes = heif_image.planes();
+    let plane = planes
+        .interleaved
+        .ok_or_else(|| {
+            CompressionError::ProcessingError(
+                "HEIC image has no interleaved plane data".to_string(),
+            )
+        })?;
+
+    let stride = plane.stride;
+    let plane_data = plane.data;
+
+    // Copy pixel data row by row (stride may differ from width * 4)
+    let mut rgba_data = Vec::with_capacity((width * height * 4) as usize);
+    for y in 0..height as usize {
+        let row_start = y * stride;
+        let row_end = row_start + (width as usize * 4);
+        rgba_data.extend_from_slice(&plane_data[row_start..row_end]);
+    }
+
+    let img_buf: image::RgbaImage =
+        image::ImageBuffer::from_raw(width, height, rgba_data).ok_or_else(|| {
+            CompressionError::ProcessingError(
+                "Failed to create image buffer from HEIC data".to_string(),
+            )
+        })?;
+
+    Ok(DynamicImage::ImageRgba8(img_buf))
+}
 
 /// Result of a compression operation
 #[derive(Debug, Clone)]
@@ -148,17 +205,20 @@ fn compress_to_webp_file(
 
     // Décode l'image selon le format d'entrée
     let img = match input_format.to_lowercase().as_str() {
-        "png" => image::load_from_memory_with_format(&input_data, ImageFormat::Png),
-        "jpg" | "jpeg" => image::load_from_memory_with_format(&input_data, ImageFormat::Jpeg),
-        "webp" => image::load_from_memory_with_format(&input_data, ImageFormat::WebP),
+        "png" => image::load_from_memory_with_format(&input_data, ImageFormat::Png)
+            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
+        "jpg" | "jpeg" => image::load_from_memory_with_format(&input_data, ImageFormat::Jpeg)
+            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
+        "webp" => image::load_from_memory_with_format(&input_data, ImageFormat::WebP)
+            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
+        "heic" | "heif" => decode_heic(&input_data),
         _ => {
             return Err(CompressionError::UnsupportedFormat(format!(
                 "Format {} non supporté",
                 input_format
             )))
         }
-    }
-    .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e)))?;
+    }?;
 
     // Encode en WebP avec webp crate
     let rgba_img = img.to_rgba8();
@@ -213,22 +273,25 @@ fn compress_to_png_file(
                 }
             }
         }
-        "jpg" | "jpeg" | "webp" => {
+        "jpg" | "jpeg" | "webp" | "heic" | "heif" => {
             // Pour autres formats -> PNG, on doit décoder/encoder
             let input_data = std::fs::read(input_path).map_err(|e| {
                 CompressionError::IoError(format!("Failed to read input file: {}", e))
             })?;
 
-            let img_format = match input_format {
-                "jpg" | "jpeg" => ImageFormat::Jpeg,
-                "webp" => ImageFormat::WebP,
-                _ => unreachable!(),
+            let img = match input_format {
+                "heic" | "heif" => decode_heic(&input_data)?,
+                _ => {
+                    let img_format = match input_format {
+                        "jpg" | "jpeg" => ImageFormat::Jpeg,
+                        "webp" => ImageFormat::WebP,
+                        _ => unreachable!(),
+                    };
+                    image::load_from_memory_with_format(&input_data, img_format).map_err(|e| {
+                        CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
+                    })?
+                }
             };
-
-            let img =
-                image::load_from_memory_with_format(&input_data, img_format).map_err(|e| {
-                    CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
-                })?;
 
             // Encode en PNG directement vers le fichier
             let output_file = std::fs::File::create(output_path).map_err(|e| {
@@ -273,40 +336,104 @@ fn compress_to_jpeg_file(
 
     // Décode l'image selon le format d'entrée
     let img = match input_format.to_lowercase().as_str() {
-        "png" => image::load_from_memory_with_format(&input_data, ImageFormat::Png),
-        "jpg" | "jpeg" => image::load_from_memory_with_format(&input_data, ImageFormat::Jpeg),
-        "webp" => image::load_from_memory_with_format(&input_data, ImageFormat::WebP),
+        "png" => image::load_from_memory_with_format(&input_data, ImageFormat::Png)
+            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
+        "jpg" | "jpeg" => image::load_from_memory_with_format(&input_data, ImageFormat::Jpeg)
+            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
+        "webp" => image::load_from_memory_with_format(&input_data, ImageFormat::WebP)
+            .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))),
+        "heic" | "heif" => decode_heic(&input_data),
         _ => {
             return Err(CompressionError::UnsupportedFormat(format!(
                 "Format {} non supporté pour JPEG",
                 input_format
             )))
         }
-    }
-    .map_err(|e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e)))?;
+    }?;
 
     // Convertit en RGB (JPEG ne supporte pas la transparence)
     let rgb_img = img.to_rgb8();
-
-    // Create output file and encode directly to it
-    let output_file = std::fs::File::create(output_path)
-        .map_err(|e| CompressionError::IoError(format!("Failed to create output file: {}", e)))?;
-
-    let mut writer = std::io::BufWriter::new(output_file);
-    let mut encoder =
-        image::codecs::jpeg::JpegEncoder::new_with_quality(&mut writer, settings.quality);
     let (width, height) = rgb_img.dimensions();
+    let pixels = rgb_img.as_raw();
 
-    encoder
-        .encode(
-            rgb_img.as_raw(),
-            width,
-            height,
-            image::ExtendedColorType::Rgb8,
-        )
-        .map_err(|e| CompressionError::ProcessingError(format!("Erreur encodage JPEG: {}", e)))?;
+    // Encode with mozjpeg for better compression (10-20% smaller than libjpeg)
+    let jpeg_data = encode_jpeg_mozjpeg(pixels, width, height, settings.quality)?;
+
+    std::fs::write(output_path, &jpeg_data)
+        .map_err(|e| CompressionError::IoError(format!("Failed to write JPEG file: {}", e)))?;
 
     Ok(())
+}
+
+/// Encode RGB pixels to JPEG using mozjpeg for better compression
+fn encode_jpeg_mozjpeg(
+    pixels: &[u8],
+    width: u32,
+    height: u32,
+    quality: u8,
+) -> CompressionResult<Vec<u8>> {
+    unsafe {
+        let mut cinfo: mozjpeg_sys::jpeg_compress_struct = std::mem::zeroed();
+        let mut jerr: mozjpeg_sys::jpeg_error_mgr = std::mem::zeroed();
+
+        cinfo.common.err = mozjpeg_sys::jpeg_std_error(&mut jerr);
+        mozjpeg_sys::jpeg_CreateCompress(
+            &mut cinfo,
+            mozjpeg_sys::JPEG_LIB_VERSION as i32,
+            std::mem::size_of::<mozjpeg_sys::jpeg_compress_struct>(),
+        );
+
+        // Setup memory destination
+        let mut buf_ptr: *mut u8 = std::ptr::null_mut();
+        let mut buf_size: std::ffi::c_ulong = 0;
+        mozjpeg_sys::jpeg_mem_dest(&mut cinfo, &mut buf_ptr, &mut buf_size);
+
+        cinfo.image_width = width;
+        cinfo.image_height = height;
+        cinfo.input_components = 3;
+        cinfo.in_color_space = mozjpeg_sys::J_COLOR_SPACE::JCS_RGB;
+
+        mozjpeg_sys::jpeg_set_defaults(&mut cinfo);
+        mozjpeg_sys::jpeg_set_quality(&mut cinfo, quality as i32, true as i32);
+
+        mozjpeg_sys::jpeg_start_compress(&mut cinfo, true as i32);
+
+        let row_stride = width as usize * 3;
+        while cinfo.next_scanline < cinfo.image_height {
+            let row_offset = cinfo.next_scanline as usize * row_stride;
+            let row_ptr = pixels.as_ptr().add(row_offset) as *const u8;
+            let mut row_array = [row_ptr];
+            mozjpeg_sys::jpeg_write_scanlines(&mut cinfo, row_array.as_mut_ptr(), 1);
+        }
+
+        mozjpeg_sys::jpeg_finish_compress(&mut cinfo);
+
+        // Copy buffer before destroying
+        let result = if !buf_ptr.is_null() && buf_size > 0 {
+            std::slice::from_raw_parts(buf_ptr, buf_size as usize).to_vec()
+        } else {
+            return Err(CompressionError::ProcessingError(
+                "mozjpeg produced empty output".to_string(),
+            ));
+        };
+
+        mozjpeg_sys::jpeg_destroy_compress(&mut cinfo);
+
+        // Free the buffer allocated by jpeg_mem_dest
+        if !buf_ptr.is_null() {
+            libc_free(buf_ptr as *mut std::ffi::c_void);
+        }
+
+        Ok(result)
+    }
+}
+
+extern "C" {
+    fn free(ptr: *mut std::ffi::c_void);
+}
+
+unsafe fn libc_free(ptr: *mut std::ffi::c_void) {
+    free(ptr);
 }
 
 // Helper functions

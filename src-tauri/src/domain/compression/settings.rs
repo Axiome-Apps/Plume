@@ -61,7 +61,8 @@ impl CompressionSettings {
             "png" => OutputFormat::Png,
             "jpg" | "jpeg" => OutputFormat::Jpeg,
             "webp" => OutputFormat::WebP,
-            _ => OutputFormat::WebP, // Fallback vers WebP pour formats inconnus
+            "heic" | "heif" => OutputFormat::WebP, // HEIC cannot be preserved, default to WebP
+            _ => OutputFormat::WebP,
         }
     }
 }

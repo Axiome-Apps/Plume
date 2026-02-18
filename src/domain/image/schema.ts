@@ -8,7 +8,7 @@ export const ImageSchema = z.object({
   id: z.string(),
   name: z.string(),
   originalSize: z.number().positive(),
-  format: z.enum(IMAGE_FORMATS).transform(f => f.toUpperCase() as 'PNG' | 'JPEG' | 'WEBP'),
+  format: z.enum(IMAGE_FORMATS).transform(f => f.toUpperCase() as 'PNG' | 'JPEG' | 'WEBP' | 'HEIC'),
   preview: z.string(),
   path: z.string(),
   status: z.enum(['pending', 'processing', 'completed', 'error']),

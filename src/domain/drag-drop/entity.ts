@@ -51,7 +51,9 @@ export class DragDropEventEntity {
     return this.paths !== undefined && this.paths.length > 0;
   }
 
-  getValidImagePaths(supportedExtensions: string[] = ['.jpg', '.jpeg', '.png', '.webp']): string[] {
+  getValidImagePaths(
+    supportedExtensions: string[] = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']
+  ): string[] {
     if (!this.hasFiles()) return [];
 
     return this.paths!.filter(path =>

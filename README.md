@@ -11,7 +11,7 @@ A modern, fast, and intelligent image compression desktop application built with
 
 - **🚀 Blazing Fast**: Native Rust performance with multi-threaded compression
 - **🎯 Smart Compression**: Automatic format detection and optimization
-- **📱 Multiple Formats**: Support for PNG, JPEG, WebP with HEIF coming soon
+- **📱 Multiple Formats**: Support for PNG, JPEG, WebP, and HEIC/HEIF (iPhone photos)
 - **🖱️ Drag & Drop**: Seamless file handling from Finder/Explorer
 - **📊 Real-time Preview**: See compression results instantly
 - **💾 Batch Processing**: Handle multiple images at once
@@ -170,7 +170,9 @@ pnpm test:coverage
 ## 🚀 Performance
 
 - **PNG Optimization**: Up to 70% size reduction with oxipng
+- **JPEG Compression**: MozJPEG encoder for 10-20% better compression than standard libjpeg
 - **WebP Conversion**: 25-35% smaller than JPEG with same quality
+- **HEIC/HEIF Support**: Import iPhone photos directly, convert to WebP/JPEG/PNG
 - **Multi-threading**: Utilizes all CPU cores for batch processing
 - **Memory Efficient**: Streaming compression for large files
 - **Native Speed**: Rust backend eliminates JavaScript bottlenecks
@@ -181,7 +183,8 @@ See [TODO.md](./TODO.md) for detailed development plans.
 
 ### Upcoming Features
 
-- [ ] HEIF/HEIC support for iPhone users
+- [x] HEIC/HEIF support for iPhone photos
+- [x] MozJPEG encoder for better JPEG compression
 - [ ] AVIF format support
 - [ ] Video compression
 
@@ -213,7 +216,9 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 - [Zod](https://zod.dev/) - TypeScript schema validation
 - [Rust](https://www.rust-lang.org/) - Systems programming language
 - [oxipng](https://github.com/shssoichiro/oxipng) - PNG optimization
+- [mozjpeg](https://github.com/nicktrav/mozjpeg-sys) - Optimized JPEG compression
 - [webp](https://developers.google.com/speed/webp/) - Modern image format
+- [libheif](https://github.com/nicktrav/libheif-rs) - HEIC/HEIF decoding
 
 ## 🙏 Acknowledgments
 

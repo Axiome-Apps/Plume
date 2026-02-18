@@ -29,6 +29,8 @@ oxipng = "9.1"
 image = "0.25"
 mozjpeg-sys = "2.2"
 webp = "0.3"
+libheif-rs = "2.6"
+libheif-sys = { version = "5.2", features = ["embedded-libheif"] }
 
 # Async pour les gros fichiers
 tokio = { version = "1.0", features = ["fs", "rt-multi-thread"] }
@@ -48,3 +50,8 @@ num_cpus = "1.0"
 
 rfd = "0.14"
 tempfile = "3.6"
+
+# Patch libheif-sys to only compile LIBDE265 decoder (HEIC photos).
+# All video codecs (x265, dav1d, rav1e, svt-av1, aom, x264) are disabled.
+[patch.crates-io]
+libheif-sys = { path = "patches/libheif-sys" }

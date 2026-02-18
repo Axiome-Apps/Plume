@@ -37,7 +37,7 @@ impl FileMetadata {
             .map(|ext| {
                 matches!(
                     ext.as_str(),
-                    "jpg" | "jpeg" | "png" | "webp" | "gif" | "bmp" | "tiff"
+                    "jpg" | "jpeg" | "png" | "webp" | "gif" | "bmp" | "tiff" | "heic" | "heif"
                 )
             })
             .unwrap_or(false);
@@ -82,7 +82,7 @@ impl FileMetadata {
             && self
                 .extension
                 .as_ref()
-                .map(|ext| matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp"))
+                .map(|ext| matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"))
                 .unwrap_or(false)
     }
 
@@ -98,6 +98,7 @@ fn get_mime_type(extension: &str) -> String {
         "jpg" | "jpeg" => "image/jpeg".to_string(),
         "png" => "image/png".to_string(),
         "webp" => "image/webp".to_string(),
+        "heic" | "heif" => "image/heic".to_string(),
         "gif" => "image/gif".to_string(),
         "bmp" => "image/bmp".to_string(),
         "tiff" => "image/tiff".to_string(),
@@ -140,7 +141,7 @@ pub fn get_file_extension<P: AsRef<Path>>(path: P) -> Option<String> {
 /// Check if path is a supported image file
 pub fn is_supported_image_file<P: AsRef<Path>>(path: P) -> bool {
     get_file_extension(path)
-        .map(|ext| matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp"))
+        .map(|ext| matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"))
         .unwrap_or(false)
 }
 

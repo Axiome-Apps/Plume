@@ -14,7 +14,7 @@ pub mod store;
 
 // Re-export core types and functions for easy access
 pub use error::{CompressionError, CompressionResult, StatsError, StatsResult};
-pub use formats::OutputFormat;
+pub use formats::{InputFormat, OutputFormat};
 pub use settings::CompressionSettings;
 
 // Engine functions - core compression operations

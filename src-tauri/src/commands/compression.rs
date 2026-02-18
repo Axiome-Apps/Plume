@@ -134,13 +134,16 @@ pub async fn compress_image(
         Some("png") => OutputFormat::Png,
         Some("jpg") | Some("jpeg") => OutputFormat::Jpeg,
         Some("auto") => {
-            // Mode 'auto' : préserver le format original
+            // Mode 'auto' : préserver le format original (HEIC -> WebP since HEIC output not supported)
             let input_extension = metadata
                 .extension
                 .clone()
                 .unwrap_or_else(|| "webp".to_string());
 
-            crate::domain::CompressionSettings::preserve_input_format(&input_extension)
+            match input_extension.as_str() {
+                "heic" | "heif" => OutputFormat::WebP,
+                _ => crate::domain::CompressionSettings::preserve_input_format(&input_extension),
+            }
         }
         _ => {
             // Aucun format spécifié ou format inconnu : utiliser WebP optimal

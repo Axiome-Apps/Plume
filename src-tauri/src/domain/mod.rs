@@ -29,6 +29,7 @@ pub use compression::{
     CompressionStat,
     EstimationQuery,
     EstimationResult,
+    InputFormat,
     OutputFormat,
     SqliteStatsStore,
     StatsStore,

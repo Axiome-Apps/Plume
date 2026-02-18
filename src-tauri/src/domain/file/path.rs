@@ -30,9 +30,13 @@ impl PathUtils {
             let is_home = home_dir.is_some_and(|d| path_ref.starts_with(d));
             let is_desktop = desktop_dir.is_some_and(|d| path_ref.starts_with(d));
             let is_pictures = pictures_dir.is_some_and(|d| path_ref.starts_with(d));
+            // Allow external volumes (macOS: /Volumes/, Linux: /media/, /mnt/)
+            let is_external_volume = path_ref.starts_with("/Volumes/")
+                || path_ref.starts_with("/media/")
+                || path_ref.starts_with("/mnt/");
 
-            // Allow access to user directories for reading image files
-            if !is_temp && !is_downloads && !is_home && !is_desktop && !is_pictures {
+            // Allow access to user directories and external volumes for reading image files
+            if !is_temp && !is_downloads && !is_home && !is_desktop && !is_pictures && !is_external_volume {
                 return Err(FileError::SecurityViolation(
                     "Absolute paths not allowed".to_string(),
                 ));
