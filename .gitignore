@@ -25,3 +25,22 @@ dist-ssr
 
 # Development todo list (not tracked in git)
 TODO.md
+
+# Claude Code configuration (local only)
+.claude/
+
+# pnpm store cache
+.pnpm-store/
+
+# Tauri build outputs
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# Temporary files and caches
+*.tmp
+*.temp
+.DS_Store
+
+# Backup files
+*.bak
+backup-*
