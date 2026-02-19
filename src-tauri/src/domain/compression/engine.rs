@@ -427,7 +427,7 @@ fn encode_jpeg_mozjpeg(
         let row_stride = width as usize * 3;
         while cinfo.next_scanline < cinfo.image_height {
             let row_offset = cinfo.next_scanline as usize * row_stride;
-            let row_ptr = pixels.as_ptr().add(row_offset) as *const u8;
+            let row_ptr = pixels.as_ptr().add(row_offset);
             let mut row_array = [row_ptr];
             mozjpeg_sys::jpeg_write_scanlines(&mut cinfo, row_array.as_mut_ptr(), 1);
         }
