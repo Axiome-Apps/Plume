@@ -7,3 +7,4 @@ export { Badge } from './Badge';
 export { Switch } from './Switch';
 export { Tooltip } from './Tooltip';
 export { LanguageSelector } from './LanguageSelector';
+export { SegmentedControl } from './SegmentedControl';

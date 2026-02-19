@@ -46,33 +46,46 @@ pub fn get_size_range(size_bytes: u64) -> String {
     }
 }
 
-/// Estimates compression results based on format and settings
+/// Estimates compression results based on format and settings.
+/// The quality setting modulates the base estimation: lower quality → more compression.
 pub fn estimate_compression(
     input_format: &str,
     output_format: &str,
     _original_size: u64,
     settings: &CompressionSettings,
 ) -> EstimationResult {
-    let (percent, confidence) = match (
+    let quality = settings.quality as f64;
+
+    // Base estimation per format pair, then modulate by quality.
+    // (base_percent_at_q80, confidence, quality_sensitivity)
+    // quality_sensitivity: how much % changes per quality point around q80.
+    let (base_percent, confidence, sensitivity) = match (
         input_format.to_lowercase().as_str(),
         output_format.to_lowercase().as_str(),
     ) {
         ("png", "webp") => {
-            if settings.quality < 90 {
-                (85.0, 0.9) // High confidence for PNG->WebP lossy
+            if quality >= 90.0 {
+                // Lossless territory — much less compression, low sensitivity
+                (43.0, 0.8, 0.2)
             } else {
-                (43.0, 0.8) // PNG->WebP lossless
+                // Lossy — high base, responsive to quality
+                (85.0, 0.9, 0.5)
             }
         }
-        ("jpg" | "jpeg", "webp") => (8.0, 0.5), // JPEG->WebP (already lossy, marginal gains)
-        ("png", "png") => (15.0, 0.9),           // PNG optimization
-        ("jpg" | "jpeg", "jpg" | "jpeg") => (20.0, 0.8), // JPEG optimization
-        ("webp", "webp") => (10.0, 0.6),         // WebP re-compression
-        ("heic" | "heif", "webp") => (70.0, 0.7), // HEIC->WebP (similar to PNG->WebP)
-        ("heic" | "heif", "jpg" | "jpeg") => (50.0, 0.7), // HEIC->JPEG
-        ("heic" | "heif", "png") => (10.0, 0.5), // HEIC->PNG (lossless, limited gains)
-        _ => (5.0, 0.3),                         // Fallback for unknown combinations
+        ("jpg" | "jpeg", "webp") => (8.0, 0.5, 0.15),
+        ("png", "png") => (15.0, 0.9, 0.0), // oxipng lossless — quality has no effect
+        ("jpg" | "jpeg", "jpg" | "jpeg") => (20.0, 0.8, 0.3),
+        ("webp", "webp") => (10.0, 0.6, 0.2),
+        ("heic" | "heif", "webp") => (70.0, 0.7, 0.5),
+        ("heic" | "heif", "jpg" | "jpeg") => (50.0, 0.7, 0.4),
+        ("heic" | "heif", "png") => (10.0, 0.5, 0.0), // Lossless target — no quality effect
+        _ => (5.0, 0.3, 0.1),
     };
+
+    // Modulate: lower quality → more compression (negative delta increases %)
+    // Reference point is quality=80.
+    let quality_delta = quality - 80.0;
+    let percent = (base_percent - quality_delta * sensitivity).clamp(0.0, 99.0);
 
     let ratio = (100.0 - percent) / 100.0;
 
@@ -80,7 +93,7 @@ pub fn estimate_compression(
         percent,
         ratio,
         confidence,
-        sample_count: if confidence > 0.7 { 100 } else { 10 }, // Simulated sample count
+        sample_count: if confidence > 0.7 { 100 } else { 10 },
     }
 }
 
@@ -112,8 +125,10 @@ pub fn create_stat(
     compressed_size: u64,
     settings: &CompressionSettings,
 ) -> CompressionStat {
-    let size_reduction_percent = if original_size > 0 {
+    let size_reduction_percent = if original_size > 0 && original_size >= compressed_size {
         ((original_size - compressed_size) as f64 / original_size as f64) * 100.0
+    } else if original_size > 0 {
+        -((compressed_size - original_size) as f64 / original_size as f64) * 100.0
     } else {
         0.0
     };

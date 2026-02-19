@@ -31,8 +31,6 @@ pub use compression::{
     EstimationResult,
     InputFormat,
     OutputFormat,
-    SqliteStatsStore,
-    StatsStore,
 };
 
 // Image domain exports

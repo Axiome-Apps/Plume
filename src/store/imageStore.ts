@@ -7,6 +7,11 @@ import { ImageType } from '@/domain/image/schema';
 import { detectImageFormat } from '@/domain/constants';
 import { AdaptiveProgressManager } from '@/domain/progress/adaptiveProgress';
 import { sizePredictionService } from '@/domain/size-prediction';
+import {
+  type OutputFormatType,
+  type CompressionLevelType,
+  resolveCompressionParams,
+} from '@/domain/compression/schema';
 
 // Types pour les réponses Tauri
 interface CompressImageResponse {
@@ -31,12 +36,9 @@ interface CompressionProgressEvent {
 type CompressionState = 'idle' | 'processing' | 'completed' | 'error';
 type AppView = 'drop' | 'list' | 'success';
 
-type HeicOutputFormat = 'jpeg' | 'png';
-
 interface CompressionSettings {
-  quality: number;
-  keepOriginalFormat: boolean;
-  heicOutputFormat: HeicOutputFormat;
+  outputFormat: OutputFormatType;
+  compressionLevel: CompressionLevelType;
 }
 
 interface ImageStore {
@@ -76,10 +78,9 @@ interface ImageStore {
 
   // Actions pour les paramètres
   setCompressionSettings: (settings: Partial<CompressionSettings>) => void;
-  toggleWebPConversion: () => void;
-  toggleLossyMode: () => void;
-  setQuality: (quality: number) => void;
-  setHeicOutputFormat: (format: HeicOutputFormat) => void;
+  setOutputFormat: (format: OutputFormatType) => void;
+  setCompressionLevel: (level: CompressionLevelType) => void;
+  recalculateEstimations: () => Promise<void>;
 
   // Actions pour le drag & drop
   handleExternalDrop: (filePaths: string[]) => Promise<void>;
@@ -94,9 +95,8 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   compressionState: 'idle',
   isProcessing: false,
   compressionSettings: {
-    quality: 85,
-    keepOriginalFormat: false,
-    heicOutputFormat: 'jpeg',
+    outputFormat: 'webp',
+    compressionLevel: 'balanced',
   },
   progressState: {},
   progressManagers: {},
@@ -165,12 +165,20 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         let estimatedCompression;
         try {
           const format = detectImageFormat(fileName);
+          const { compressionSettings: currentSettings } = get();
+          const resolved = resolveCompressionParams(
+            currentSettings.outputFormat,
+            currentSettings.compressionLevel,
+            format
+          );
+          const estimationOutputFormat =
+            resolved.format === 'auto' ? format.toLowerCase() : resolved.format;
           const estimation = await sizePredictionService.getEstimation(
             format,
-            'webp', // Format de sortie par défaut
+            estimationOutputFormat,
             fileSize,
-            80, // Qualité par défaut
-            true // Mode lossy par défaut
+            resolved.quality,
+            resolved.lossy
           );
           // Extraire les propriétés compatibles avec EstimationResultType
           estimatedCompression = {
@@ -284,8 +292,16 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
           console.log(`🎯 Starting adaptive progress for ${image.name}`);
 
-          // Obtenir l'estimation de durée depuis le service Rust
-          const outputFormat = compressionSettings.keepOriginalFormat ? image.format : 'webp';
+          // Resolve compression params for this image
+          const {
+            quality,
+            format: outputFormatForImage,
+            lossy,
+          } = resolveCompressionParams(
+            compressionSettings.outputFormat,
+            compressionSettings.compressionLevel,
+            image.format
+          );
           let estimatedDurationMs = 1000; // Fallback par défaut
 
           try {
@@ -295,10 +311,10 @@ export const useImageStore = create<ImageStore>((set, get) => ({
               sample_count: number;
             }>('get_progress_estimation', {
               input_format: image.format,
-              output_format: outputFormat,
+              output_format: outputFormatForImage === 'auto' ? image.format : outputFormatForImage,
               original_size: image.originalSize,
-              quality_setting: compressionSettings.quality,
-              lossy_mode: compressionSettings.quality < 90,
+              quality_setting: quality,
+              lossy_mode: lossy,
             });
             estimatedDurationMs = estimation.estimated_duration_ms;
             console.log(
@@ -344,20 +360,9 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             },
           });
 
-          // Determine output format per image:
-          // - WebP mode: everything goes to WebP (including HEIC)
-          // - Original mode: keep format, but HEIC -> heicOutputFormat (jpeg/png)
-          const isHeic = image.format.toUpperCase() === 'HEIC';
-          let outputFormatForImage: string;
-          if (compressionSettings.keepOriginalFormat) {
-            outputFormatForImage = isHeic ? compressionSettings.heicOutputFormat : 'auto';
-          } else {
-            outputFormatForImage = 'webp';
-          }
-
           console.log(`📞 Calling compress_image for ${image.name}`, {
             path: image.path,
-            quality: compressionSettings.quality,
+            quality,
             format: outputFormatForImage,
             imageId: image.id,
           });
@@ -368,16 +373,14 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             currentManager.onCompressionStarted();
           }
 
-          const startTime = Date.now();
           const response = await invoke<CompressImageResponse>('compress_image', {
             request: {
               file_path: image.path,
-              quality: compressionSettings.quality,
+              quality,
               format: outputFormatForImage,
             },
             imageId: image.id,
           });
-          const compressionTimeMs = Date.now() - startTime;
 
           // Signaler la fin de la compression au gestionnaire adaptatif
           const finalManager = get().progressManagers[image.id];
@@ -404,39 +407,42 @@ export const useImageStore = create<ImageStore>((set, get) => ({
               toast.info(`${image.name} est déjà optimisé`);
             }
 
-            // Enregistrer le résultat de compression avec timing dans la base de données
-            try {
-              const outputFormat =
-                outputFormatForImage === 'auto'
-                  ? image.format.toUpperCase()
-                  : outputFormatForImage.toUpperCase();
+            // Enregistrer dans les deux bases de données
+            const recordedFormat =
+              outputFormatForImage === 'auto'
+                ? image.format.toLowerCase()
+                : outputFormatForImage.toLowerCase();
 
-              await invoke('record_compression_result_with_time', {
+            // 1. Stats store (alimente les estimations)
+            try {
+              await invoke('record_compression_stat', {
+                request: {
+                  input_format: image.format.toLowerCase(),
+                  output_format: recordedFormat,
+                  original_size: image.originalSize,
+                  compressed_size: response.result.compressed_size,
+                  quality_setting: quality,
+                  lossy_mode: lossy,
+                },
+              });
+              console.log(
+                `📊 Stat recorded: ${image.format} → ${recordedFormat}, ${image.originalSize} → ${response.result.compressed_size} bytes`
+              );
+            } catch (statError) {
+              console.warn('⚠️ Failed to record compression stat:', statError);
+            }
+
+            // 2. Compression history (DatabaseManager)
+            try {
+              await invoke('record_compression_result', {
                 inputFormat: image.format.toUpperCase(),
-                outputFormat: outputFormat,
+                outputFormat: recordedFormat.toUpperCase(),
                 originalSize: image.originalSize,
                 compressedSize: response.result.compressed_size,
-                compressionTimeMs: compressionTimeMs,
-                toolVersion: 'plume-v0.1.0',
+                toolVersion: 'plume-v0.3.0',
               });
-
-              console.log(
-                `📊 Compression result with timing recorded: ${image.format} → ${outputFormat}, ${image.originalSize} → ${response.result.compressed_size} bytes in ${compressionTimeMs}ms`
-              );
             } catch (dbError) {
-              console.warn('⚠️ Failed to record compression result in database:', dbError);
-              // Fallback vers l'ancienne méthode sans timing
-              try {
-                await invoke('record_compression_result', {
-                  inputFormat: image.format.toUpperCase(),
-                  outputFormat: outputFormat,
-                  originalSize: image.originalSize,
-                  compressedSize: response.result.compressed_size,
-                  toolVersion: 'plume-v0.1.0',
-                });
-              } catch (fallbackError) {
-                console.warn('⚠️ Fallback recording also failed:', fallbackError);
-              }
+              console.warn('⚠️ Failed to record compression result:', dbError);
             }
           } else {
             // Signaler l'erreur au gestionnaire adaptatif
@@ -509,40 +515,68 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     }));
   },
 
-  toggleWebPConversion: () => {
+  setOutputFormat: (format: OutputFormatType) => {
     set(state => ({
       compressionSettings: {
         ...state.compressionSettings,
-        keepOriginalFormat: !state.compressionSettings.keepOriginalFormat,
+        outputFormat: format,
+        // PNG uses oxipng lossless — level has no real effect, lock to aggressive
+        ...(format === 'png' ? { compressionLevel: 'aggressive' as CompressionLevelType } : {}),
       },
     }));
+    get().recalculateEstimations();
   },
 
-  toggleLossyMode: () => {
+  setCompressionLevel: (level: CompressionLevelType) => {
     set(state => ({
       compressionSettings: {
         ...state.compressionSettings,
-        quality: state.compressionSettings.quality >= 100 ? 85 : 100,
+        compressionLevel: level,
       },
     }));
+    get().recalculateEstimations();
   },
 
-  setQuality: (quality: number) => {
-    set(state => ({
-      compressionSettings: {
-        ...state.compressionSettings,
-        quality: Math.max(1, Math.min(100, quality)),
-      },
-    }));
-  },
+  recalculateEstimations: async () => {
+    const { images, compressionSettings } = get();
+    const pendingImages = images.filter(img => img.isPending());
+    if (pendingImages.length === 0) return;
 
-  setHeicOutputFormat: (format: HeicOutputFormat) => {
-    set(state => ({
-      compressionSettings: {
-        ...state.compressionSettings,
-        heicOutputFormat: format,
-      },
-    }));
+    const updatedImages = await Promise.all(
+      images.map(async img => {
+        if (!img.isPending()) return img;
+
+        const resolved = resolveCompressionParams(
+          compressionSettings.outputFormat,
+          compressionSettings.compressionLevel,
+          img.format
+        );
+        const estimationOutputFormat =
+          resolved.format === 'auto' ? img.format.toLowerCase() : resolved.format;
+
+        try {
+          const estimation = await sizePredictionService.getEstimation(
+            img.format,
+            estimationOutputFormat,
+            img.originalSize,
+            resolved.quality,
+            resolved.lossy
+          );
+          const data = img.data;
+          data.estimatedCompression = {
+            percent: estimation.percent,
+            ratio: estimation.ratio,
+            confidence: estimation.confidence,
+            sample_count: estimation.sample_count,
+          };
+          return ImageEntity.fromData(data);
+        } catch {
+          return img;
+        }
+      })
+    );
+
+    set({ images: updatedImages });
   },
 
   // Actions pour le drag & drop

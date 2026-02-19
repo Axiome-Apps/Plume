@@ -42,6 +42,15 @@ Immutable conventions and best practices guide for Plume development.
 
 ## Release Management
 
+### Version Bump (CRITICAL)
+
+**3 fichiers à synchroniser** lors d'un bump de version :
+- `package.json` → `"version": "X.Y.Z"`
+- `src-tauri/tauri.conf.json` → `"version": "X.Y.Z"`
+- `src-tauri/Cargo.toml` → `version = "X.Y.Z"`
+
+Tauri utilise ces versions pour nommer les binaires (`Plume_X.Y.Z_*`) et le titre de release (`Plume vX.Y.Z`). Si non bumped, les assets portent l'ancienne version.
+
 ### GitHub Releases
 
 **Workflow** : Draft → CI builds → Verify → Publish • Tags après validation • Test dépendances Linux

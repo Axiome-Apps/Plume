@@ -85,7 +85,7 @@ jobs:
           releaseName: 'Plume v__VERSION__'
           releaseBody: |
             ## What's Changed
-            - Automatic release for v${{ github.ref_name }}
+            - Automatic release for ${{ github.ref_name }}
 
             ## Download
             Choose the appropriate version for your operating system below.

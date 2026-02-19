@@ -77,24 +77,22 @@ fn decode_image_with_icc(
     match input_format.to_lowercase().as_str() {
         "heic" | "heif" => decode_heic(input_data),
         "png" => {
-            let img = image::load_from_memory_with_format(input_data, ImageFormat::Png)
-                .map_err(|e| {
+            let img =
+                image::load_from_memory_with_format(input_data, ImageFormat::Png).map_err(|e| {
                     CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
                 })?;
             Ok((img, None))
         }
         "jpg" | "jpeg" => {
-            let img = image::load_from_memory_with_format(input_data, ImageFormat::Jpeg)
-                .map_err(|e| {
-                    CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
-                })?;
+            let img = image::load_from_memory_with_format(input_data, ImageFormat::Jpeg).map_err(
+                |e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e)),
+            )?;
             Ok((img, None))
         }
         "webp" => {
-            let img = image::load_from_memory_with_format(input_data, ImageFormat::WebP)
-                .map_err(|e| {
-                    CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
-                })?;
+            let img = image::load_from_memory_with_format(input_data, ImageFormat::WebP).map_err(
+                |e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e)),
+            )?;
             Ok((img, None))
         }
         _ => Err(CompressionError::UnsupportedFormat(format!(
@@ -337,8 +335,13 @@ fn compress_to_jpeg_file(
     let (width, height) = rgb_img.dimensions();
     let pixels = rgb_img.as_raw();
 
-    let jpeg_data =
-        encode_jpeg_mozjpeg(pixels, width, height, settings.quality, icc_profile.as_deref())?;
+    let jpeg_data = encode_jpeg_mozjpeg(
+        pixels,
+        width,
+        height,
+        settings.quality,
+        icc_profile.as_deref(),
+    )?;
 
     std::fs::write(output_path, &jpeg_data)
         .map_err(|e| CompressionError::IoError(format!("Failed to write JPEG file: {}", e)))?;
@@ -354,9 +357,8 @@ fn encode_png_with_icc(
 ) -> CompressionResult<()> {
     use image::ImageEncoder;
 
-    let output_file = std::fs::File::create(output_path).map_err(|e| {
-        CompressionError::IoError(format!("Failed to create output file: {}", e))
-    })?;
+    let output_file = std::fs::File::create(output_path)
+        .map_err(|e| CompressionError::IoError(format!("Failed to create output file: {}", e)))?;
     let writer = std::io::BufWriter::new(output_file);
 
     let mut encoder = image::codecs::png::PngEncoder::new(writer);
@@ -368,10 +370,13 @@ fn encode_png_with_icc(
     let rgba = img.to_rgba8();
     let (width, height) = rgba.dimensions();
     encoder
-        .write_image(rgba.as_raw(), width, height, image::ExtendedColorType::Rgba8)
-        .map_err(|e| {
-            CompressionError::ProcessingError(format!("Erreur encodage PNG: {}", e))
-        })?;
+        .write_image(
+            rgba.as_raw(),
+            width,
+            height,
+            image::ExtendedColorType::Rgba8,
+        )
+        .map_err(|e| CompressionError::ProcessingError(format!("Erreur encodage PNG: {}", e)))?;
 
     Ok(())
 }
@@ -481,15 +486,13 @@ fn inject_icc_into_webp(webp_data: &[u8], icc_data: &[u8]) -> Vec<u8> {
     // Build padded ICCP chunk (RIFF chunks must be even-aligned)
     let icc_chunk = build_riff_chunk(b"ICCP", icc_data);
 
-    let result = if chunk_type == b"VP8X" {
+    if chunk_type == b"VP8X" {
         // Already extended format: inject ICCP flag + chunk after VP8X
         inject_icc_into_extended_webp(webp_data, &icc_chunk)
     } else {
         // Simple format (VP8 or VP8L): wrap in VP8X + ICCP
         wrap_simple_webp_with_icc(webp_data, &icc_chunk, chunk_type)
-    };
-
-    result
+    }
 }
 
 /// Build a RIFF chunk: FourCC + LE32 size + data + optional padding byte
@@ -536,11 +539,7 @@ fn inject_icc_into_extended_webp(webp_data: &[u8], icc_chunk: &[u8]) -> Vec<u8> 
 }
 
 /// Wrap a simple WebP (VP8/VP8L) into extended format with VP8X + ICCP
-fn wrap_simple_webp_with_icc(
-    webp_data: &[u8],
-    icc_chunk: &[u8],
-    chunk_type: &[u8],
-) -> Vec<u8> {
+fn wrap_simple_webp_with_icc(webp_data: &[u8], icc_chunk: &[u8], chunk_type: &[u8]) -> Vec<u8> {
     // Read canvas dimensions from the bitstream
     let (canvas_w, canvas_h) = read_webp_dimensions(webp_data, chunk_type);
 
@@ -647,9 +646,9 @@ fn encode_webp_advanced(
         config.autofilter = 1; // Auto deblocking filter
     }
 
-    encoder.encode_advanced(&config).map_err(|e| {
-        CompressionError::ProcessingError(format!("WebP encoding failed: {:?}", e))
-    })
+    encoder
+        .encode_advanced(&config)
+        .map_err(|e| CompressionError::ProcessingError(format!("WebP encoding failed: {:?}", e)))
 }
 
 fn validate_settings(settings: &CompressionSettings) -> CompressionResult<()> {

@@ -1,9 +1,14 @@
-use rusqlite::{Connection, Result as SqlResult};
+use rusqlite::{Connection, OptionalExtension, Result as SqlResult};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
 use super::models::CompressionRecord;
+use crate::domain::compression::formats::OutputFormat;
+use crate::domain::compression::settings::CompressionSettings;
+use crate::domain::compression::stats::{
+    calculate_confidence, estimate_compression, CompressionStat, EstimationQuery, EstimationResult,
+};
 
 pub struct DatabaseManager {
     db_path: PathBuf,
@@ -25,8 +30,6 @@ impl DatabaseManager {
 
         // Chemin complet vers la base de données
         let db_path = app_data.join("compression_stats.db");
-
-        println!("Database will be created at: {:?}", db_path);
 
         Ok(Self {
             db_path,
@@ -138,6 +141,122 @@ impl DatabaseManager {
             let mut stmt = conn.prepare("SELECT COUNT(*) FROM compression_records")?;
             let count: i64 = stmt.query_row([], |row| row.get(0))?;
             Ok(count)
+        })
+    }
+
+    // ─── Compression stats methods (unified store) ───
+
+    /// Get compression estimation based on historical data
+    pub fn get_compression_estimation(
+        &self,
+        query: &EstimationQuery,
+    ) -> Result<EstimationResult, String> {
+        self.with_connection(|conn| {
+            let quality_range = 10i32;
+            let min_quality = (query.quality_setting as i32 - quality_range).max(1) as u8;
+            let max_quality = (query.quality_setting as i32 + quality_range).min(100) as u8;
+
+            let mut stmt = conn.prepare(
+                "SELECT
+                    AVG(size_reduction_percent) as avg_reduction,
+                    COUNT(*) as count,
+                    AVG(size_reduction_percent * size_reduction_percent) - AVG(size_reduction_percent) * AVG(size_reduction_percent) as variance
+                FROM compression_stats
+                WHERE input_format = ?1
+                AND output_format = ?2
+                AND quality_setting BETWEEN ?3 AND ?4
+                AND lossy_mode = ?5",
+            )?;
+
+            let row = stmt
+                .query_row(
+                    rusqlite::params![
+                        query.input_format,
+                        query.output_format,
+                        min_quality,
+                        max_quality,
+                        query.lossy_mode,
+                    ],
+                    |row| {
+                        Ok((
+                            row.get::<_, Option<f64>>(0)?,
+                            row.get::<_, u32>(1)?,
+                            row.get::<_, Option<f64>>(2)?,
+                        ))
+                    },
+                )
+                .optional()?;
+
+            match row {
+                Some((Some(avg_reduction), count, variance)) if count > 0 => {
+                    let confidence = calculate_confidence(count, variance.unwrap_or(0.0));
+                    Ok(EstimationResult {
+                        percent: avg_reduction,
+                        ratio: (100.0 - avg_reduction) / 100.0,
+                        confidence,
+                        sample_count: count,
+                    })
+                }
+                _ => {
+                    let fallback = estimate_compression(
+                        &query.input_format,
+                        &query.output_format,
+                        query.original_size,
+                        &CompressionSettings::new(
+                            query.quality_setting,
+                            OutputFormat::from_string(&query.output_format)
+                                .unwrap_or(OutputFormat::WebP),
+                        ),
+                    );
+                    Ok(fallback)
+                }
+            }
+        })
+    }
+
+    /// Save a compression stat record
+    pub fn save_compression_stat(&self, stat: &CompressionStat) -> Result<i64, String> {
+        self.with_connection(|conn| {
+            conn.execute(
+                "INSERT INTO compression_stats (
+                    input_format, output_format, input_size_range, quality_setting,
+                    lossy_mode, size_reduction_percent, original_size, compressed_size,
+                    compression_time_ms, timestamp, image_type
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                rusqlite::params![
+                    stat.input_format,
+                    stat.output_format,
+                    stat.input_size_range,
+                    stat.quality_setting,
+                    stat.lossy_mode,
+                    stat.size_reduction_percent,
+                    stat.original_size,
+                    stat.compressed_size,
+                    stat.compression_time_ms,
+                    stat.timestamp,
+                    stat.image_type,
+                ],
+            )?;
+            Ok(conn.last_insert_rowid())
+        })
+    }
+
+    /// Count compression stats
+    pub fn count_compression_stats(&self) -> Result<u32, String> {
+        self.with_connection(|conn| {
+            let count: u32 =
+                conn.query_row("SELECT COUNT(*) FROM compression_stats", [], |row| {
+                    row.get(0)
+                })?;
+            Ok(count)
+        })
+    }
+
+    /// Clear all compression stats
+    pub fn clear_compression_stats(&self) -> Result<(), String> {
+        self.with_connection(|conn| {
+            conn.execute("DELETE FROM compression_stats", [])?;
+            Ok(())
         })
     }
 }

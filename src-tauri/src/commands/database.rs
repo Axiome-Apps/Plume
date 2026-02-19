@@ -96,104 +96,82 @@ pub async fn seed_compression_database(app: AppHandle) -> Result<String, String>
     let db_manager = DatabaseManager::new(&app)?;
     db_manager.connect()?;
 
-    // Vérifie si la base a déjà des données
-    let existing_count = db_manager.count_records()?;
+    // Vérifie si la table compression_stats a déjà des données
+    let existing_count = db_manager.count_compression_stats()?;
     if existing_count > 0 {
         return Ok(format!(
-            "Database already contains {} records, skipping seed",
+            "Database already contains {} compression stats, skipping seed",
             existing_count
         ));
     }
 
-    use crate::database::models::CompressionRecord;
+    use crate::domain::compression::stats::{get_size_range, CompressionStat};
 
-    // Statistiques réalistes basées sur les recherches
-    let seed_data = vec![
-        // PNG vers WebP - 70-80% de réduction
-        ("PNG", "WebP", 1024000, 256000, Some("v1.3.2".to_string())),
-        ("PNG", "WebP", 2048000, 460800, Some("v1.3.2".to_string())),
-        ("PNG", "WebP", 512000, 122880, Some("v1.3.2".to_string())),
-        ("PNG", "WebP", 4096000, 983040, Some("v1.3.2".to_string())),
-        ("PNG", "WebP", 256000, 61440, Some("v1.3.2".to_string())),
-        // JPEG vers WebP - 25-35% de réduction
-        ("JPEG", "WebP", 800000, 560000, Some("v1.3.2".to_string())),
-        ("JPEG", "WebP", 1500000, 1050000, Some("v1.3.2".to_string())),
-        ("JPEG", "WebP", 600000, 420000, Some("v1.3.2".to_string())),
-        ("JPEG", "WebP", 2000000, 1400000, Some("v1.3.2".to_string())),
-        ("JPEG", "WebP", 300000, 210000, Some("v1.3.2".to_string())),
-        // PNG vers PNG (optimisation) - 10-20% de réduction
-        (
-            "PNG",
-            "PNG",
-            1024000,
-            860000,
-            Some("oxipng-9.1".to_string()),
-        ),
-        (
-            "PNG",
-            "PNG",
-            2048000,
-            1740000,
-            Some("oxipng-9.1".to_string()),
-        ),
-        ("PNG", "PNG", 512000, 430000, Some("oxipng-9.1".to_string())),
-        (
-            "PNG",
-            "PNG",
-            4096000,
-            3480000,
-            Some("oxipng-9.1".to_string()),
-        ),
-        // JPEG vers JPEG (recompression) - 15-25% de réduction
-        ("JPEG", "JPEG", 800000, 640000, Some("mozjpeg".to_string())),
-        (
-            "JPEG",
-            "JPEG",
-            1500000,
-            1200000,
-            Some("mozjpeg".to_string()),
-        ),
-        ("JPEG", "JPEG", 600000, 480000, Some("mozjpeg".to_string())),
-        (
-            "JPEG",
-            "JPEG",
-            2000000,
-            1600000,
-            Some("mozjpeg".to_string()),
-        ),
-        // Cas spéciaux - petites images
-        ("PNG", "WebP", 50000, 15000, Some("v1.3.2".to_string())),
-        ("JPEG", "WebP", 75000, 60000, Some("v1.3.2".to_string())),
-        // Cas spéciaux - très grandes images
-        ("PNG", "WebP", 8192000, 1638400, Some("v1.3.2".to_string())),
-        (
-            "JPEG",
-            "WebP",
-            10240000,
-            7168000,
-            Some("v1.3.2".to_string()),
-        ),
+    // Seed data: (input_format, output_format, original_size, compressed_size)
+    let seed_data: Vec<(&str, &str, u64, u64)> = vec![
+        // PNG → WebP - 70-80% reduction
+        ("PNG", "WebP", 1024000, 256000),
+        ("PNG", "WebP", 2048000, 460800),
+        ("PNG", "WebP", 512000, 122880),
+        ("PNG", "WebP", 4096000, 983040),
+        ("PNG", "WebP", 256000, 61440),
+        // JPEG → WebP - 25-35% reduction
+        ("JPEG", "WebP", 800000, 560000),
+        ("JPEG", "WebP", 1500000, 1050000),
+        ("JPEG", "WebP", 600000, 420000),
+        ("JPEG", "WebP", 2000000, 1400000),
+        ("JPEG", "WebP", 300000, 210000),
+        // PNG → PNG (optimization) - 10-20% reduction
+        ("PNG", "PNG", 1024000, 860000),
+        ("PNG", "PNG", 2048000, 1740000),
+        ("PNG", "PNG", 512000, 430000),
+        ("PNG", "PNG", 4096000, 3480000),
+        // JPEG → JPEG (recompression) - 15-25% reduction
+        ("JPEG", "JPEG", 800000, 640000),
+        ("JPEG", "JPEG", 1500000, 1200000),
+        ("JPEG", "JPEG", 600000, 480000),
+        ("JPEG", "JPEG", 2000000, 1600000),
+        // Small images
+        ("PNG", "WebP", 50000, 15000),
+        ("JPEG", "WebP", 75000, 60000),
+        // Very large images
+        ("PNG", "WebP", 8192000, 1638400),
+        ("JPEG", "WebP", 10240000, 7168000),
     ];
 
     let mut inserted_count = 0;
-    for (input_format, output_format, original_size, compressed_size, tool_version) in seed_data {
-        let record = CompressionRecord::new(
-            input_format.to_string(),
-            output_format.to_string(),
+    let timestamp = chrono::Utc::now().to_rfc3339();
+
+    for (input_format, output_format, original_size, compressed_size) in seed_data {
+        let size_reduction_percent = if original_size > 0 {
+            ((original_size - compressed_size) as f64 / original_size as f64) * 100.0
+        } else {
+            0.0
+        };
+
+        let stat = CompressionStat {
+            id: None,
+            input_format: input_format.to_string(),
+            output_format: output_format.to_string(),
+            input_size_range: get_size_range(original_size),
+            quality_setting: 80,
+            lossy_mode: true,
+            size_reduction_percent,
             original_size,
             compressed_size,
-            tool_version,
-            "seed".to_string(), // Marquer comme données de seed
-        );
+            compression_time_ms: None,
+            timestamp: timestamp.clone(),
+            image_type: None,
+        };
 
-        match db_manager.insert_compression_record(&record) {
+        match db_manager.save_compression_stat(&stat) {
             Ok(_) => inserted_count += 1,
-            Err(e) => println!("Failed to insert seed record: {}", e),
+            Err(e) => println!("Failed to insert seed stat: {}", e),
         }
     }
 
     Ok(format!(
-        "Successfully seeded database with {} compression records",
+        "Successfully seeded database with {} compression stats",
         inserted_count
     ))
 }

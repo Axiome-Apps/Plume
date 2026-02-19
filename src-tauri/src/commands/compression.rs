@@ -1,18 +1,8 @@
-use crate::domain::{validate_image_file, AppState, OutputFormat, SqliteStatsStore, StatsStore};
+use crate::database::DatabaseManager;
+use crate::domain::{validate_image_file, AppState, OutputFormat};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, State};
-
-// Global stats store - same pattern as stats.rs
-static STATS_STORE: std::sync::LazyLock<Mutex<SqliteStatsStore>> = std::sync::LazyLock::new(|| {
-    let db_path = std::env::temp_dir()
-        .join("plume")
-        .join("compression_stats.db");
-    std::fs::create_dir_all(db_path.parent().unwrap()).unwrap();
-    let store = SqliteStatsStore::new(db_path.to_str().unwrap()).unwrap();
-    Mutex::new(store)
-});
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompressImageRequest {
@@ -141,7 +131,7 @@ pub async fn compress_image(
                 .unwrap_or_else(|| "webp".to_string());
 
             match input_extension.as_str() {
-                "heic" | "heif" => OutputFormat::WebP,
+                "heic" | "heif" => OutputFormat::Jpeg,
                 _ => crate::domain::CompressionSettings::preserve_input_format(&input_extension),
             }
         }
@@ -211,7 +201,7 @@ pub async fn compress_image(
             );
 
             // Record compression statistics with timing information
-            if let Ok(mut store) = STATS_STORE.lock() {
+            {
                 let input_format = metadata
                     .extension
                     .clone()
@@ -226,15 +216,17 @@ pub async fn compress_image(
                     "plume-v0.1.0".to_string(),
                 );
 
-                match store.save_stat(stat) {
+                match DatabaseManager::new(&app_handle)
+                    .and_then(|db| { db.connect()?; db.save_compression_stat(&stat) })
+                {
                     Ok(id) => {
                         println!(
-                            "📊 Saved compression stat with timing (id: {}, time: {}ms)",
+                            "Saved compression stat with timing (id: {}, time: {}ms)",
                             id, processing_time
                         );
                     }
                     Err(e) => {
-                        println!("⚠️ Failed to save compression stat: {}", e);
+                        println!("Failed to save compression stat: {}", e);
                     }
                 }
             }

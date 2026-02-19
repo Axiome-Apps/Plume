@@ -9,77 +9,46 @@
       "processing": "Images en cours de compression",
       "completed": "Images compressées"
     },
-    "recommended": "Recommandé",
     "empty": "Vider",
     "downloadAll": "Télécharger tout",
     "totalSize": "au total",
     "compression": {
-      "pending": "Compresser tout",
-      "active": "Compression...",
-      "completed": "Terminé"
+      "pending": "Compresser",
+      "active": "Compression..."
     },
-    "tooltips": {
+    "controls": {
       "format": {
-        "title": "Format de sortie",
-        "description": "WebP: Format moderne, -50% plus petit<br/>Original: PNG oxipng (-15%), JPEG optimisé (-25%)",
-        "info": "✓ PNG détectés: WebP très efficace"
+        "title": "Cible",
+        "keep": "Original",
+        "tooltip": "Conserve le format original. Les fichiers HEIC seront convertis en JPEG."
       },
-      "strategy": {
-        "title": "Qualité WebP",
-        "description": "Lossy: Ultra compact (-98%) mais légèrement flou<br/>Lossless: Qualité parfaite, moins compressé (-43%)",
-        "info": "S'applique seulement aux PNGs"
+      "level": {
+        "title": "Compression",
+        "light": "Léger",
+        "balanced": "Équilibré",
+        "aggressive": "Agressif",
+        "tooltip": "Léger : Meilleure qualité (plus lourd). Agressif : taille minimale.",
+        "pngLocked": "Le format PNG utilise une optimisation sans perte (oxipng). Le niveau de compression n'a pas d'effet.",
+        "pngHeicWarning": "PNG n'est pas recommandé pour les fichiers HEIC : le fichier de sortie sera plus lourd. Préférez WebP ou JPEG."
       }
     }
   },
   "common": {
-    "cancel": "Annuler",
-    "confirm": "Confirmer",
-    "save": "Enregistrer",
     "download": "Télécharger",
-    "delete": "Supprimer",
-    "loading": "Chargement...",
-    "error": "Erreur",
-    "success": "Succès",
     "supported": "supportés",
     "browse": "Cliquez pour parcourir"
   },
   "compression": {
-    "start": "Démarrer la compression",
     "selectFiles": "Sélectionnez ou déposez vos images",
-    "dropFiles": "Glissez vos images ici",
     "pending": "En attente",
     "processing": "Traitement...",
-    "progress": "en cours...",
     "completed": "Terminée",
-    "failed": "Échec",
     "error": "Erreur"
   },
-  "formats": {
-    "png": "PNG",
-    "jpeg": "JPEG",
-    "webp": "WebP",
-    "auto": "Automatique"
-  },
-  "errors": {
-    "fileTooBig": "Le fichier est trop volumineux",
-    "invalidFormat": "Format de fichier non supporté",
-    "compressionFailed": "Erreur lors de la compression",
-    "networkError": "Erreur de connexion"
-  },
   "stats": {
-    "originalSize": "Taille originale",
-    "compressedSize": "Taille compressée",
-    "reduction": "Réduction",
-    "savings": "Économie",
     "finalSize": "Taille finale:",
     "economy": "Économie:",
     "estimation": "Estimation:"
-  },
-  "settings": {
-    "quality": "Qualité",
-    "format": "Format",
-    "outputPath": "Dossier de sortie",
-    "advanced": "Avancé"
   },
   "success": {
     "title": "Toutes les images ont été compressées avec succès !",

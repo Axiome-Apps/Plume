@@ -15,17 +15,20 @@ export const TranslationKeysSchema = z.object({
       processing: z.string(),
       completed: z.string(),
     }),
-    recommended: z.string(),
-    tooltips: z.object({
+    controls: z.object({
       format: z.object({
         title: z.string(),
-        description: z.string(),
-        info: z.string(),
+        keep: z.string(),
+        tooltip: z.string(),
       }),
-      strategy: z.object({
+      level: z.object({
         title: z.string(),
-        description: z.string(),
-        info: z.string(),
+        light: z.string(),
+        balanced: z.string(),
+        aggressive: z.string(),
+        tooltip: z.string(),
+        pngLocked: z.string(),
+        pngHeicWarning: z.string(),
       }),
     }),
     empty: z.string(),
@@ -34,58 +37,24 @@ export const TranslationKeysSchema = z.object({
     compression: z.object({
       pending: z.string(),
       active: z.string(),
-      completed: z.string(),
     }),
   }),
   common: z.object({
-    cancel: z.string(),
-    confirm: z.string(),
-    save: z.string(),
     download: z.string(),
-    delete: z.string(),
-    loading: z.string(),
-    error: z.string(),
-    success: z.string(),
     supported: z.string(),
     browse: z.string(),
   }),
   compression: z.object({
-    start: z.string(),
     selectFiles: z.string(),
-    dropFiles: z.string(),
     pending: z.string(),
     processing: z.string(),
-    progress: z.string(),
     completed: z.string(),
-    failed: z.string(),
     error: z.string(),
   }),
-  formats: z.object({
-    png: z.string(),
-    jpeg: z.string(),
-    webp: z.string(),
-    auto: z.string(),
-  }),
-  errors: z.object({
-    fileTooBig: z.string(),
-    invalidFormat: z.string(),
-    compressionFailed: z.string(),
-    networkError: z.string(),
-  }),
   stats: z.object({
-    originalSize: z.string(),
-    compressedSize: z.string(),
-    reduction: z.string(),
-    savings: z.string(),
     finalSize: z.string(),
     economy: z.string(),
     estimation: z.string(),
-  }),
-  settings: z.object({
-    quality: z.string(),
-    format: z.string(),
-    outputPath: z.string(),
-    advanced: z.string(),
   }),
   success: z.object({
     title: z.string(),
@@ -97,20 +66,17 @@ export const TranslationKeysSchema = z.object({
 
 export type TranslationKeysType = z.infer<typeof TranslationKeysSchema>;
 
-// Type pour les clés imbriquées (ex: 'app.title', 'common.cancel')
+// Type pour les clés imbriquées (ex: 'app.name', 'common.download')
 export type TranslationKeyType =
   | `app.${keyof TranslationKeysType['app']}`
   | `header.${keyof TranslationKeysType['header']}`
   | `header.title.${keyof TranslationKeysType['header']['title']}`
   | `header.compression.${keyof TranslationKeysType['header']['compression']}`
-  | `header.tooltips.format.${keyof TranslationKeysType['header']['tooltips']['format']}`
-  | `header.tooltips.strategy.${keyof TranslationKeysType['header']['tooltips']['strategy']}`
+  | `header.controls.format.${keyof TranslationKeysType['header']['controls']['format']}`
+  | `header.controls.level.${keyof TranslationKeysType['header']['controls']['level']}`
   | `common.${keyof TranslationKeysType['common']}`
   | `compression.${keyof TranslationKeysType['compression']}`
-  | `formats.${keyof TranslationKeysType['formats']}`
-  | `errors.${keyof TranslationKeysType['errors']}`
   | `stats.${keyof TranslationKeysType['stats']}`
-  | `settings.${keyof TranslationKeysType['settings']}`
   | `success.${keyof TranslationKeysType['success']}`;
 
 /**

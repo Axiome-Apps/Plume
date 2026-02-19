@@ -31,7 +31,9 @@ export class CompressionEstimationService {
     });
 
     try {
-      const result = await invoke<EstimationResultType>('get_compression_estimation', { query });
+      const result = await invoke<EstimationResultType>('get_compression_estimation', {
+        request: query,
+      });
       const validatedResult = EstimationResultSchema.parse(result);
 
       return this.enhanceEstimation(validatedResult, inputFormat, outputFormat);

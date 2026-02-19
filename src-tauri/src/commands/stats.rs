@@ -1,17 +1,7 @@
-use crate::domain::{AppState, EstimationQuery, EstimationResult, SqliteStatsStore, StatsStore};
+use crate::database::DatabaseManager;
+use crate::domain::{EstimationQuery, EstimationResult};
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
-use tauri::State;
-
-// Global stats store - in a real app, this would be managed by AppState
-static STATS_STORE: std::sync::LazyLock<Mutex<SqliteStatsStore>> = std::sync::LazyLock::new(|| {
-    let db_path = std::env::temp_dir()
-        .join("plume")
-        .join("compression_stats.db");
-    std::fs::create_dir_all(db_path.parent().unwrap()).unwrap();
-    let store = SqliteStatsStore::new(db_path.to_str().unwrap()).unwrap();
-    Mutex::new(store)
-});
+use tauri::AppHandle;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetEstimationRequest {
@@ -36,7 +26,7 @@ pub struct RecordStatRequest {
 #[tauri::command]
 pub async fn get_compression_estimation(
     request: GetEstimationRequest,
-    _state: State<'_, AppState>,
+    app: AppHandle,
 ) -> Result<EstimationResult, String> {
     let query = EstimationQuery {
         input_format: request.input_format,
@@ -46,20 +36,16 @@ pub async fn get_compression_estimation(
         lossy_mode: request.lossy_mode,
     };
 
-    let store = STATS_STORE
-        .lock()
-        .map_err(|_| "Failed to acquire stats store lock".to_string())?;
-
-    store
-        .get_estimation(&query)
-        .map_err(|e| format!("Failed to get estimation: {}", e))
+    let db = DatabaseManager::new(&app)?;
+    db.connect()?;
+    db.get_compression_estimation(&query)
 }
 
 /// Record a compression statistic for learning
 #[tauri::command]
 pub async fn record_compression_stat(
     request: RecordStatRequest,
-    _state: State<'_, AppState>,
+    app: AppHandle,
 ) -> Result<i64, String> {
     let output_format_enum = match request.output_format.to_lowercase().as_str() {
         "webp" => crate::domain::OutputFormat::WebP,
@@ -76,55 +62,37 @@ pub async fn record_compression_stat(
         &crate::domain::CompressionSettings::new(request.quality_setting, output_format_enum),
     );
 
-    let mut store = STATS_STORE
-        .lock()
-        .map_err(|_| "Failed to acquire stats store lock".to_string())?;
-
-    store
-        .save_stat(stat)
-        .map_err(|e| format!("Failed to save stat: {}", e))
+    let db = DatabaseManager::new(&app)?;
+    db.connect()?;
+    db.save_compression_stat(&stat)
 }
-
-// record_compression_result_with_time function removed - was unused
 
 /// Reset all compression statistics
 #[tauri::command]
-pub async fn reset_compression_stats(_state: State<'_, AppState>) -> Result<(), String> {
-    let mut store = STATS_STORE
-        .lock()
-        .map_err(|_| "Failed to acquire stats store lock".to_string())?;
-
-    store
-        .clear_all()
-        .map_err(|e| format!("Failed to clear stats: {}", e))
+pub async fn reset_compression_stats(app: AppHandle) -> Result<(), String> {
+    let db = DatabaseManager::new(&app)?;
+    db.connect()?;
+    db.clear_compression_stats()
 }
 
 /// Get total number of compression statistics
 #[tauri::command]
-pub async fn get_stats_count(_state: State<'_, AppState>) -> Result<u32, String> {
-    let store = STATS_STORE
-        .lock()
-        .map_err(|_| "Failed to acquire stats store lock".to_string())?;
-
-    store
-        .count_stats()
-        .map_err(|e| format!("Failed to count stats: {}", e))
+pub async fn get_stats_count(app: AppHandle) -> Result<u32, String> {
+    let db = DatabaseManager::new(&app)?;
+    db.connect()?;
+    db.count_compression_stats()
 }
 
 /// Get compression statistics summary
 #[tauri::command]
-pub async fn get_stats_summary(_state: State<'_, AppState>) -> Result<StatsSummary, String> {
-    let store = STATS_STORE
-        .lock()
-        .map_err(|_| "Failed to acquire stats store lock".to_string())?;
+pub async fn get_stats_summary(app: AppHandle) -> Result<StatsSummary, String> {
+    let db = DatabaseManager::new(&app)?;
+    db.connect()?;
 
-    let total_stats = store
-        .count_stats()
-        .map_err(|e| format!("Failed to count stats: {}", e))?;
+    let total_stats = db.count_compression_stats()?;
 
-    // Get some sample estimations to show the current state
-    let webp_estimation = store
-        .get_estimation(&EstimationQuery {
+    let webp_estimation = db
+        .get_compression_estimation(&EstimationQuery {
             input_format: "png".to_string(),
             output_format: "webp".to_string(),
             original_size: 1000000,

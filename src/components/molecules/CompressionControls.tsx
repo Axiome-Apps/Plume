@@ -1,27 +1,20 @@
-import { FC } from 'react';
-import Button from '../atoms/Button';
-import { Badge, Switch, Tooltip } from '../atoms';
-import { TrashIcon, DownloadIcon } from '../icons';
+import type { CompressionLevelType, OutputFormatType } from '@/domain/compression/schema';
 import { ImageEntity } from '@/domain/image/entity';
 import { useTranslation } from '@/hooks/useTranslation';
-
-type HeicOutputFormat = 'jpeg' | 'png';
+import { FC, useMemo } from 'react';
+import { SegmentedControl, Tooltip } from '../atoms';
+import Button from '../atoms/Button';
+import { DownloadIcon, FeatherIcon, TrashIcon } from '../icons';
 
 interface CompressionControlsProps {
   images: ImageEntity[];
   pendingImages: ImageEntity[];
   completedImages: ImageEntity[];
-  processingImages: ImageEntity[];
   isProcessing: boolean;
-  convertToWebP: boolean;
-  lossyMode: boolean;
-  hasPNG: boolean;
-  hasHEIC: boolean;
-  hasOnlyWebP: boolean;
-  heicOutputFormat: HeicOutputFormat;
-  onToggleWebPConversion: () => void;
-  onToggleLossyMode: () => void;
-  onHeicOutputFormatChange: (format: HeicOutputFormat) => void;
+  outputFormat: OutputFormatType;
+  compressionLevel: CompressionLevelType;
+  onOutputFormatChange: (format: OutputFormatType) => void;
+  onCompressionLevelChange: (level: CompressionLevelType) => void;
   onStartCompression: () => void;
   onClearImages: () => void;
   onDownloadAllImages: () => void;
@@ -32,106 +25,81 @@ export const CompressionControls: FC<CompressionControlsProps> = ({
   pendingImages,
   completedImages,
   isProcessing,
-  convertToWebP,
-  lossyMode,
-  hasPNG,
-  hasHEIC,
-  hasOnlyWebP,
-  heicOutputFormat,
-  onToggleWebPConversion,
-  onToggleLossyMode,
-  onHeicOutputFormatChange,
+  outputFormat,
+  compressionLevel,
+  onOutputFormatChange,
+  onCompressionLevelChange,
   onStartCompression,
   onClearImages,
   onDownloadAllImages,
 }) => {
   const { t } = useTranslation();
+
+  const isPngOutput = outputFormat === 'png';
+  const hasHEIC = useMemo(() => images.some(img => img.format.toUpperCase() === 'HEIC'), [images]);
+
+  const formatOptions: { value: OutputFormatType; label: string }[] = [
+    { value: 'keep', label: t('header.controls.format.keep') },
+    { value: 'webp', label: 'WebP' },
+    { value: 'jpeg', label: 'JPEG' },
+    { value: 'png', label: 'PNG' },
+  ];
+
+  const levelOptions: { value: CompressionLevelType; label: string }[] = [
+    { value: 'light', label: t('header.controls.level.light') },
+    { value: 'balanced', label: t('header.controls.level.balanced') },
+    { value: 'aggressive', label: t('header.controls.level.aggressive') },
+  ];
+
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-      <div
-        className={`flex flex-col sm:flex-row gap-3 flex-1 ${
-          convertToWebP ? 'justify-between' : 'justify-start'
-        }`}
-      >
-        <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 flex-1">
-          {hasOnlyWebP ? (
-            <span className="text-sm font-semibold text-slate-700 px-2">WebP</span>
-          ) : (
-            <Switch
-              checked={convertToWebP}
-              onChange={onToggleWebPConversion}
-              checkedLabel="WebP"
-              uncheckedLabel={hasHEIC ? 'Autre' : 'Original'}
-            />
-          )}
-
-          <Tooltip title={t('header.tooltips.format.title')}>
-            <div dangerouslySetInnerHTML={{ __html: t('header.tooltips.format.description') }} />
-            {hasPNG && <div className="text-green-300">{t('header.tooltips.format.info')}</div>}
-            {hasHEIC && (
-              <div className="text-amber-300">
-                {convertToWebP
-                  ? 'Les fichiers HEIC seront convertis en WebP.'
-                  : 'Les fichiers HEIC seront convertis dans le format choisi ci-dessous.'}
-              </div>
-            )}
+      <div className="flex flex-col sm:flex-row gap-3 flex-1">
+        <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-3">
+          <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+            {t('header.controls.format.title')}
+          </span>
+          <SegmentedControl
+            options={formatOptions}
+            value={outputFormat}
+            onChange={onOutputFormatChange}
+            color="green"
+            disabled={isProcessing}
+          />
+          <Tooltip title={t('header.controls.format.title')}>
+            <div>{t('header.controls.format.tooltip')}</div>
           </Tooltip>
-
-          {(convertToWebP || hasOnlyWebP) && <Badge color="green">{t('header.recommended')}</Badge>}
         </div>
 
-        {(convertToWebP || hasOnlyWebP) && (
-          <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
-            <Switch
-              checked={lossyMode}
-              onChange={onToggleLossyMode}
-              checkedLabel="Lossy"
-              uncheckedLabel="Lossless"
-              color="blue"
-            />
-
-            <Tooltip title={t('header.tooltips.strategy.title')}>
-              <div
-                dangerouslySetInnerHTML={{ __html: t('header.tooltips.strategy.description') }}
-              />
-              <div className="text-yellow-300">⚠️ {t('header.tooltips.strategy.info')}</div>
-            </Tooltip>
-          </div>
-        )}
-
-        {hasHEIC && !convertToWebP && (
-          <div className="flex items-center gap-3 bg-amber-50 rounded-lg p-3">
-            <span className="text-sm font-medium text-slate-700 whitespace-nowrap">HEIC →</span>
-            <div className="flex gap-1">
-              {(['jpeg', 'png'] as const).map(fmt => (
-                <button
-                  key={fmt}
-                  onClick={() => onHeicOutputFormatChange(fmt)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                    heicOutputFormat === fmt
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  {fmt.toUpperCase()}
-                </button>
-              ))}
+        <div
+          className={`flex items-center gap-2 rounded-lg p-3 ${isPngOutput ? 'bg-amber-50' : 'bg-slate-50'}`}
+        >
+          <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+            {t('header.controls.level.title')}
+          </span>
+          <SegmentedControl
+            options={levelOptions}
+            value={compressionLevel}
+            onChange={onCompressionLevelChange}
+            color="blue"
+            disabled={isProcessing || isPngOutput}
+          />
+          <Tooltip title={t('header.controls.level.title')}>
+            <div>
+              {isPngOutput
+                ? t('header.controls.level.pngLocked')
+                : t('header.controls.level.tooltip')}
             </div>
-            <Tooltip title="Format HEIC">
-              <div>
-                Le format HEIC ne peut pas être conservé tel quel. Les fichiers HEIC seront
-                convertis en {heicOutputFormat.toUpperCase()}.
-              </div>
-            </Tooltip>
-          </div>
-        )}
+            {isPngOutput && hasHEIC && (
+              <div className="text-amber-300 mt-1">{t('header.controls.level.pngHeicWarning')}</div>
+            )}
+          </Tooltip>
+        </div>
       </div>
 
       <div className="flex gap-2">
         {images.length > 1 && (
           <Button variant="outlined" color="slate" onClick={onClearImages} disabled={isProcessing}>
-            <TrashIcon size={16} className="mr-2" />
-            {t('header.empty')}
+            <TrashIcon size={16} />
           </Button>
         )}
 
@@ -142,7 +110,7 @@ export const CompressionControls: FC<CompressionControlsProps> = ({
             onClick={onStartCompression}
             disabled={isProcessing || pendingImages.length === 0}
           >
-            <DownloadIcon size={16} className="mr-2" />
+            <FeatherIcon size={16} className="mr-2" />
             {isProcessing ? t('header.compression.active') : t('header.compression.pending')}
           </Button>
         )}

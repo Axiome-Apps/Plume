@@ -221,13 +221,6 @@ export class ImageEntity {
     return ImageEntity.hasFormat(images, 'HEIC');
   }
 
-  static hasOnlyWebP(images: ImageType[]): boolean {
-    return (
-      images.length > 0 &&
-      images.every(img => ImageEntity.fromData(img).getFormatUpperCase() === 'WEBP')
-    );
-  }
-
   // Méthodes de formatage
   static formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 B';

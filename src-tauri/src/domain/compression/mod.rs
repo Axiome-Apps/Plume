@@ -10,8 +10,6 @@ pub mod prediction;
 pub mod progress;
 pub mod settings;
 pub mod stats;
-pub mod store;
-
 // Re-export core types and functions for easy access
 pub use error::{CompressionError, CompressionResult, StatsError, StatsResult};
 pub use formats::{InputFormat, OutputFormat};
@@ -27,9 +25,6 @@ pub use stats::{
     calculate_confidence, create_stat, estimate_compression, get_size_range, CompressionStat,
     EstimationQuery, EstimationResult,
 };
-
-// Storage trait and implementations
-pub use store::{SqliteStatsStore, StatsStore};
 
 // Prediction service for size estimation
 pub use prediction::{create_prediction_query, CompressionPredictionService};
@@ -75,35 +70,5 @@ mod integration_tests {
         assert!(estimate.percent > 0.0);
         assert!(estimate.ratio < 1.0);
         assert!(estimate.confidence >= 0.0 && estimate.confidence <= 1.0);
-    }
-
-    #[test]
-    fn test_store_integration() {
-        let mut store = SqliteStatsStore::in_memory().unwrap();
-
-        // Create and save a stat
-        let settings = CompressionSettings::new(80, OutputFormat::WebP);
-        let stat = create_stat(
-            "png".to_string(),
-            "webp".to_string(),
-            1000000,
-            400000,
-            &settings,
-        );
-
-        let id = store.save_stat(stat).unwrap();
-        assert!(id > 0);
-
-        // Query for estimation
-        let query = EstimationQuery {
-            input_format: "png".to_string(),
-            output_format: "webp".to_string(),
-            original_size: 1000000,
-            quality_setting: 80,
-            lossy_mode: true,
-        };
-
-        let estimation = store.get_estimation(&query).unwrap();
-        assert!(estimation.sample_count > 0);
     }
 }
