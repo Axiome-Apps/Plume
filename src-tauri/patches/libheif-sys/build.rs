@@ -124,6 +124,11 @@ fn compile_libheif() -> PathBuf {
     build_config.define("LIBDE265_INCLUDE_DIR", de265_include.to_str().unwrap());
     build_config.define("LIBDE265_LIBRARY", de265_lib.to_str().unwrap());
 
+    // libde265 is linked statically — tell libheif so it doesn't
+    // decorate de265 symbols with __declspec(dllimport) on Windows.
+    build_config.cxxflag("-DLIBDE265_STATIC_BUILD");
+    build_config.cflag("-DLIBDE265_STATIC_BUILD");
+
     // Disable some options
     for key in [
         "BUILD_SHARED_LIBS",
