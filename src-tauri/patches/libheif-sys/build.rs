@@ -84,7 +84,7 @@ fn compile_libde265() -> PathBuf {
 }
 
 #[cfg(feature = "embedded-libheif")]
-fn compile_libheif() -> String {
+fn compile_libheif() -> PathBuf {
     let out_path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let libheif_dir = prepare_libheif_src();
 
@@ -200,12 +200,7 @@ fn compile_libheif() -> String {
         build_config.define(format!("WITH_{}_PLUGIN", key), "OFF");
     }
 
-    let libheif_build = build_config.build();
-
-    libheif_build
-        .join("lib/pkgconfig")
-        .to_string_lossy()
-        .to_string()
+    build_config.build()
 }
 
 #[cfg(feature = "embedded-libheif")]
@@ -216,8 +211,13 @@ fn find_libheif_embedded() -> Vec<String> {
         let mut config = system_deps::Config::new();
         std::env::set_var("SYSTEM_DEPS_LIBHEIF_BUILD_INTERNAL", "always");
         config = config.add_build_internal("libheif", |lib, version| {
-            let pc_file_path = compile_libheif();
-            system_deps::Library::from_internal_pkg_config(pc_file_path, lib, version)
+            let prefix = compile_libheif();
+            let pc_dir = prefix.join("lib").join("pkgconfig");
+            system_deps::Library::from_internal_pkg_config(
+                pc_dir.to_string_lossy().to_string(),
+                lib,
+                version,
+            )
         });
 
         match config.probe() {
@@ -238,24 +238,30 @@ fn find_libheif_embedded() -> Vec<String> {
     // Compile embedded and emit link directives manually.
     #[cfg(all(target_os = "windows", target_env = "msvc"))]
     {
-        let heif_pc_path = compile_libheif();
-        // heif_pc_path = "<OUT_DIR>/libheif_build/lib/pkgconfig"
-        let heif_prefix = PathBuf::from(&heif_pc_path)
-            .parent() // lib/pkgconfig -> lib
-            .unwrap()
-            .parent() // lib -> prefix
-            .unwrap()
-            .to_path_buf();
-        let heif_lib_dir = heif_prefix.join("lib");
+        let heif_prefix = compile_libheif();
         let heif_include_dir = heif_prefix.join("include");
 
         let out_path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-        let de265_lib_dir = out_path.join("libde265_build").join("lib");
+        let de265_prefix = out_path.join("libde265_build");
 
-        println!("cargo:rustc-link-search=native={}", heif_lib_dir.display());
-        println!("cargo:rustc-link-search=native={}", de265_lib_dir.display());
+        // cmake-rs uses Visual Studio generator (multi-config) on MSVC,
+        // so installed libs land in lib/ after `cmake --install`.
+        // But build artifacts may also be in lib/Release/.
+        let heif_lib_dir = heif_prefix.join("lib");
+        let de265_lib_dir = de265_prefix.join("lib");
+
+        for dir in [&heif_lib_dir, &de265_lib_dir] {
+            println!("cargo:rustc-link-search=native={}", dir.display());
+            println!(
+                "cargo:rustc-link-search=native={}",
+                dir.join("Release").display()
+            );
+        }
+
+        // heif target has no PREFIX → heif.lib
+        // de265 target sets PREFIX "lib" on WIN32 → libde265.lib
         println!("cargo:rustc-link-lib=static=heif");
-        println!("cargo:rustc-link-lib=static=de265");
+        println!("cargo:rustc-link-lib=static=libde265");
 
         vec![heif_include_dir.to_string_lossy().to_string()]
     }
