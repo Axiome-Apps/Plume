@@ -13,7 +13,7 @@ pub async fn select_image_files(
     use rfd::FileDialog;
 
     let files = FileDialog::new()
-        .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
+        .add_filter("Images", &["png", "jpg", "jpeg", "webp", "heic", "heif"])
         .set_title("Sélectionner des images")
         .pick_files();
 
@@ -52,15 +52,34 @@ pub async fn generate_preview(
     // Read image data
     let image_data = read_image_file(path).map_err(|e| format!("Failed to read image: {}", e))?;
 
-    // For preview, we can resize if needed (simplified - just return base64 for now)
+    let ext = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    // HEIC needs decoding to PNG for preview
+    if ext == "heic" || ext == "heif" {
+        let heic_img = crate::domain::compression::engine::decode_heic_public(&image_data)
+            .map_err(|e| format!("Failed to decode HEIC for preview: {}", e))?;
+
+        let mut png_buf = std::io::Cursor::new(Vec::new());
+        heic_img
+            .write_to(&mut png_buf, image::ImageFormat::Png)
+            .map_err(|e| format!("Failed to encode HEIC preview as PNG: {}", e))?;
+
+        let base64_data = general_purpose::STANDARD.encode(png_buf.into_inner());
+        return Ok(format!("data:image/png;base64,{}", base64_data));
+    }
+
+    // For other formats, return raw base64
     let base64_data = general_purpose::STANDARD.encode(&image_data);
 
-    // Get the MIME type from extension
-    let mime_type = match path.extension().and_then(|ext| ext.to_str()) {
-        Some("jpg") | Some("jpeg") => "image/jpeg",
-        Some("png") => "image/png",
-        Some("webp") => "image/webp",
-        _ => "image/png", // fallback
+    let mime_type = match ext.as_str() {
+        "jpg" | "jpeg" => "image/jpeg",
+        "png" => "image/png",
+        "webp" => "image/webp",
+        _ => "image/png",
     };
 
     Ok(format!("data:{};base64,{}", mime_type, base64_data))

@@ -32,7 +32,7 @@ Deliver a native desktop app that combines cutting-edge compression algorithms w
 
 **Key Features**:
 
-- Multi-format compression (PNG, JPEG, WebP)
+- Multi-format compression (PNG, JPEG, WebP, HEIC)
 - Drag & drop interface with batch processing
 - Real-time progress indicators
 - Intelligent compression presets
@@ -108,10 +108,11 @@ Deliver a native desktop app that combines cutting-edge compression algorithms w
 
 - [x] Multi-threaded PNG optimization (oxipng)
 - [x] WebP conversion with quality controls
-- [x] JPEG optimization (mozjpeg)
+- [x] JPEG optimization (mozjpeg-sys encoder)
 - [ ] **Real-time progress indicators** (Current Focus)
 - [ ] Memory optimization for large batches
 - [ ] Compression algorithm fine-tuning
+- [ ] **Investigate WebP color desaturation** — Analyze color space handling in WebP conversion pipeline (RGBA conversion, ICC profile preservation, webp crate behavior)
 
 #### User Interface & Experience
 
@@ -149,7 +150,7 @@ Deliver a native desktop app that combines cutting-edge compression algorithms w
 
 #### Format Support Expansion
 
-- [ ] HEIF/HEIC support for mobile photos
+- [x] HEIC/HEIF support for mobile photos (via libheif-rs)
 - [ ] AVIF support for next-gen web
 - [ ] JPEG XL evaluation and implementation
 - [ ] Raw image format preprocessing
@@ -196,6 +197,8 @@ Deliver a native desktop app that combines cutting-edge compression algorithms w
   - PNG → PNG: 15-20% average reduction
   - PNG → WebP: 70-80% average reduction
   - JPEG → WebP: 25-35% average reduction
+  - JPEG → JPEG (MozJPEG): 10-20% average reduction vs libjpeg
+  - HEIC → WebP: ~70% average reduction
 - **Speed**: Average compression time < 3 seconds per image
 - **Memory**: < 500MB usage for 100 image batch
 - **Startup**: Application launch < 2 seconds
@@ -229,8 +232,9 @@ Deliver a native desktop app that combines cutting-edge compression algorithms w
 
 - **PNG**: oxipng (Rust-native, multithreaded)
 - **WebP**: libwebp via webp crate
-- **JPEG**: mozjpeg-sys for optimal compression
-- **Future**: libheif, libavif, libjxl
+- **JPEG**: mozjpeg-sys for optimal compression (10-20% better than libjpeg)
+- **HEIC/HEIF**: libheif-rs for iPhone photo decoding
+- **Future**: libavif, libjxl
 
 ### Development Tools
 
@@ -269,16 +273,20 @@ Deliver a native desktop app that combines cutting-edge compression algorithms w
 - ✅ Rust backend with strategy pattern for algorithms
 - ✅ SQLite integration for compression statistics
 - ✅ Intelligent size prediction system
+- ✅ HEIC/HEIF input support (iPhone photos) via libheif-rs
+- ✅ MozJPEG encoder integration for better JPEG compression
+- ✅ Conditional format selector for HEIC files (WebP/JPEG/PNG)
+- ✅ External volumes support (macOS /Volumes/, Linux /media/, /mnt/)
 
 ### In Progress
 
 - 🔄 **Real-time progress indicators** - Smooth, database-backed estimation
-- 🔄 **Documentation restructure** - Comprehensive docs with Docusaurus readiness
+- 🔄 **WebP color desaturation investigation** - ICC profile and color space analysis
 - 🔄 **Testing infrastructure** - Unit and integration test setup
 
 ### Coming Next
 
-- 📋 Progress system V1 completion
+- 📋 AVIF format support
 - 📋 Advanced error handling implementation
 - 📋 Performance optimization and memory management
 - 📋 User experience polish and accessibility improvements
@@ -309,9 +317,9 @@ We welcome contributions from the community! Here's how you can help:
 
 ---
 
-**Last Updated**: January 2025  
-**Current Version**: Pre-release Development  
-**Next Milestone**: V1.0 Foundation (Q1 2025)
+**Last Updated**: February 2026
+**Current Version**: Pre-release Development
+**Next Milestone**: V1.0 Foundation
 
 For technical implementation details, see our [Technical Documentation](docs/technical/).  
 For development setup, see our [Development Guide](docs/development/).

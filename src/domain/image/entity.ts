@@ -188,6 +188,10 @@ export class ImageEntity {
     return this._data.format.toUpperCase() === 'WEBP';
   }
 
+  isHEIC(): boolean {
+    return this._data.format.toUpperCase() === 'HEIC';
+  }
+
   getFormatLowerCase(): string {
     return this._data.format.toLowerCase();
   }
@@ -197,7 +201,7 @@ export class ImageEntity {
   }
 
   // Méthodes statiques pour collections
-  static hasFormat(images: ImageType[], format: 'PNG' | 'JPEG' | 'WEBP'): boolean {
+  static hasFormat(images: ImageType[], format: 'PNG' | 'JPEG' | 'WEBP' | 'HEIC'): boolean {
     return images.some(img => ImageEntity.fromData(img).getFormatUpperCase() === format);
   }
 
@@ -211,6 +215,10 @@ export class ImageEntity {
 
   static hasJPEG(images: ImageType[]): boolean {
     return ImageEntity.hasFormat(images, 'JPEG');
+  }
+
+  static hasHEIC(images: ImageType[]): boolean {
+    return ImageEntity.hasFormat(images, 'HEIC');
   }
 
   // Méthodes de formatage
