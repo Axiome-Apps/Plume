@@ -21,58 +21,62 @@ A modern, fast, and intelligent image compression desktop application built with
 
 ## 🎬 Demo
 
-*Coming soon*
+![Plume Demo](.github/assets/demo.gif)
 
 ## 📥 Installation
 
-  ### macOS
+### macOS
 
-  #### Homebrew (recommended)
+#### Homebrew (recommended)
 
-  ```bash
-  brew install --cask axiome-apps/tap/plume
+```bash
+brew install --cask axiome-apps/tap/plume
 ```
 
 #### Direct Download
 
-  | Architecture             | Download                                                                            |
-  |--------------------------|-------------------------------------------------------------------------------------|
-  | Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_aarch64.dmg |
-  | Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.dmg     |
+| Architecture             | Download                                                                            |
+|--------------------------|-------------------------------------------------------------------------------------|
+| Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_aarch64.dmg |
+| Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.dmg     |
 
-  ⚠️ Direct download only: macOS blocks unsigned apps. Run this command to unblock:
-  xattr -dr com.apple.quarantine /Applications/Plume.app
+⚠️ Direct download only: macOS blocks unsigned apps. Run this command to unblock:
+```bash
+xattr -dr com.apple.quarantine /Applications/Plume.app
+```
 
-  ### Windows
+### Windows
 
-  | Architecture | Download                                                                        |
-  |--------------|---------------------------------------------------------------------------------|
-  | 64-bit       | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.msi |
+| Architecture | Download                                                                        |
+|--------------|---------------------------------------------------------------------------------|
+| 64-bit       | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0_x64.msi |
 
-  ⚠️ If SmartScreen blocks the app, click "More info" → "Run anyway".
+⚠️ If SmartScreen blocks the app, click "More info" → "Run anyway".
 
-  ### Linux
+### Linux
 
-  | Format   | Download                                                                         |
-  |----------|----------------------------------------------------------------------------------|
-  | AppImage | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0.AppImage |
+| Format   | Download                                                                         |
+|----------|----------------------------------------------------------------------------------|
+| AppImage | https://github.com/Axiome-Apps/Plume/releases/download/main/Plume_0.1.0.AppImage |
 
-  Make the file executable if needed:
-  ```
-  chmod +x ./Plume*.AppImage
+Make the file executable if needed:
+```bash
+chmod +x ./Plume*.AppImage
 ```
 
 ### For Developers
 
 #### Prerequisites
+
 - **Node.js** 18+ ([Download](https://nodejs.org/))
 - **Rust** 1.70+ ([Install](https://rustup.rs/))
 - **pnpm** ([Install](https://pnpm.io/installation))
 
 #### Development Setup
+
 ```bash
 # Clone the repository
-git clone https://github.com/triplecasquette/plume.git
+git clone https://github.com/Axiome-Apps/Plume.git
 cd plume
 
 # Install dependencies
@@ -90,11 +94,12 @@ pnpm tauri build
 Plume follows clean architecture principles with clear separation of concerns:
 
 ### Frontend (TypeScript/React)
+
 ```
 src/
 ├── components/          # Atomic Design Components
 │   ├── atoms/           # Basic UI elements (Button, Icon)
-│   ├── molecules/       # Component combinations (ImageCard, FileUpload)  
+│   ├── molecules/       # Component combinations (ImageCard, FileUpload)
 │   ├── organisms/       # Complex components (ImageList, DropZone)
 │   └── templates/       # Page layouts
 ├── domain/              # Business Logic
@@ -106,6 +111,7 @@ src/
 ```
 
 ### Backend (Rust)
+
 ```
 src-tauri/src/
 ├── commands/            # Tauri command handlers
@@ -117,7 +123,7 @@ src-tauri/src/
 │   │   ├── stats.rs     # fn estimate(), CompressionStat
 │   │   ├── store.rs     # trait StatsStore + impls
 │   │   └── error.rs     # CompressionError enum
-│   ├── image/           # Image processing domain  
+│   ├── image/           # Image processing domain
 │   │   ├── metadata.rs  # ImageInfo, ImageMetadata structs
 │   │   ├── process.rs   # fn resize(), fn optimize()
 │   │   └── error.rs     # ImageError enum
@@ -130,6 +136,7 @@ src-tauri/src/
 ```
 
 ### Key Design Patterns
+
 - **Functional Architecture**: Pure functions + data structures (Rust)
 - **Domain-Driven Design**: Rich domain models with business logic (TypeScript)
 - **Clean Architecture**: Dependencies point inward to the domain
@@ -145,7 +152,7 @@ pnpm test
 # Run frontend tests
 pnpm test:frontend
 
-# Run Rust tests  
+# Run Rust tests
 cargo test
 
 # Run E2E tests
@@ -158,7 +165,7 @@ pnpm test:coverage
 ## 🚀 Performance
 
 - **PNG Optimization**: Up to 70% size reduction with oxipng
-- **WebP Conversion**: 25-35% smaller than JPEG with same quality  
+- **WebP Conversion**: 25-35% smaller than JPEG with same quality
 - **Multi-threading**: Utilizes all CPU cores for batch processing
 - **Memory Efficient**: Streaming compression for large files
 - **Native Speed**: Rust backend eliminates JavaScript bottlenecks
@@ -168,8 +175,9 @@ pnpm test:coverage
 See [TODO.md](./TODO.md) for detailed development plans.
 
 ### Upcoming Features
+
 - [ ] HEIF/HEIC support for iPhone users
-- [ ] AVIF format support  
+- [ ] AVIF format support
 - [ ] Video compression
 
 ## 🤝 Contributing
@@ -177,6 +185,7 @@ See [TODO.md](./TODO.md) for detailed development plans.
 We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md) to get started.
 
 ### Quick Start for Contributors
+
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Make your changes following our code style
@@ -184,8 +193,9 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 5. Submit a pull request
 
 ### Development Standards
+
 - **Code Style**: Prettier + ESLint for TypeScript, rustfmt for Rust
-- **Testing**: Jest for frontend, built-in test framework for Rust
+- **Testing**: Vitest for frontend, built-in test framework for Rust
 - **Commits**: Conventional commits with meaningful messages
 - **Documentation**: Update relevant docs with any changes
 
@@ -200,7 +210,6 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 - [oxipng](https://github.com/shssoichiro/oxipng) - PNG optimization
 - [webp](https://developers.google.com/speed/webp/) - Modern image format
 
-
 ## 🙏 Acknowledgments
 
 - The Tauri team for the amazing framework
@@ -210,13 +219,14 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 ## License
 
 Plume is licensed under **CeCILL v2.1**. For more details, see the [LICENSE](./LICENSE.md) file.
+
 ## 📞 Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/triplecasquette/plume/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/triplecasquette/plume/discussions) 
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/Axiome-Apps/Plume/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/Axiome-Apps/Plume/discussions)
 
 ---
 
 <div align="center">
-  <strong>Made with ❤️ and ⚡ by the Axiome app community</strong>
+  <strong>Made with ❤️ and ⚡ by the Axiome Apps community</strong>
 </div>
