@@ -69,7 +69,7 @@ impl CompressionSettings {
 
 impl Default for CompressionSettings {
     fn default() -> Self {
-        Self::new(80, OutputFormat::WebP)
+        Self::new(85, OutputFormat::WebP)
     }
 }
 

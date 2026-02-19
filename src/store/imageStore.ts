@@ -94,7 +94,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   compressionState: 'idle',
   isProcessing: false,
   compressionSettings: {
-    quality: 80,
+    quality: 85,
     keepOriginalFormat: false,
     heicOutputFormat: 'jpeg',
   },
@@ -400,6 +400,10 @@ export const useImageStore = create<ImageStore>((set, get) => ({
               ),
             }));
 
+            if (response.result.compressed_size >= image.originalSize) {
+              toast.info(`${image.name} est déjà optimisé`);
+            }
+
             // Enregistrer le résultat de compression avec timing dans la base de données
             try {
               const outputFormat =
@@ -518,7 +522,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     set(state => ({
       compressionSettings: {
         ...state.compressionSettings,
-        quality: state.compressionSettings.quality >= 90 ? 80 : 95,
+        quality: state.compressionSettings.quality >= 100 ? 85 : 100,
       },
     }));
   },

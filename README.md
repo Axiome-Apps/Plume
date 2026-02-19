@@ -37,8 +37,8 @@ brew install --cask axiome-apps/tap/plume
 
 | Architecture             | Download                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------- |
-| Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_aarch64.dmg |
-| Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_x64.dmg     |
+| Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_aarch64.dmg |
+| Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_x64.dmg     |
 
 ⚠️ Direct download only: macOS blocks unsigned apps. Run this command to unblock:
 
@@ -50,8 +50,8 @@ xattr -dr com.apple.quarantine /Applications/Plume.app
 
 | Format | Download                                                                                |
 | ------ | --------------------------------------------------------------------------------------- |
-| MSI    | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_x64_en-US.msi |
-| EXE    | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_x64-setup.exe |
+| MSI    | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_x64_en-US.msi |
+| EXE    | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_x64-setup.exe |
 
 ⚠️ If SmartScreen blocks the app, click "More info" → "Run anyway".
 
@@ -59,9 +59,9 @@ xattr -dr com.apple.quarantine /Applications/Plume.app
 
 | Format   | Download                                                                                 |
 | -------- | ---------------------------------------------------------------------------------------- |
-| AppImage | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_amd64.AppImage |
-| Deb      | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume_0.1.0_amd64.deb      |
-| RPM      | https://github.com/Axiome-Apps/Plume/releases/download/v0.1.0/Plume-0.1.0-1.x86_64.rpm   |
+| AppImage | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_amd64.AppImage |
+| Deb      | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_amd64.deb      |
+| RPM      | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume-0.2.0-1.x86_64.rpm   |
 
 For AppImage, make it executable:
 
@@ -185,6 +185,7 @@ See [TODO.md](./TODO.md) for detailed development plans.
 
 - [x] HEIC/HEIF support for iPhone photos
 - [x] MozJPEG encoder for better JPEG compression
+- [x] Smart format selection UI (WebP/Original/HEIC flows)
 - [ ] AVIF format support
 - [ ] Video compression
 

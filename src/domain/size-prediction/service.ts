@@ -131,13 +131,13 @@ export class CompressionEstimationService {
 
     // Logique de fallback basée sur les données connues
     if (inputLower === 'png' && outputLower === 'webp') {
-      percent = lossyMode ? 65 : 20; // Moins agressif que les 98% originaux
+      percent = lossyMode ? 65 : 20;
     } else if (inputLower === 'jpeg' && outputLower === 'webp') {
-      percent = 25;
+      percent = 8; // JPEG déjà lossy, gain WebP marginal
     } else if (inputLower === 'png' && outputLower === 'png') {
-      percent = 12; // Optimisation PNG
+      percent = 12;
     } else if (inputLower === 'jpeg' && outputLower === 'jpeg') {
-      percent = 18; // Optimisation JPEG
+      percent = 15;
     }
 
     return EnhancedCompressionEstimationSchema.parse({

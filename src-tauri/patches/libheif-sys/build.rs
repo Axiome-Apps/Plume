@@ -12,18 +12,25 @@ fn main() {
 
     // Tell cargo to tell rustc to link the heif library.
 
+    #[cfg(feature = "embedded-libheif")]
+    let include_paths = find_libheif_embedded();
+
+    #[cfg(not(feature = "embedded-libheif"))]
     #[cfg(not(all(target_os = "windows", target_env = "msvc")))]
-    #[allow(unused_variables)]
     let include_paths = find_libheif();
 
+    #[cfg(not(feature = "embedded-libheif"))]
     #[cfg(all(target_os = "windows", target_env = "msvc"))]
-    #[allow(unused_variables)]
-    let include_paths: Vec<String> = Vec::new();
-    #[cfg(all(target_os = "windows", target_env = "msvc"))]
-    install_libheif_by_vcpkg();
+    let include_paths = {
+        install_libheif_by_vcpkg();
+        Vec::<String>::new()
+    };
 
     #[cfg(feature = "use-bindgen")]
     run_bindgen(&include_paths);
+
+    // Suppress unused warning when use-bindgen is off
+    let _ = include_paths;
 }
 
 #[allow(dead_code)]
@@ -45,15 +52,77 @@ fn prepare_libheif_src() -> PathBuf {
 }
 
 #[cfg(feature = "embedded-libheif")]
-fn compile_libheif() -> String {
-    use std::path::PathBuf;
+fn compile_libde265() -> PathBuf {
+    let out_path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+    let crate_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+    let src = crate_dir.join("vendor/libde265");
+    let dst = out_path.join("libde265_src");
+    if dst.exists() {
+        std::fs::remove_dir_all(&dst).unwrap();
+    }
+    copy_dir_all(&src, &dst).unwrap();
 
+    // Patch root CMakeLists.txt to remove dec265/enc265 subdirectory calls
+    // (we deleted those tool directories from the vendored source)
+    let cmake_path = dst.join("CMakeLists.txt");
+    let contents = std::fs::read_to_string(&cmake_path).unwrap();
+    let contents = contents
+        .replace("add_subdirectory (dec265)", "")
+        .replace("add_subdirectory (enc265)", "");
+    std::fs::write(&cmake_path, contents).unwrap();
+
+    let mut config = cmake::Config::new(&dst);
+    config.out_dir(out_path.join("libde265_build"));
+    config.define("CMAKE_INSTALL_LIBDIR", "lib");
+    config.define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
+    config.define("BUILD_SHARED_LIBS", "OFF");
+    config.define("ENABLE_SDL", "OFF");
+    config.define("ENABLE_ENCODER", "OFF");
+    config.define("ENABLE_DECODER", "ON");
+    config.define("BUILD_TESTING", "OFF");
+    config.build()
+}
+
+#[cfg(feature = "embedded-libheif")]
+fn compile_libheif() -> String {
     let out_path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let libheif_dir = prepare_libheif_src();
+
+    // Build libde265 first
+    let de265_prefix = compile_libde265();
+    let de265_include = de265_prefix.join("include");
+    let de265_lib_dir = de265_prefix.join("lib");
+
+    // Find the actual library file
+    let de265_lib = if cfg!(target_os = "windows") {
+        // On Windows, cmake builds produce libde265.lib or de265.lib
+        let lib1 = de265_lib_dir.join("libde265.lib");
+        let lib2 = de265_lib_dir.join("de265.lib");
+        if lib1.exists() { lib1 } else { lib2 }
+    } else {
+        de265_lib_dir.join("libde265.a")
+    };
+
+    // Set PKG_CONFIG_PATH so libheif's cmake can find libde265
+    let de265_pc_dir = de265_lib_dir.join("pkgconfig");
+    if let Ok(existing) = std::env::var("PKG_CONFIG_PATH") {
+        std::env::set_var(
+            "PKG_CONFIG_PATH",
+            format!("{}:{}", de265_pc_dir.display(), existing),
+        );
+    } else {
+        std::env::set_var("PKG_CONFIG_PATH", &de265_pc_dir);
+    }
+    std::env::set_var("PKG_CONFIG_ALLOW_CROSS", "1");
 
     let mut build_config = cmake::Config::new(libheif_dir);
     build_config.out_dir(out_path.join("libheif_build"));
     build_config.define("CMAKE_INSTALL_LIBDIR", "lib");
+
+    // Point libheif to our vendored libde265
+    build_config.define("CMAKE_PREFIX_PATH", de265_prefix.to_str().unwrap());
+    build_config.define("LIBDE265_INCLUDE_DIR", de265_include.to_str().unwrap());
+    build_config.define("LIBDE265_LIBRARY", de265_lib.to_str().unwrap());
 
     // Disable some options
     for key in [
@@ -139,19 +208,63 @@ fn compile_libheif() -> String {
         .to_string()
 }
 
-#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
-fn find_libheif() -> Vec<String> {
-    #[allow(unused_mut)]
-    let mut config = system_deps::Config::new();
-
-    #[cfg(feature = "embedded-libheif")]
+#[cfg(feature = "embedded-libheif")]
+fn find_libheif_embedded() -> Vec<String> {
+    // On non-Windows, use system_deps with our embedded build
+    #[cfg(not(all(target_os = "windows", target_env = "msvc")))]
     {
+        let mut config = system_deps::Config::new();
         std::env::set_var("SYSTEM_DEPS_LIBHEIF_BUILD_INTERNAL", "always");
         config = config.add_build_internal("libheif", |lib, version| {
             let pc_file_path = compile_libheif();
             system_deps::Library::from_internal_pkg_config(pc_file_path, lib, version)
         });
+
+        match config.probe() {
+            Ok(deps) => deps
+                .all_include_paths()
+                .iter()
+                .filter_map(|p| p.to_str())
+                .map(|p| p.to_string())
+                .collect(),
+            Err(err) => {
+                println!("cargo:error={err}");
+                std::process::exit(1);
+            }
+        }
     }
+
+    // On Windows MSVC, system_deps/pkg-config is not reliable.
+    // Compile embedded and emit link directives manually.
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
+    {
+        let heif_pc_path = compile_libheif();
+        let heif_lib_dir = PathBuf::from(&heif_pc_path)
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let heif_include_dir = heif_lib_dir.parent().unwrap().join("include");
+
+        let out_path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+        let de265_lib_dir = out_path.join("libde265_build").join("lib");
+
+        println!("cargo:rustc-link-search=native={}", heif_lib_dir.display());
+        println!("cargo:rustc-link-search=native={}", de265_lib_dir.display());
+        println!("cargo:rustc-link-lib=static=heif");
+        println!("cargo:rustc-link-lib=static=de265");
+        // C++ runtime on MSVC
+        println!("cargo:rustc-link-lib=dylib=c++");
+
+        vec![heif_include_dir.to_string_lossy().to_string()]
+    }
+}
+
+#[cfg(not(feature = "embedded-libheif"))]
+#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
+fn find_libheif() -> Vec<String> {
+    let config = system_deps::Config::new();
 
     use system_deps::Error;
 
@@ -181,6 +294,7 @@ fn find_libheif() -> Vec<String> {
     }
 }
 
+#[cfg(not(feature = "embedded-libheif"))]
 #[cfg(all(target_os = "windows", target_env = "msvc"))]
 fn install_libheif_by_vcpkg() {
     let vcpkg_lib = vcpkg::Config::new()
