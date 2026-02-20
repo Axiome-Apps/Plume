@@ -17,7 +17,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const Button: React.FC<ButtonProps> = ({
   variant = 'filled',
   size = 'md',
-  color = 'blue',
+  color = 'primary',
   children,
   className = '',
   disabled = false,

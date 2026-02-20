@@ -15,11 +15,11 @@ function formatFileSize(bytes: number): string {
 
 export function FileInfo({ name, size, format, className }: FileInfoProps) {
   return (
-    <div className={`text-sm text-gray-700 ${className}`}>
+    <div className={`text-sm text-text/70 ${className}`}>
       <div className="font-medium truncate" title={name}>
         {name}
       </div>
-      <div className="text-gray-500">
+      <div className="text-text/50">
         {formatFileSize(size)} • {format.toUpperCase()}
       </div>
     </div>

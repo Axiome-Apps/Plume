@@ -2,25 +2,27 @@ interface SegmentedControlProps<T extends string> {
   options: { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
-  color?: 'blue' | 'green' | 'slate';
+  color?: 'primary' | 'success' | 'accent';
   disabled?: boolean;
+  fullWidth?: boolean;
 }
 
 const COLOR_CLASSES = {
-  blue: 'bg-blue-500 text-white',
-  green: 'bg-green-500 text-white',
-  slate: 'bg-slate-600 text-white',
+  primary: 'bg-primary text-white',
+  success: 'bg-success text-white',
+  accent: 'bg-accent text-white',
 } as const;
 
 export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
-  color = 'blue',
+  color = 'primary',
   disabled = false,
+  fullWidth = false,
 }: SegmentedControlProps<T>) {
   return (
-    <div className="flex gap-0.5 bg-slate-200 rounded-lg p-0.5">
+    <div className={`flex gap-0.5 bg-secondary/15 rounded-lg p-0.5 ${fullWidth ? 'w-full' : ''}`}>
       {options.map(option => {
         const isActive = option.value === value;
         return (
@@ -29,9 +31,11 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             disabled={disabled}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              fullWidth ? 'flex-1 text-center' : ''
+            } ${
               isActive
                 ? COLOR_CLASSES[color]
-                : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+                : 'text-text/60 hover:text-text/80 hover:bg-secondary/10'
             } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             {option.label}

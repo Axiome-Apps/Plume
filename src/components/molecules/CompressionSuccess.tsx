@@ -17,18 +17,18 @@ export const CompressionSuccess: FC = () => {
   const shouldShow = pendingImages.length === 0 && !isProcessing && completedImages.length > 0;
   if (!shouldShow) return null;
   return (
-    <div className="bg-white rounded-xl p-6 border border-slate-200 text-center">
+    <div className="bg-white rounded-xl p-6 border border-secondary/20 text-center">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-slate-800 mb-2">🎉 {t('success.title')}</h3>
-        <p className="text-slate-600">{t('success.description')}</p>
+        <h3 className="text-lg font-semibold text-text mb-2">🎉 {t('success.title')}</h3>
+        <p className="text-text/60">{t('success.description')}</p>
       </div>
       <div className="flex justify-center gap-3">
-        <Button onClick={downloadAllImages} color="green">
+        <Button onClick={downloadAllImages} color="success">
           <DownloadIcon size={16} className="mr-2" />
           {t('success.download')} ({completedImages.length})
         </Button>
 
-        <Button variant="outlined" color="slate" onClick={clearImages}>
+        <Button variant="outlined" color="secondary" onClick={clearImages}>
           <TrashIcon size={16} className="mr-2" />
           {t('success.startOver')}
         </Button>

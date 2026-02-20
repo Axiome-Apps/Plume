@@ -10,14 +10,14 @@ interface ImagePreviewProps {
 export function ImagePreview({ imageUrl, status, className }: ImagePreviewProps) {
   return (
     <div className={`relative aspect-square ${className}`}>
-      <div className="w-full h-full bg-gray-100 rounded-lg overflow-hidden">
+      <div className="w-full h-full bg-secondary/10 rounded-lg overflow-hidden">
         {imageUrl ? (
           <img src={imageUrl} alt="Image preview" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-            <div className="w-12 h-12 bg-gray-300 rounded-lg flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-background to-secondary/10 flex items-center justify-center">
+            <div className="w-12 h-12 bg-secondary/20 rounded-lg flex items-center justify-center">
               <svg
-                className="w-6 h-6 text-gray-500"
+                className="w-6 h-6 text-text/30"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -34,7 +34,7 @@ export function ImagePreview({ imageUrl, status, className }: ImagePreviewProps)
         )}
       </div>
 
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2">
         <StatusBadge status={status} />
       </div>
     </div>

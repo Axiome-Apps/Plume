@@ -1,5 +1,5 @@
-import { ProgressBar, Badge } from '@/components/atoms';
-import { ImagePreview, ImageActions } from '@/components/molecules';
+import { Badge, ProgressBar } from '@/components/atoms';
+import { ImageActions, ImagePreview } from '@/components/molecules';
 import type { ImageEntity } from '@/domain/image/entity';
 
 interface ImageCardProps {
@@ -7,49 +7,41 @@ interface ImageCardProps {
   onDownload?: () => void;
   onRemove?: () => void;
   onCompress?: () => void;
-  className?: string;
 }
 
-export function ImageCard({ image, onDownload, onRemove, onCompress, className }: ImageCardProps) {
+export function ImageCard({ image, onDownload, onRemove, onCompress }: ImageCardProps) {
   return (
-    <div
-      className={`p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow ${className}`}
-    >
-      {/* Layout responsive */}
-      <div className="grid grid-cols-1 md:grid-cols-[96px_1fr_auto] gap-4 items-start">
-        {/* Preview - Full width sur mobile, taille fixe sur desktop */}
+    <div className="flex items-center justify-between p-4 border border-secondary/20 rounded-lg bg-white hover:shadow-md transition-shadow gap-4">
+      <div className="flex items-center gap-4 min-w-0 flex-1">
         <ImagePreview
           imageUrl={image.preview}
           status={image.status}
-          className="w-full aspect-square md:w-24 md:h-24 mx-auto md:mx-0"
+          className="w-20 h-20 shrink-0"
         />
 
-        {/* Informations - Centrées sur mobile */}
-        <div className="space-y-2 text-center md:text-left">
-          {/* Nom du fichier */}
-          <h3 className="font-medium text-gray-900 truncate">{image.name}</h3>
+        <div className="space-y-1.5 min-w-0 flex-1">
+          <h3 className="font-medium text-text truncate">{image.name}</h3>
 
-          <div className="flex items-center justify-center md:justify-start gap-2 text-sm">
-            <Badge color="gray">{image.format.toUpperCase()}</Badge>
-            <span className="text-gray-600">{formatFileSize(image.originalSize)}</span>
+          <div className="flex items-center gap-2 text-sm">
+            <Badge color="secondary">{image.format.toUpperCase()}</Badge>
+            <span className="text-text/60">{formatFileSize(image.originalSize)}</span>
           </div>
 
-          {/* Progress pour processing */}
           {image.status === 'processing' && image.progress !== undefined && (
             <div className="space-y-1">
               <ProgressBar progress={image.progress} />
-              <div className="text-xs text-gray-500">{image.progress}% terminé</div>
+              <div className="text-xs text-text/50">{image.progress}% terminé</div>
             </div>
           )}
 
           {image.status === 'pending' && image.estimatedCompression && (
-            <div className="flex items-center justify-center md:justify-start gap-2 text-sm">
+            <div className="text-sm">
               {image.estimatedCompression.percent < 10 ? (
-                <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-medium">
+                <span className="bg-warning/10 text-warning px-2 py-0.5 rounded text-xs font-medium">
                   Déjà optimisé — gain estimé ~{image.estimatedCompression.percent.toFixed(0)}%
                 </span>
               ) : (
-                <span className="text-slate-500">
+                <span className="text-text/50">
                   Économie estimée : ~{image.estimatedCompression.percent.toFixed(0)}%
                 </span>
               )}
@@ -57,32 +49,28 @@ export function ImageCard({ image, onDownload, onRemove, onCompress, className }
           )}
 
           {image.status === 'completed' && image.compressedSize !== undefined && (
-            <div className="flex items-center justify-center md:justify-start gap-2 text-sm">
-              <span className="text-gray-600">→ {formatFileSize(image.compressedSize)}</span>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-text/60">→ {formatFileSize(image.compressedSize)}</span>
               {image.savings && image.savings > 0 ? (
-                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">
+                <span className="bg-success/10 text-success px-2 py-0.5 rounded text-xs font-medium">
                   -{image.savings}%
                 </span>
               ) : (
-                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-medium">
+                <span className="bg-secondary/10 text-text/60 px-2 py-0.5 rounded text-xs font-medium">
                   Déjà optimisé
                 </span>
               )}
             </div>
           )}
         </div>
-
-        {/* Actions responsive */}
-        <div className="md:justify-self-end w-full md:w-auto">
-          <ImageActions
-            status={image.status}
-            onCompress={onCompress}
-            onDownload={onDownload}
-            onRemove={onRemove}
-            className="w-full md:w-auto"
-          />
-        </div>
       </div>
+
+      <ImageActions
+        status={image.status}
+        onCompress={onCompress}
+        onDownload={onDownload}
+        onRemove={onRemove}
+      />
     </div>
   );
 }

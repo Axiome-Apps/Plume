@@ -31,20 +31,20 @@ export function CompressionStats({
     <div className={`text-sm space-y-1 ${className}`}>
       {isCompleted ? (
         <>
-          <div className="flex items-center justify-between text-gray-600">
+          <div className="flex items-center justify-between text-text/60">
             <span>{t('stats.finalSize')}</span>
             <span>{formatFileSize(actualCompressedSize)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-600">{t('stats.economy')}</span>
-            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
+            <span className="text-text/60">{t('stats.economy')}</span>
+            <span className="bg-success/10 text-success px-2 py-1 rounded text-xs font-medium">
               -{actualSavings}%
             </span>
           </div>
         </>
       ) : (
         estimatedCompression && (
-          <div className="text-gray-500">
+          <div className="text-text/50">
             <div className="flex items-center justify-between">
               <span>{t('stats.estimation')}</span>
               <span>~{estimatedCompression.percent}%</span>

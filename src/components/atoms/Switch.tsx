@@ -6,7 +6,7 @@ interface SwitchProps {
   checkedLabel: string;
   uncheckedLabel: string;
   className?: string;
-  color?: 'green' | 'blue';
+  color?: 'success' | 'primary';
 }
 
 export const Switch: FC<SwitchProps> = ({
@@ -15,11 +15,11 @@ export const Switch: FC<SwitchProps> = ({
   checkedLabel,
   uncheckedLabel,
   className = '',
-  color = 'green',
+  color = 'success',
 }) => {
   const colorClasses = {
-    green: 'bg-green-500',
-    blue: 'bg-blue-500',
+    success: 'bg-success',
+    primary: 'bg-primary',
   };
 
   return (
@@ -27,7 +27,7 @@ export const Switch: FC<SwitchProps> = ({
       <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
       <div
         className={`relative w-12 h-6 rounded-full transition-colors ${
-          checked ? colorClasses[color] : 'bg-slate-300'
+          checked ? colorClasses[color] : 'bg-secondary/40'
         }`}
       >
         <div
@@ -36,7 +36,7 @@ export const Switch: FC<SwitchProps> = ({
           }`}
         />
       </div>
-      <span className="text-sm font-medium text-slate-700">
+      <span className="text-sm font-medium text-text/70">
         {checked ? checkedLabel : uncheckedLabel}
       </span>
     </label>

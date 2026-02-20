@@ -37,7 +37,7 @@ export const StatsDebug: FC = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 bg-slate-900 text-white p-4 rounded-lg shadow-lg max-w-sm">
+    <div className="fixed bottom-4 right-4 bg-text text-white p-4 rounded-lg shadow-lg max-w-sm">
       <h3 className="font-bold mb-2">📊 Debug Stats</h3>
 
       <div className="flex gap-2 mb-3">

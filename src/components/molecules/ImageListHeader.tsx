@@ -3,6 +3,8 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useImageStore } from '@/store/imageStore';
 import { FC } from 'react';
 import { Badge } from '../atoms';
+import Button from '../atoms/Button';
+import { DownloadIcon, FeatherIcon, TrashIcon } from '../icons';
 import { CompressionControls } from './CompressionControls';
 
 export const ImageListHeader: FC = () => {
@@ -35,48 +37,70 @@ export const ImageListHeader: FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 border border-slate-200">
-      <div className="flex flex-col justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">{getHeaderTitle()}</h2>
-        <div className="flex gap-4 text-sm text-slate-600">
-          <div className="flex flex-col">
-            <span className="mb-2">
-              {images.length} image{images.length > 1 ? 's' : ''} : {formatFileSize(totalSize)}
-            </span>
+    <div className="bg-white rounded-xl p-4 sm:p-5 border border-secondary/20 space-y-3">
+      {/* Line 1 - Info: title + stats + action buttons */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-lg font-bold text-primary">{getHeaderTitle()}</h2>
+          <span className="text-sm text-text/50">
+            {images.length} image{images.length > 1 ? 's' : ''} · {formatFileSize(totalSize)}
+          </span>
+          <div className="flex flex-wrap gap-1.5">
             {pendingImages.length > 0 && (
-              <Badge color="yellow">
+              <Badge color="warning">
                 {pendingImages.length} {t('compression.pending')}
               </Badge>
             )}
             {processingImages.length > 0 && (
-              <Badge color="blue">
+              <Badge color="primary">
                 {processingImages.length} {t('compression.processing')}
               </Badge>
             )}
             {completedImages.length > 0 && (
-              <Badge color="green">
+              <Badge color="success">
                 {completedImages.length} {t('compression.completed')}
               </Badge>
             )}
           </div>
+        </div>
 
-          {pendingImages.length > 0 && (
-            <CompressionControls
-              images={images}
-              pendingImages={pendingImages}
-              completedImages={completedImages}
-              isProcessing={isProcessing}
-              outputFormat={compressionSettings.outputFormat}
-              compressionLevel={compressionSettings.compressionLevel}
-              onOutputFormatChange={setOutputFormat}
-              onCompressionLevelChange={setCompressionLevel}
-              onStartCompression={startCompression}
-              onClearImages={clearImages}
-              onDownloadAllImages={downloadAllImages}
-            />
+        <div className="flex gap-2">
+          {images.length > 1 && (
+            <Button variant="outlined" color="error" onClick={clearImages} disabled={isProcessing}>
+              <TrashIcon size={16} />
+            </Button>
+          )}
+          {pendingImages.length > 0 && images.length > 1 && (
+            <Button
+              variant="filled"
+              color="primary"
+              onClick={startCompression}
+              disabled={isProcessing || pendingImages.length === 0}
+            >
+              <FeatherIcon size={16} className="mr-2" />
+              {isProcessing ? t('header.compression.active') : t('header.compression.pending')}
+            </Button>
+          )}
+          {completedImages.length > 0 && images.length > 1 && (
+            <Button variant="filled" color="success" onClick={downloadAllImages}>
+              <DownloadIcon size={16} className="mr-2" />
+              {t('header.downloadAll')} ({completedImages.length})
+            </Button>
           )}
         </div>
       </div>
+
+      {/* Lines 2 & 3 - Format + Compression controls */}
+      {pendingImages.length > 0 && (
+        <CompressionControls
+          images={images}
+          isProcessing={isProcessing}
+          outputFormat={compressionSettings.outputFormat}
+          compressionLevel={compressionSettings.compressionLevel}
+          onOutputFormatChange={setOutputFormat}
+          onCompressionLevelChange={setCompressionLevel}
+        />
+      )}
     </div>
   );
 };

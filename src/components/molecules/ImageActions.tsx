@@ -1,85 +1,44 @@
 import { Button } from '@/components/atoms';
 import { FeatherIcon, DownloadIcon, TrashIcon } from '@/components/icons';
 import type { ImageStatus } from '@/domain/image';
-import { useTranslation } from '@/hooks/useTranslation';
 
 interface ImageActionsProps {
   status: ImageStatus;
   onCompress?: () => void;
   onDownload?: () => void;
   onRemove?: () => void;
-  className?: string;
 }
 
-export function ImageActions({
-  status,
-  onCompress,
-  onDownload,
-  onRemove,
-  className,
-}: ImageActionsProps) {
-  const { t } = useTranslation();
+const squareBtn = '!p-0 h-16 w-16 !rounded-full';
 
+export function ImageActions({ status, onCompress, onDownload, onRemove }: ImageActionsProps) {
   return (
-    <div className={`flex gap-1 ${className}`}>
+    <div className="flex gap-2 h-full">
       {status === 'pending' && (
         <>
-          <Button
-            onClick={onCompress}
-            size="sm"
-            color="blue"
-            className="flex-[2] md:flex-none md:p-2"
-            title="Compresser"
-          >
-            <FeatherIcon size={16} className="md:mx-0" />
-            <span className="ml-2 md:hidden">Compresser</span>
+          <Button onClick={onCompress} color="accent" className={squareBtn} title="Compresser">
+            <FeatherIcon size={28} />
           </Button>
-          <Button
-            onClick={onRemove}
-            size="sm"
-            color="red"
-            className="flex-1 md:flex-none md:p-2"
-            title="Supprimer"
-          >
-            <TrashIcon size={16} />
+          <Button onClick={onRemove} color="error" className={squareBtn} title="Supprimer">
+            <TrashIcon size={28} />
           </Button>
         </>
       )}
 
       {status === 'completed' && (
         <>
-          <Button
-            onClick={onDownload}
-            size="sm"
-            color="green"
-            className="flex-[2] md:flex-none md:p-2"
-            title="Télécharger"
-          >
-            <DownloadIcon size={16} />
-            <span className="ml-2 md:hidden">{t('common.download')}</span>
+          <Button onClick={onDownload} color="success" className={squareBtn} title="Télécharger">
+            <DownloadIcon size={28} />
           </Button>
-          <Button
-            onClick={onRemove}
-            size="sm"
-            color="red"
-            className="flex-1 md:flex-none md:p-2"
-            title="Supprimer"
-          >
-            <TrashIcon size={16} />
+          <Button onClick={onRemove} color="error" className={squareBtn} title="Supprimer">
+            <TrashIcon size={28} />
           </Button>
         </>
       )}
 
       {(status === 'processing' || status === 'error') && (
-        <Button
-          onClick={onRemove}
-          size="sm"
-          color="red"
-          className="w-full md:w-auto md:p-2"
-          title="Supprimer"
-        >
-          <TrashIcon size={16} />
-          <span className="ml-2 md:hidden">Supprimer</span>
+        <Button onClick={onRemove} color="error" className={squareBtn} title="Supprimer">
+          <TrashIcon size={28} />
         </Button>
       )}
     </div>
