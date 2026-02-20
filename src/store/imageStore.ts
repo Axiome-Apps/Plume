@@ -302,26 +302,30 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             compressionSettings.compressionLevel,
             image.format
           );
-          let estimatedDurationMs = 1000; // Fallback par défaut
 
+          // Obtenir l'estimation de durée depuis la BDD (avec fallback heuristique)
+          let estimatedDurationMs = 3000;
           try {
             const estimation = await invoke<{
               estimated_duration_ms: number;
               confidence: number;
               sample_count: number;
             }>('get_progress_estimation', {
-              input_format: image.format,
-              output_format: outputFormatForImage === 'auto' ? image.format : outputFormatForImage,
-              original_size: image.originalSize,
-              quality_setting: quality,
-              lossy_mode: lossy,
+              request: {
+                input_format: image.format.toLowerCase(),
+                output_format:
+                  outputFormatForImage === 'auto'
+                    ? image.format.toLowerCase()
+                    : outputFormatForImage,
+                original_size: image.originalSize,
+              },
             });
             estimatedDurationMs = estimation.estimated_duration_ms;
             console.log(
-              `⏱️ Estimated compression time: ${estimatedDurationMs}ms (confidence: ${estimation.confidence})`
+              `⏱️ Estimated compression time: ${Math.round(estimatedDurationMs)}ms (confidence: ${estimation.confidence.toFixed(2)}, samples: ${estimation.sample_count})`
             );
-          } catch (error) {
-            console.warn(`⚠️ Could not get time estimation, using fallback: ${error}`);
+          } catch (err) {
+            console.warn('⚠️ Failed to get DB estimation, using default:', err);
           }
 
           // Créer et démarrer le gestionnaire de progression adaptatif

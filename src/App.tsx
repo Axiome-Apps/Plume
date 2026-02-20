@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import AppLayout from './components/templates/AppLayout';
 import DropZone from './components/organisms/DropZone';
 import ImageList from './components/organisms/ImageList';
@@ -12,18 +13,13 @@ function App() {
 
   useDragDropGlobal(handleExternalDrop);
 
-  // Initialiser l'écoute des événements de progression au démarrage
   useEffect(() => {
     initializeProgressListener();
+    // Initialize DB tables and seed baseline stats on first run
+    invoke('init_database').catch(console.warn);
   }, [initializeProgressListener]);
 
-  return (
-    <AppLayout>
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        {currentView === 'drop' ? <DropZone /> : <ImageList />}
-      </div>
-    </AppLayout>
-  );
+  return <AppLayout>{currentView === 'drop' ? <DropZone /> : <ImageList />}</AppLayout>;
 }
 
 export default App;

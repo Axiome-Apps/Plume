@@ -67,6 +67,73 @@ pub async fn record_compression_stat(
     db.save_compression_stat(&stat)
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProgressEstimationRequest {
+    pub input_format: String,
+    pub output_format: String,
+    pub original_size: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProgressEstimationResult {
+    pub estimated_duration_ms: u64,
+    pub confidence: f64,
+    pub sample_count: u32,
+}
+
+/// Get estimated compression duration in ms based on historical DB data.
+/// Falls back to a size/format heuristic when DB has fewer than 3 samples.
+#[allow(dead_code)] // used via tauri::generate_handler! — not visible to Rust's dead_code lint
+#[tauri::command]
+pub async fn get_progress_estimation(
+    request: ProgressEstimationRequest,
+    app: AppHandle,
+) -> Result<ProgressEstimationResult, String> {
+    let db = DatabaseManager::new(&app)?;
+    db.connect()?;
+
+    if let Some((avg_ms, count)) = db.get_time_estimation(
+        &request.input_format,
+        &request.output_format,
+        request.original_size,
+    )? {
+        let confidence = (count as f64 / 20.0).min(1.0);
+        return Ok(ProgressEstimationResult {
+            estimated_duration_ms: avg_ms,
+            confidence,
+            sample_count: count,
+        });
+    }
+
+    // Fallback heuristic when DB has no data yet
+    let size_mb = request.original_size as f64 / (1024.0 * 1024.0);
+    let is_heic = matches!(
+        request.input_format.to_lowercase().as_str(),
+        "heic" | "heif"
+    );
+    let is_png = request.output_format.to_lowercase() == "png";
+
+    let mut estimated_ms: u64 = 2000;
+    if size_mb > 1.0 {
+        estimated_ms += (size_mb * 1500.0) as u64;
+    }
+    if size_mb > 5.0 {
+        estimated_ms += (size_mb * 1000.0) as u64;
+    }
+    if is_heic {
+        estimated_ms = (estimated_ms as f64 * 1.5) as u64;
+    }
+    if is_png {
+        estimated_ms *= 2;
+    }
+
+    Ok(ProgressEstimationResult {
+        estimated_duration_ms: estimated_ms,
+        confidence: 0.0,
+        sample_count: 0,
+    })
+}
+
 /// Reset all compression statistics
 #[tauri::command]
 pub async fn reset_compression_stats(app: AppHandle) -> Result<(), String> {
