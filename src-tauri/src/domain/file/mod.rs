@@ -51,7 +51,7 @@ pub fn write_compressed_image<P: AsRef<std::path::Path>>(
 /// Get safe temp file path
 pub fn get_temp_file_path(prefix: &str, extension: &str) -> std::path::PathBuf {
     let temp_dir = std::env::temp_dir();
-    let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S_%3f");
+    let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S_%9f");
     let filename = format!("{}_{}.{}", prefix, timestamp, extension);
     temp_dir.join(filename)
 }

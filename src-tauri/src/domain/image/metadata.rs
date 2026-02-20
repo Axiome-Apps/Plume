@@ -188,6 +188,13 @@ pub fn extract_metadata(data: &[u8], format: &str) -> ImageResult<ImageMetadata>
 pub fn classify_image_type(metadata: &ImageMetadata) -> ImageType {
     // Simple heuristics for classification
     let pixel_count = metadata.dimensions.pixel_count();
+    let width = metadata.dimensions.width;
+    let height = metadata.dimensions.height;
+
+    // Exact screen resolutions take priority over generic photo detection
+    if is_typical_screen_resolution(width, height) {
+        return ImageType::Screenshot;
+    }
 
     // Very small images are likely logos
     if pixel_count < 10000 {
@@ -200,13 +207,6 @@ pub fn classify_image_type(metadata: &ImageMetadata) -> ImageType {
         if (0.5..=2.0).contains(&aspect_ratio) {
             return ImageType::Photo;
         }
-    }
-
-    // Check for typical screenshot dimensions
-    let width = metadata.dimensions.width;
-    let height = metadata.dimensions.height;
-    if is_typical_screen_resolution(width, height) {
-        return ImageType::Screenshot;
     }
 
     // Default classification based on estimated complexity

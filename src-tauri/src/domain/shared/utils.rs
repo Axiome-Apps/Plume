@@ -198,7 +198,7 @@ pub mod string {
 
     /// Generate safe temporary filename
     pub fn generate_temp_filename(prefix: &str, extension: &str) -> String {
-        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S_%3f");
+        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S_%9f");
         let sanitized_prefix = sanitize_filename(prefix);
         let sanitized_ext = path::normalize_extension(extension);
 

@@ -113,47 +113,40 @@ impl CompressionPredictionService {
 
     /// Adjusts compression prediction based on file size
     fn adjust_for_size(&self, base_reduction: f64, file_size: u64) -> f64 {
-        let size_range = get_size_range(file_size);
-
-        match size_range.as_str() {
-            "small" => {
-                // Small files often compress less efficiently
-                base_reduction * 0.8
-            }
-            "medium" => {
-                // Medium files are optimal for compression
-                base_reduction
-            }
-            "large" => {
-                // Large files may compress slightly better
-                base_reduction * 1.1
-            }
-            _ => base_reduction,
-        }
+        adjust_for_size(base_reduction, file_size)
     }
 
     /// Estimates sample count for confidence calculation
     fn estimate_sample_count(&self, input_format: &str, output_format: &str) -> u32 {
-        // This is a simplified estimation - in a real implementation,
-        // you might query the database for actual counts
         match (input_format, output_format) {
-            ("PNG", "WebP") | ("JPEG", "WebP") => 50, // Common conversions
-            ("PNG", "PNG") | ("JPEG", "JPEG") => 30,  // Same-format optimizations
-            _ => 10,                                  // Less common conversions
+            ("PNG", "WebP") | ("JPEG", "WebP") => 50,
+            ("PNG", "PNG") | ("JPEG", "JPEG") => 30,
+            _ => 10,
         }
     }
 
     /// Calculates confidence score based on available data
     fn calculate_confidence(&self, base_confidence: f64, sample_count: u32) -> f64 {
-        let sample_factor = match sample_count {
-            0..=5 => 0.3,
-            6..=20 => 0.6,
-            21..=50 => 0.8,
-            _ => 1.0,
-        };
-
-        (base_confidence * sample_factor).min(1.0)
+        calculate_prediction_confidence(base_confidence, sample_count)
     }
+}
+
+fn adjust_for_size(base_reduction: f64, file_size: u64) -> f64 {
+    match get_size_range(file_size).as_str() {
+        "small" => base_reduction * 0.8,
+        "large" => base_reduction * 1.1,
+        _ => base_reduction,
+    }
+}
+
+fn calculate_prediction_confidence(base_confidence: f64, sample_count: u32) -> f64 {
+    let sample_factor = match sample_count {
+        0..=5 => 0.3,
+        6..=20 => 0.6,
+        21..=50 => 0.8,
+        _ => 1.0,
+    };
+    (base_confidence * sample_factor).min(1.0)
 }
 
 /// Create a compression prediction query
@@ -179,41 +172,25 @@ mod tests {
 
     #[test]
     fn test_size_adjustment() {
-        let service = CompressionPredictionService {
-            db_manager: DatabaseManager::new(&mock_app_handle()).unwrap(),
-        };
-
-        // Small files should have reduced compression
-        let small_result = service.adjust_for_size(70.0, 500_000); // 0.5MB
-        assert!(small_result < 70.0);
-
-        // Medium files should keep base compression
-        let medium_result = service.adjust_for_size(70.0, 2_000_000); // 2MB
-        assert_eq!(medium_result, 70.0);
-
-        // Large files should have increased compression
-        let large_result = service.adjust_for_size(70.0, 8_000_000); // 8MB
-        assert!(large_result > 70.0);
+        assert!(adjust_for_size(70.0, 500_000) < 70.0); // small → reduced
+        assert_eq!(adjust_for_size(70.0, 2_000_000), 70.0); // medium → unchanged
+        assert!(adjust_for_size(70.0, 8_000_000) > 70.0); // large → slightly increased
     }
 
     #[test]
     fn test_confidence_calculation() {
-        let service = CompressionPredictionService {
-            db_manager: DatabaseManager::new(&mock_app_handle()).unwrap(),
-        };
-
-        // Low sample count should reduce confidence
-        let low_confidence = service.calculate_confidence(0.8, 3);
-        assert!(low_confidence < 0.8);
-
-        // High sample count should maintain confidence
-        let high_confidence = service.calculate_confidence(0.8, 100);
-        assert!(high_confidence >= 0.8);
+        assert!(calculate_prediction_confidence(0.8, 3) < 0.8); // low samples reduce confidence
+        assert!(calculate_prediction_confidence(0.8, 100) >= 0.8); // many samples preserve confidence
+        assert_eq!(calculate_prediction_confidence(1.0, 0), 0.3); // no samples → 0.3 floor
     }
 
-    fn mock_app_handle() -> AppHandle {
-        // This would need to be implemented with a proper mock
-        // For now, this test will fail but shows the intended structure
-        unimplemented!("Mock app handle needed for tests")
+    #[test]
+    fn test_create_prediction_query() {
+        let query =
+            create_prediction_query("jpeg".to_string(), "webp".to_string(), 1_000_000, 80, true);
+        assert_eq!(query.input_format, "jpeg");
+        assert_eq!(query.output_format, "webp");
+        assert_eq!(query.quality_setting, 80);
+        assert!(query.lossy_mode);
     }
 }
