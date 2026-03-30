@@ -432,19 +432,6 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             } catch (statError) {
               console.warn('⚠️ Failed to record compression stat:', statError);
             }
-
-            // 2. Compression history (DatabaseManager)
-            try {
-              await invoke('record_compression_result', {
-                inputFormat: image.format.toUpperCase(),
-                outputFormat: recordedFormat.toUpperCase(),
-                originalSize: image.originalSize,
-                compressedSize: response.result.compressed_size,
-                toolVersion: 'plume-v0.3.0',
-              });
-            } catch (dbError) {
-              console.warn('⚠️ Failed to record compression result:', dbError);
-            }
           } else {
             // Signaler l'erreur au gestionnaire adaptatif
             const errorManager = get().progressManagers[image.id];

@@ -32,9 +32,6 @@ webp = "0.3"
 libheif-rs = "2.6"
 libheif-sys = { version = "5.2", features = ["embedded-libheif"] }
 
-# Async pour les gros fichiers
-tokio = { version = "1.0", features = ["fs", "rt-multi-thread"] }
-
 # Utilitaires système
 dirs = "5.0"
 base64 = "0.22"
@@ -44,9 +41,9 @@ thiserror = "1.0"
 rusqlite = { version = "0.30", features = ["bundled"] }
 chrono = { version = "0.4", features = ["serde"] }
 
-# Logging et utilitaires système
+# Logging
 log = "0.4"
-num_cpus = "1.0"
+env_logger = "0.11"
 
 rfd = "0.14"
 tempfile = "3.6"

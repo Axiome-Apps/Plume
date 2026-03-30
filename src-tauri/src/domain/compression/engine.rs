@@ -194,26 +194,6 @@ pub fn compress_batch_files(
         .collect()
 }
 
-/// Legacy function - use compress_file_to_file instead
-#[deprecated(note = "Use compress_file_to_file for better memory efficiency")]
-pub fn compress_file<P: AsRef<Path>>(
-    file_path: P,
-    settings: &CompressionSettings,
-) -> CompressionResult<CompressionOutput> {
-    let input_path = file_path.as_ref();
-
-    // Create output path with new extension
-    let mut output_path = input_path.to_path_buf();
-    let new_extension = match settings.format {
-        OutputFormat::WebP => "webp",
-        OutputFormat::Png => "png",
-        OutputFormat::Jpeg => "jpg",
-    };
-    output_path.set_extension(new_extension);
-
-    compress_file_to_file(input_path, &output_path, settings)
-}
-
 /// Create a compression statistic from the operation result
 pub fn create_compression_stat(
     input_format: &str,
@@ -501,7 +481,7 @@ fn build_riff_chunk(fourcc: &[u8; 4], data: &[u8]) -> Vec<u8> {
     chunk.extend_from_slice(fourcc);
     chunk.extend_from_slice(&(data.len() as u32).to_le_bytes());
     chunk.extend_from_slice(data);
-    if data.len() % 2 != 0 {
+    if !data.len().is_multiple_of(2) {
         chunk.push(0); // RIFF padding
     }
     chunk

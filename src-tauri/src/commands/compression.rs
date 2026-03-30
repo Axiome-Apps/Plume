@@ -63,11 +63,11 @@ pub async fn compress_image(
 
     let image_id = image_id.unwrap_or_else(|| {
         let generated_id = format!("img_{}", start_time.elapsed().as_nanos());
-        println!("🔧 No image_id provided, generated: {}", generated_id);
+        log::debug!("No image_id provided, generated: {}", generated_id);
         generated_id
     });
 
-    println!("🎯 compress_image called, using image_id: {}", image_id);
+    log::debug!("compress_image called, using image_id: {}", image_id);
 
     // Emit start event
     let _ = app_handle.emit(
@@ -221,13 +221,13 @@ pub async fn compress_image(
                     db.save_compression_stat(&stat)
                 }) {
                     Ok(id) => {
-                        println!(
-                            "Saved compression stat with timing (id: {}, time: {}ms)",
+                        log::debug!(
+                            "Saved compression stat (id: {}, time: {}ms)",
                             id, processing_time
                         );
                     }
                     Err(e) => {
-                        println!("Failed to save compression stat: {}", e);
+                        log::warn!("Failed to save compression stat: {}", e);
                     }
                 }
             }

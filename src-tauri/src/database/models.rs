@@ -43,9 +43,3 @@ impl CompressionRecord {
         (reduction as f64 / self.original_size as f64) * 100.0
     }
 }
-
-/// Données d'initialisation pour peupler la base avec des stats réalistes
-#[derive(Debug, Deserialize)]
-pub struct SeedData {
-    pub compression_stats: Vec<CompressionRecord>,
-}

@@ -76,7 +76,10 @@ impl Default for CompressionConfig {
 impl Default for PerformanceConfig {
     fn default() -> Self {
         Self {
-            max_concurrent_operations: num_cpus::get().max(4),
+            max_concurrent_operations: std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(4)
+                .max(4),
             memory_limit_mb: 1024,          // 1GB
             disk_cache_size_mb: 512,        // 512MB
             enable_gpu_acceleration: false, // Conservative default

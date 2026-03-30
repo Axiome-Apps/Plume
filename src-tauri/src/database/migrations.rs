@@ -42,22 +42,7 @@ pub fn create_tables(conn: &Connection) -> SqlResult<()> {
         [],
     )?;
 
-    // Garder l'ancienne table pour la compatibilité si elle existe (lecture seule)
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS compression_records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            input_format TEXT NOT NULL,
-            output_format TEXT NOT NULL,
-            original_size INTEGER NOT NULL,
-            compressed_size INTEGER NOT NULL,
-            tool_version TEXT,
-            source_type TEXT NOT NULL,
-            timestamp TEXT DEFAULT CURRENT_TIMESTAMP
-        )",
-        [],
-    )?;
-
-    println!("Database tables and indexes created successfully");
+    log::debug!("Database tables and indexes created successfully");
     Ok(())
 }
 
@@ -70,10 +55,10 @@ pub fn initialize_database(conn: &Connection) -> SqlResult<()> {
     let count: i64 = stmt.query_row([], |row| row.get(0))?;
 
     if count == 0 {
-        println!("Database is empty, will be seeded with initial data");
+        log::debug!("Database is empty, will be seeded with initial data");
         // La logique de seeding sera appelée depuis le gestionnaire principal
     } else {
-        println!(
+        log::debug!(
             "Database already contains {} compression stats records",
             count
         );

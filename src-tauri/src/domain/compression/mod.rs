@@ -7,7 +7,6 @@ pub mod engine;
 pub mod error;
 pub mod formats;
 pub mod prediction;
-pub mod progress;
 pub mod settings;
 pub mod stats;
 // Re-export core types and functions for easy access
@@ -28,9 +27,6 @@ pub use stats::{
 
 // Prediction service for size estimation
 pub use prediction::{create_prediction_query, CompressionPredictionService};
-
-// Progress types (legacy - functionality moved to TypeScript AdaptiveProgressManager)
-pub use progress::{EasingFunction, ProgressConfig, ProgressEstimation, ProgressEstimationQuery};
 
 // Convenience functions for common operations
 

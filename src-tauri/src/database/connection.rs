@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
-use super::models::CompressionRecord;
 use crate::domain::compression::formats::OutputFormat;
 use crate::domain::compression::settings::CompressionSettings;
 use crate::domain::compression::stats::{
@@ -60,91 +59,7 @@ impl DatabaseManager {
         }
     }
 
-    /// Insère un nouvel enregistrement de compression
-    pub fn insert_compression_record(&self, record: &CompressionRecord) -> Result<i64, String> {
-        self.with_connection(|conn| {
-            conn.execute(
-                "INSERT INTO compression_records (input_format, output_format, original_size, compressed_size, tool_version, source_type, timestamp)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                (
-                    &record.input_format,
-                    &record.output_format,
-                    &record.original_size,
-                    &record.compressed_size,
-                    &record.tool_version,
-                    &record.source_type,
-                    &record.timestamp,
-                ),
-            )?;
-            Ok(conn.last_insert_rowid())
-        })
-    }
-
-    /// Récupère la moyenne de compression pour une combinaison de formats donnée
-    /// Utilise maintenant le nouveau schéma unifié compression_stats
-    pub fn get_average_compression(
-        &self,
-        input_format: &str,
-        output_format: &str,
-    ) -> Result<f64, String> {
-        self.with_connection(|conn| {
-            // Essaie d'abord avec la nouvelle table compression_stats
-            let mut stmt = conn.prepare(
-                "SELECT AVG(size_reduction_percent) as avg_compression
-                 FROM compression_stats 
-                 WHERE input_format = ?1 AND output_format = ?2"
-            )?;
-
-            let result: Result<f64, _> = stmt.query_row((input_format, output_format), |row| {
-                Ok(row.get(0).unwrap_or(0.0))
-            });
-
-            match result {
-                Ok(avg) => Ok(avg),
-                Err(_) => {
-                    // Fallback vers l'ancienne table si pas de données dans la nouvelle
-                    let mut fallback_stmt = conn.prepare(
-                        "SELECT AVG((CAST(original_size - compressed_size AS REAL) / original_size) * 100) as avg_compression
-                         FROM compression_records 
-                         WHERE input_format = ?1 AND output_format = ?2 AND original_size > 0"
-                    )?;
-
-                    let fallback_result: f64 = fallback_stmt.query_row((input_format, output_format), |row| {
-                        Ok(row.get(0).unwrap_or(0.0))
-                    })?;
-
-                    Ok(fallback_result)
-                }
-            }
-        })
-    }
-
-    /// Auto-purge : garde seulement les N derniers enregistrements
-    pub fn cleanup_old_records(&self, max_records: i64) -> Result<usize, String> {
-        self.with_connection(|conn| {
-            let deleted = conn.execute(
-                "DELETE FROM compression_records 
-                 WHERE id NOT IN (
-                     SELECT id FROM compression_records 
-                     ORDER BY timestamp DESC 
-                     LIMIT ?1
-                 )",
-                [max_records],
-            )?;
-            Ok(deleted)
-        })
-    }
-
-    /// Compte le nombre total d'enregistrements
-    pub fn count_records(&self) -> Result<i64, String> {
-        self.with_connection(|conn| {
-            let mut stmt = conn.prepare("SELECT COUNT(*) FROM compression_records")?;
-            let count: i64 = stmt.query_row([], |row| row.get(0))?;
-            Ok(count)
-        })
-    }
-
-    // ─── Compression stats methods (unified store) ───
+    // ─── Compression stats methods ───
 
     /// Get compression estimation based on historical data
     pub fn get_compression_estimation(
@@ -374,11 +289,11 @@ impl DatabaseManager {
             };
             match self.save_compression_stat(&stat) {
                 Ok(_) => inserted += 1,
-                Err(e) => println!("Seed insert failed: {}", e),
+                Err(e) => log::warn!("Seed insert failed: {}", e),
             }
         }
 
-        println!(
+        log::info!(
             "Database seeded with {} baseline compression stats",
             inserted
         );

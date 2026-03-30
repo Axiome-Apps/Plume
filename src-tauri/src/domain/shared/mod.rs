@@ -35,12 +35,6 @@ pub use utils::string::{generate_temp_filename, sanitize_filename, truncate_with
 pub use utils::time::{current_timestamp, format_duration_ms};
 pub use utils::validation::{validate_dimensions, validate_format, validate_quality};
 
-// Legacy compatibility - maintain old function names
-/// @deprecated Use utils::size::format_bytes instead
-pub fn format_file_size(bytes: u64) -> String {
-    utils::size::format_bytes(bytes)
-}
-
 // Application lifecycle utilities
 
 /// Initialize shared domain resources and return AppState

@@ -4,7 +4,7 @@ use tauri::AppHandle;
 /// Test database connection
 #[tauri::command]
 pub async fn test_database_connection(app: AppHandle) -> Result<String, String> {
-    println!("Testing database connection...");
+    log::debug!("Testing database connection...");
     let db_manager = DatabaseManager::new(&app)?;
     db_manager.connect()?;
     Ok("Database connection successful".to_string())
@@ -13,7 +13,7 @@ pub async fn test_database_connection(app: AppHandle) -> Result<String, String> 
 /// Initialise la base de données au démarrage de l'application
 #[tauri::command]
 pub async fn init_database(app: AppHandle) -> Result<String, String> {
-    println!("Initializing database...");
+    log::info!("Initializing database...");
 
     // Crée le gestionnaire de base de données
     let db_manager = DatabaseManager::new(&app)?;
@@ -37,7 +37,7 @@ pub async fn init_database(app: AppHandle) -> Result<String, String> {
         format!("Database initialized ({} compression stats)", stats_count)
     };
 
-    println!("{}", message);
+    log::info!("{}", message);
     Ok(message)
 }
 
@@ -51,53 +51,16 @@ pub async fn get_compression_prediction(
     let db_manager = DatabaseManager::new(&app)?;
     db_manager.connect()?;
 
-    let avg = db_manager.get_average_compression(&input_format, &output_format)?;
-
-    // Si aucune donnée, retourne une estimation basique
-    if avg == 0.0 {
-        let default_compression = match (input_format.as_str(), output_format.as_str()) {
-            ("PNG", "WebP") => 70.0,
-            ("JPEG", "WebP") => 25.0,
-            ("PNG", "PNG") => 15.0,
-            ("JPEG", "JPEG") => 20.0,
-            _ => 10.0,
-        };
-        Ok(default_compression)
-    } else {
-        Ok(avg)
-    }
-}
-
-/// Enregistre un nouveau résultat de compression
-#[tauri::command]
-pub async fn record_compression_result(
-    input_format: String,
-    output_format: String,
-    original_size: i64,
-    compressed_size: i64,
-    tool_version: Option<String>,
-    app: AppHandle,
-) -> Result<String, String> {
-    let db_manager = DatabaseManager::new(&app)?;
-    db_manager.connect()?;
-
-    use crate::database::models::CompressionRecord;
-
-    let record = CompressionRecord::new(
+    let query = crate::domain::EstimationQuery {
         input_format,
         output_format,
-        original_size,
-        compressed_size,
-        tool_version,
-        "actual".to_string(),
-    );
+        original_size: 1_000_000,
+        quality_setting: 80,
+        lossy_mode: true,
+    };
 
-    let id = db_manager.insert_compression_record(&record)?;
-
-    // Auto-nettoyage : garde max 1000 enregistrements
-    db_manager.cleanup_old_records(1000)?;
-
-    Ok(format!("Compression result recorded with ID: {}", id))
+    let estimation = db_manager.get_compression_estimation(&query)?;
+    Ok(estimation.percent)
 }
 
 /// Peuple la base de données avec des statistiques réalistes de compression.
