@@ -9,14 +9,13 @@ A modern, fast, and intelligent image compression desktop application built with
 
 ## ✨ Features
 
-- **🚀 Blazing Fast**: Native Rust performance with multi-threaded compression
-- **🎯 Smart Compression**: Automatic format detection and optimization
-- **📱 Multiple Formats**: Support for PNG, JPEG, WebP, and HEIC/HEIF (iPhone photos)
+- **🚀 Blazing Fast**: Native Rust performance with MozJPEG, oxipng, and libwebp
+- **🎯 Smart Compression**: Three compression levels (light, balanced, aggressive) with automatic format handling
+- **📱 Multiple Formats**: PNG, JPEG, WebP input/output + HEIC/HEIF import (iPhone photos)
 - **🖱️ Drag & Drop**: Seamless file handling from Finder/Explorer
-- **📊 Real-time Preview**: See compression results instantly
-- **💾 Batch Processing**: Handle multiple images at once
-- **📈 Detailed Analytics**: Compression ratios, file size savings, and more
-- **🎨 Modern UI**: Clean, intuitive interface built with Tailwind CSS
+- **💾 Batch Processing**: Compress multiple images at once with automatic save
+- **📈 Intelligent Estimation**: SQLite-backed size and duration predictions that improve with usage
+- **🎨 Modern UI**: OKLCH design system with Nunito font, built with Tailwind CSS
 - **🔒 Privacy First**: All processing happens locally, no cloud uploads
 
 ## 🎬 Demo
@@ -37,8 +36,8 @@ brew install --cask axiome-apps/tap/plume
 
 | Architecture             | Download                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------- |
-| Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_aarch64.dmg |
-| Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_x64.dmg     |
+| Apple Silicon (M1/M2/M3) | https://github.com/Axiome-Apps/Plume/releases/download/v0.4.0/Plume_0.4.0_aarch64.dmg |
+| Intel                    | https://github.com/Axiome-Apps/Plume/releases/download/v0.4.0/Plume_0.4.0_x64.dmg     |
 
 ⚠️ Direct download only: macOS blocks unsigned apps. Run this command to unblock:
 
@@ -50,8 +49,8 @@ xattr -dr com.apple.quarantine /Applications/Plume.app
 
 | Format | Download                                                                                |
 | ------ | --------------------------------------------------------------------------------------- |
-| MSI    | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_x64_en-US.msi |
-| EXE    | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_x64-setup.exe |
+| MSI    | https://github.com/Axiome-Apps/Plume/releases/download/v0.4.0/Plume_0.4.0_x64_en-US.msi |
+| EXE    | https://github.com/Axiome-Apps/Plume/releases/download/v0.4.0/Plume_0.4.0_x64-setup.exe |
 
 ⚠️ If SmartScreen blocks the app, click "More info" → "Run anyway".
 
@@ -59,9 +58,9 @@ xattr -dr com.apple.quarantine /Applications/Plume.app
 
 | Format   | Download                                                                                 |
 | -------- | ---------------------------------------------------------------------------------------- |
-| AppImage | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_amd64.AppImage |
-| Deb      | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume_0.2.0_amd64.deb      |
-| RPM      | https://github.com/Axiome-Apps/Plume/releases/download/v0.2.0/Plume-0.2.0-1.x86_64.rpm   |
+| AppImage | https://github.com/Axiome-Apps/Plume/releases/download/v0.4.0/Plume_0.4.0_amd64.AppImage |
+| Deb      | https://github.com/Axiome-Apps/Plume/releases/download/v0.4.0/Plume_0.4.0_amd64.deb      |
+| RPM      | https://github.com/Axiome-Apps/Plume/releases/download/v0.4.0/Plume-0.4.0-1.x86_64.rpm   |
 
 For AppImage, make it executable:
 
@@ -76,6 +75,7 @@ chmod +x ./Plume*.AppImage
 - **Node.js** 18+ ([Download](https://nodejs.org/))
 - **Rust** 1.70+ ([Install](https://rustup.rs/))
 - **pnpm** ([Install](https://pnpm.io/installation))
+- **nasm** (required for MozJPEG: `brew install nasm` / `sudo apt install nasm` / `choco install nasm`)
 
 #### Development Setup
 
@@ -102,80 +102,63 @@ Plume follows clean architecture principles with clear separation of concerns:
 
 ```
 src/
-├── components/          # Atomic Design Components
-│   ├── atoms/           # Basic UI elements (Button, Icon)
-│   ├── molecules/       # Component combinations (ImageCard, FileUpload)
-│   ├── organisms/       # Complex components (ImageList, DropZone)
-│   └── templates/       # Page layouts
-├── domain/              # Business Logic
-│   ├── entities/        # Core business objects (Image, CompressionSettings)
-│   ├── schemas/         # Zod validation schemas
-│   └── services/        # Business use cases
-├── infrastructure/      # External adapters (Tauri commands)
-└── presentation/        # React hooks and UI logic
+├── components/          # Atomic Design (atoms → molecules → organisms → templates)
+├── domain/
+│   ├── compression/     # Compression settings and format schemas (Zod)
+│   ├── image/           # Image entity and schema
+│   ├── i18n/            # Translation schema and validation
+│   ├── progress/        # Adaptive progress manager
+│   └── size-prediction/ # Compression estimation service (DB-backed)
+├── store/               # Zustand state management
+├── hooks/               # Custom React hooks
+├── lib/                 # Tauri command wrappers
+└── locales/             # FR/EN translations
 ```
 
 ### Backend (Rust)
 
 ```
 src-tauri/src/
-├── commands/            # Tauri command handlers
-├── domain/              # Business domains (functional architecture)
-│   ├── compression/     # Image compression domain
-│   │   ├── settings.rs  # CompressionSettings struct
-│   │   ├── formats.rs   # OutputFormat enum
-│   │   ├── engine.rs    # fn compress(), fn decompress()
-│   │   ├── stats.rs     # fn estimate(), CompressionStat
-│   │   ├── store.rs     # trait StatsStore + impls
-│   │   └── error.rs     # CompressionError enum
-│   ├── image/           # Image processing domain
-│   │   ├── metadata.rs  # ImageInfo, ImageMetadata structs
-│   │   ├── process.rs   # fn resize(), fn optimize()
-│   │   └── error.rs     # ImageError enum
-│   └── file/            # File handling domain
-│       ├── info.rs      # FileInfo struct
-│       ├── process.rs   # fn validate_file(), fn save_file()
-│       └── error.rs     # FileError enum
-└── infrastructure/      # Technical implementations
-    └── compression/     # Format-specific algorithms
+├── commands/            # Tauri command handlers (compression, file, database, stats)
+├── domain/
+│   ├── compression/     # Engine (MozJPEG, oxipng, libwebp, libheif), formats, settings, stats
+│   ├── file/            # File I/O, metadata, path utilities
+│   ├── image/           # Image analysis and metadata extraction
+│   └── shared/          # Config, errors, events, utilities
+└── database/            # SQLite connection, migrations, models
 ```
 
 ### Key Design Patterns
 
 - **Functional Architecture**: Pure functions + data structures (Rust)
-- **Domain-Driven Design**: Rich domain models with business logic (TypeScript)
-- **Clean Architecture**: Dependencies point inward to the domain
-- **Strategy Pattern**: Pluggable compression algorithms via traits
-- **Zero-cost abstractions**: Rust's performance without overhead
+- **Atomic Design**: Component hierarchy from atoms to templates (React)
+- **Domain-Driven Design**: Feature-based domain modules with Zod schemas (TypeScript)
+- **Adaptive Learning**: Compression estimates improve with real usage data (SQLite)
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
+# Rust tests
+cargo test --manifest-path src-tauri/Cargo.toml
+
+# Frontend tests
 pnpm test
 
-# Run frontend tests
-pnpm test:frontend
+# Type check
+pnpm type-check
 
-# Run Rust tests
-cargo test
-
-# Run E2E tests
-pnpm test:e2e
-
-# Coverage report
-pnpm test:coverage
+# Lint
+pnpm lint
 ```
 
 ## 🚀 Performance
 
-- **PNG Optimization**: Up to 70% size reduction with oxipng
+- **PNG Optimization**: Up to 70% size reduction with oxipng lossless optimization
 - **JPEG Compression**: MozJPEG encoder for 10-20% better compression than standard libjpeg
-- **WebP Conversion**: 25-35% smaller than JPEG with same quality
+- **WebP Conversion**: 25-35% smaller than JPEG at equivalent quality
 - **HEIC/HEIF Support**: Import iPhone photos directly, convert to WebP/JPEG/PNG
-- **Multi-threading**: Utilizes all CPU cores for batch processing
-- **Memory Efficient**: Streaming compression for large files
-- **Native Speed**: Rust backend eliminates JavaScript bottlenecks
+- **ICC Profiles**: Color accuracy preserved across all format conversions
+- **Native Speed**: Rust backend with zero JavaScript bottlenecks
 
 ## 📋 Roadmap
 
@@ -186,8 +169,9 @@ See [TODO.md](./TODO.md) for detailed development plans.
 - [x] HEIC/HEIF support for iPhone photos
 - [x] MozJPEG encoder for better JPEG compression
 - [x] Smart format selection UI (WebP/Original/HEIC flows)
+- [x] OKLCH design system with Nunito font
+- [x] DB-backed compression estimation (size + duration)
 - [ ] AVIF format support
-- [ ] Video compression
 
 ## 🤝 Contributing
 
@@ -217,9 +201,10 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 - [Zod](https://zod.dev/) - TypeScript schema validation
 - [Rust](https://www.rust-lang.org/) - Systems programming language
 - [oxipng](https://github.com/shssoichiro/oxipng) - PNG optimization
-- [mozjpeg](https://github.com/nicktrav/mozjpeg-sys) - Optimized JPEG compression
-- [webp](https://developers.google.com/speed/webp/) - Modern image format
-- [libheif](https://github.com/nicktrav/libheif-rs) - HEIC/HEIF decoding
+- [mozjpeg-sys](https://crates.io/crates/mozjpeg-sys) - Optimized JPEG compression
+- [webp](https://crates.io/crates/webp) - WebP encoding
+- [libheif-rs](https://crates.io/crates/libheif-rs) - HEIC/HEIF decoding
+- [rusqlite](https://crates.io/crates/rusqlite) - SQLite database
 
 ## 🙏 Acknowledgments
 
