@@ -10,8 +10,8 @@ use commands::{
     clear_app_temporary_files, compress_batch, compress_image, generate_preview,
     get_compression_estimation, get_compression_prediction, get_file_information, get_stats_count,
     get_stats_summary, init_database, record_compression_result, record_compression_stat,
-    reset_compression_stats, save_all_to_downloads, save_to_downloads, seed_compression_database,
-    select_image_files, test_compression_prediction, test_database_connection,
+    reset_compression_stats, seed_compression_database, select_image_files,
+    test_compression_prediction, test_database_connection,
 };
 
 // Garde la fonction greet pour l'instant
@@ -33,8 +33,6 @@ fn main() {
             compress_image,
             compress_batch,
             select_image_files,
-            save_to_downloads,
-            save_all_to_downloads,
             generate_preview,
             clear_app_temporary_files,
             get_file_information,

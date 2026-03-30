@@ -106,32 +106,6 @@ export async function selectImageFiles(): Promise<string[]> {
 }
 
 /**
- * Sauvegarde un fichier compressé dans le dossier Downloads
- */
-export async function saveToDownloads(filePath: string): Promise<string> {
-  try {
-    const downloadPath = await invoke<string>('save_to_downloads', { filePath });
-    return downloadPath;
-  } catch (error) {
-    console.error('Erreur sauvegarde dans Downloads:', error);
-    throw new Error(`Impossible de sauvegarder dans Downloads: ${error}`);
-  }
-}
-
-/**
- * Sauvegarde tous les fichiers compressés dans le dossier Downloads
- */
-export async function saveAllToDownloads(filePaths: string[]): Promise<string[]> {
-  try {
-    const downloadPaths = await invoke<string[]>('save_all_to_downloads', { filePaths });
-    return downloadPaths;
-  } catch (error) {
-    console.error('Erreur sauvegarde de tous les fichiers:', error);
-    throw new Error(`Impossible de sauvegarder tous les fichiers: ${error}`);
-  }
-}
-
-/**
  * Génère un preview base64 à partir d'un chemin de fichier
  */
 export async function generatePreview(filePath: string): Promise<string> {

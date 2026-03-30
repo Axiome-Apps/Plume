@@ -32,7 +32,6 @@ export const TranslationKeysSchema = z.object({
       }),
     }),
     empty: z.string(),
-    downloadAll: z.string(),
     totalSize: z.string(),
     compression: z.object({
       pending: z.string(),
@@ -40,7 +39,6 @@ export const TranslationKeysSchema = z.object({
     }),
   }),
   common: z.object({
-    download: z.string(),
     supported: z.string(),
     browse: z.string(),
   }),
@@ -59,7 +57,6 @@ export const TranslationKeysSchema = z.object({
   success: z.object({
     title: z.string(),
     description: z.string(),
-    download: z.string(),
     startOver: z.string(),
   }),
 });

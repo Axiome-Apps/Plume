@@ -1,13 +1,12 @@
 import { FC } from 'react';
 import Button from '../atoms/Button';
-import { TrashIcon, DownloadIcon } from '../icons';
+import { TrashIcon } from '../icons';
 import { useImageStore } from '@/store/imageStore';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export const CompressionSuccess: FC = () => {
   const images = useImageStore(state => state.images);
   const isProcessing = useImageStore(state => state.isProcessing);
-  const downloadAllImages = useImageStore(state => state.downloadAllImages);
   const clearImages = useImageStore(state => state.clearImages);
 
   const pendingImages = images.filter(img => img.isPending());
@@ -23,11 +22,6 @@ export const CompressionSuccess: FC = () => {
         <p className="text-text/60">{t('success.description')}</p>
       </div>
       <div className="flex justify-center gap-3">
-        <Button onClick={downloadAllImages} color="success">
-          <DownloadIcon size={16} className="mr-2" />
-          {t('success.download')} ({completedImages.length})
-        </Button>
-
         <Button variant="outlined" color="secondary" onClick={clearImages}>
           <TrashIcon size={16} className="mr-2" />
           {t('success.startOver')}

@@ -1,4 +1,4 @@
-use crate::domain::{copy_file, get_file_info, read_image_file, validate_image_file, AppState};
+use crate::domain::{get_file_info, read_image_file, validate_image_file, AppState};
 use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -83,60 +83,6 @@ pub async fn generate_preview(
     };
 
     Ok(format!("data:{};base64,{}", mime_type, base64_data))
-}
-
-/// Commande pour sauvegarder un fichier dans le dossier Downloads
-#[tauri::command]
-pub async fn save_to_downloads(
-    file_path: String,
-    _state: State<'_, AppState>,
-) -> Result<String, String> {
-    let source_path = Path::new(&file_path);
-
-    // Get Downloads directory
-    let downloads_dir =
-        dirs::download_dir().ok_or_else(|| "Could not find Downloads directory".to_string())?;
-
-    // Get file name
-    let file_name = source_path
-        .file_name()
-        .ok_or_else(|| "Invalid file path".to_string())?;
-
-    let target_path = downloads_dir.join(file_name);
-
-    // Make unique if file already exists
-    let unique_target = crate::domain::PathUtils::make_unique_filename(&target_path);
-
-    // Copy file
-    copy_file(source_path, &unique_target)
-        .map_err(|e| format!("Failed to copy file to Downloads: {}", e))?;
-
-    Ok(unique_target.to_string_lossy().to_string())
-}
-
-/// Commande pour sauvegarder tous les fichiers dans le dossier Downloads
-#[tauri::command]
-pub async fn save_all_to_downloads(
-    file_paths: Vec<String>,
-    _state: State<'_, AppState>,
-) -> Result<Vec<String>, String> {
-    let mut saved_paths = Vec::new();
-
-    for file_path in file_paths {
-        match save_to_downloads(file_path, _state.clone()).await {
-            Ok(saved_path) => saved_paths.push(saved_path),
-            Err(e) => {
-                // Log error but continue with other files
-                eprintln!("Failed to save file: {}", e);
-            }
-        }
-    }
-
-    if saved_paths.is_empty() {
-        Err("No files could be saved".to_string())
-    } else {
-        Ok(saved_paths)
-    }
 }
 
 /// Commande pour nettoyer les fichiers temporaires de l'application

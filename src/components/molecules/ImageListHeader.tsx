@@ -4,7 +4,7 @@ import { useImageStore } from '@/store/imageStore';
 import { FC } from 'react';
 import { Badge } from '../atoms';
 import Button from '../atoms/Button';
-import { DownloadIcon, FeatherIcon, TrashIcon } from '../icons';
+import { FeatherIcon, TrashIcon } from '../icons';
 import { CompressionControls } from './CompressionControls';
 
 export const ImageListHeader: FC = () => {
@@ -20,7 +20,6 @@ export const ImageListHeader: FC = () => {
   const setCompressionLevel = useImageStore(state => state.setCompressionLevel);
   const startCompression = useImageStore(state => state.startCompression);
   const clearImages = useImageStore(state => state.clearImages);
-  const downloadAllImages = useImageStore(state => state.downloadAllImages);
 
   // Computed
   const pendingImages = images.filter(img => img.isPending());
@@ -79,12 +78,6 @@ export const ImageListHeader: FC = () => {
             >
               <FeatherIcon size={16} className="mr-2" />
               {isProcessing ? t('header.compression.active') : t('header.compression.pending')}
-            </Button>
-          )}
-          {completedImages.length > 0 && images.length > 1 && (
-            <Button variant="filled" color="success" onClick={downloadAllImages}>
-              <DownloadIcon size={16} className="mr-2" />
-              {t('header.downloadAll')} ({completedImages.length})
             </Button>
           )}
         </div>

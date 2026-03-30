@@ -4,12 +4,11 @@ import type { ImageEntity } from '@/domain/image/entity';
 
 interface ImageCardProps {
   image: ImageEntity;
-  onDownload?: () => void;
   onRemove?: () => void;
   onCompress?: () => void;
 }
 
-export function ImageCard({ image, onDownload, onRemove, onCompress }: ImageCardProps) {
+export function ImageCard({ image, onRemove, onCompress }: ImageCardProps) {
   return (
     <div className="flex items-center justify-between p-4 border border-secondary/20 rounded-lg bg-white hover:shadow-md transition-shadow gap-4">
       <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -65,12 +64,7 @@ export function ImageCard({ image, onDownload, onRemove, onCompress }: ImageCard
         </div>
       </div>
 
-      <ImageActions
-        status={image.status}
-        onCompress={onCompress}
-        onDownload={onDownload}
-        onRemove={onRemove}
-      />
+      <ImageActions status={image.status} onCompress={onCompress} onRemove={onRemove} />
     </div>
   );
 }

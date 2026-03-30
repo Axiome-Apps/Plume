@@ -9,10 +9,7 @@ pub use database::{
     get_compression_prediction, init_database, record_compression_result,
     seed_compression_database, test_compression_prediction, test_database_connection,
 };
-pub use file::{
-    clear_app_temporary_files, generate_preview, get_file_information, save_all_to_downloads,
-    save_to_downloads, select_image_files,
-};
+pub use file::{clear_app_temporary_files, generate_preview, get_file_information, select_image_files};
 #[allow(unused_imports)]
 // get_progress_estimation used via tauri::generate_handler! — not visible to clippy
 pub use stats::{

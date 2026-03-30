@@ -73,9 +73,6 @@ interface ImageStore {
   // Actions pour la compression
   startCompression: () => Promise<void>;
   compressImage: (imageId: string) => Promise<void>;
-  downloadImage: (imageId: string) => Promise<void>;
-  downloadAllImages: () => Promise<void>;
-
   // Actions pour les paramètres
   setCompressionSettings: (settings: Partial<CompressionSettings>) => void;
   setOutputFormat: (format: OutputFormatType) => void;
@@ -488,28 +485,6 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
     // Appeler directement startCompression qui gérera les transitions de statut
     await get().startCompression();
-  },
-
-  downloadImage: async (imageId: string) => {
-    const { images } = get();
-    const image = images.find(img => img.id === imageId);
-
-    if (!image || !image.outputPath) return;
-
-    try {
-      toast.success(`${image.name} prêt pour téléchargement`);
-    } catch (error) {
-      toast.error(`Erreur de téléchargement: ${error}`);
-    }
-  },
-
-  downloadAllImages: async () => {
-    const { images } = get();
-    const completedImages = images.filter(img => img.isCompleted());
-
-    for (const image of completedImages) {
-      await get().downloadImage(image.id);
-    }
   },
 
   // Actions pour les paramètres

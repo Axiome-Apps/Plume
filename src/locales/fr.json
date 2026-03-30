@@ -10,7 +10,6 @@
       "completed": "Images compressées"
     },
     "empty": "Vider",
-    "downloadAll": "Télécharger tout",
     "totalSize": "au total",
     "compression": {
       "pending": "Compresser",
@@ -34,7 +33,6 @@
     }
   },
   "common": {
-    "download": "Télécharger",
     "supported": "supportés",
     "browse": "Cliquez pour parcourir"
   },
@@ -52,8 +50,7 @@
   },
   "success": {
     "title": "Toutes les images ont été compressées avec succès !",
-    "description": "Vous pouvez télécharger vos images ou recommencer avec de nouvelles images.",
-    "download": "Télécharger tout",
+    "description": "Vos images compressées ont été sauvegardées dans leur dossier d'origine.",
     "startOver": "Recommencer"
   }
 }
