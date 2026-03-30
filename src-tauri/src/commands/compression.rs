@@ -216,9 +216,10 @@ pub async fn compress_image(
                     "plume-v0.1.0".to_string(),
                 );
 
-                match DatabaseManager::new(&app_handle)
-                    .and_then(|db| { db.connect()?; db.save_compression_stat(&stat) })
-                {
+                match DatabaseManager::new(&app_handle).and_then(|db| {
+                    db.connect()?;
+                    db.save_compression_stat(&stat)
+                }) {
                     Ok(id) => {
                         println!(
                             "Saved compression stat with timing (id: {}, time: {}ms)",
