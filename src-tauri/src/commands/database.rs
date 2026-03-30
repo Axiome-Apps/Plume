@@ -1,4 +1,4 @@
-use crate::database::{migrations, DatabaseManager};
+use crate::database::{DatabaseManager, migrations};
 use tauri::AppHandle;
 
 /// Test database connection

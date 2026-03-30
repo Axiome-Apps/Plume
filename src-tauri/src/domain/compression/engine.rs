@@ -2,7 +2,7 @@ use crate::domain::compression::{
     error::{CompressionError, CompressionResult},
     formats::OutputFormat,
     settings::CompressionSettings,
-    stats::{create_stat, CompressionStat},
+    stats::{CompressionStat, create_stat},
 };
 use image::DynamicImage;
 use std::path::Path;
@@ -288,10 +288,10 @@ fn compress_to_png_file(
 
             // Optimize with oxipng (preserves iCCP chunks by default)
             let options = oxipng::Options::from_preset(3);
-            if let Ok(png_data) = std::fs::read(output_path) {
-                if let Ok(optimized_data) = oxipng::optimize_from_memory(&png_data, &options) {
-                    let _ = std::fs::write(output_path, optimized_data);
-                }
+            if let Ok(png_data) = std::fs::read(output_path)
+                && let Ok(optimized_data) = oxipng::optimize_from_memory(&png_data, &options)
+            {
+                let _ = std::fs::write(output_path, optimized_data);
             }
 
             Ok(())
@@ -434,12 +434,12 @@ fn encode_jpeg_mozjpeg(
     }
 }
 
-extern "C" {
+unsafe extern "C" {
     fn free(ptr: *mut std::ffi::c_void);
 }
 
 unsafe fn libc_free(ptr: *mut std::ffi::c_void) {
-    free(ptr);
+    unsafe { free(ptr) };
 }
 
 /// Inject an ICC profile into a WebP RIFF container.

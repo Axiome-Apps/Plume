@@ -198,10 +198,10 @@ impl AppConfig {
         let mut config = Self::default();
 
         // Load from file if provided
-        if let Some(path) = config_path {
-            if path.as_ref().exists() {
-                config = Self::load_from_file(path)?;
-            }
+        if let Some(path) = config_path
+            && path.as_ref().exists()
+        {
+            config = Self::load_from_file(path)?;
         }
 
         // Apply environment variable overrides
@@ -217,16 +217,16 @@ impl AppConfig {
             self.temp_dir = temp_dir;
         }
 
-        if let Ok(max_size) = std::env::var("PLUME_MAX_FILE_SIZE") {
-            if let Ok(size) = max_size.parse::<u64>() {
-                self.max_file_size = size;
-            }
+        if let Ok(max_size) = std::env::var("PLUME_MAX_FILE_SIZE")
+            && let Ok(size) = max_size.parse::<u64>()
+        {
+            self.max_file_size = size;
         }
 
-        if let Ok(quality) = std::env::var("PLUME_DEFAULT_QUALITY") {
-            if let Ok(q) = quality.parse::<u8>() {
-                self.compression.default_quality = q.clamp(1, 100);
-            }
+        if let Ok(quality) = std::env::var("PLUME_DEFAULT_QUALITY")
+            && let Ok(q) = quality.parse::<u8>()
+        {
+            self.compression.default_quality = q.clamp(1, 100);
         }
     }
 }

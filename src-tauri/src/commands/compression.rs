@@ -1,5 +1,5 @@
 use crate::database::DatabaseManager;
-use crate::domain::{validate_image_file, AppState, OutputFormat};
+use crate::domain::{AppState, OutputFormat, validate_image_file};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tauri::{AppHandle, Emitter, State};
@@ -223,7 +223,8 @@ pub async fn compress_image(
                     Ok(id) => {
                         log::debug!(
                             "Saved compression stat (id: {}, time: {}ms)",
-                            id, processing_time
+                            id,
+                            processing_time
                         );
                     }
                     Err(e) => {

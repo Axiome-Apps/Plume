@@ -187,11 +187,11 @@ impl EventBus {
 
         // Notify listeners
         for listener in &self.listeners {
-            if listener.can_handle(&event.event_type) {
-                if let Err(e) = listener.handle_event(&event) {
-                    // Log error but don't fail the publish
-                    eprintln!("Error in event listener: {}", e);
-                }
+            if listener.can_handle(&event.event_type)
+                && let Err(e) = listener.handle_event(&event)
+            {
+                // Log error but don't fail the publish
+                eprintln!("Error in event listener: {}", e);
             }
         }
 

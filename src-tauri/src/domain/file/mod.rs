@@ -10,13 +10,13 @@ pub mod path;
 
 // Re-export core types and functions for easy access
 pub use error::{FileError, FileResult};
-pub use metadata::{format_file_size, get_file_extension, is_supported_image_file, FileMetadata};
-pub use path::{generate_output_path, PathUtils};
+pub use metadata::{FileMetadata, format_file_size, get_file_extension, is_supported_image_file};
+pub use path::{PathUtils, generate_output_path};
 
 // File operations - core I/O functions
 pub use operations::{
-    batch_copy_files, cleanup_temp_files, copy_file, create_backup, delete_file, file_exists,
-    get_file_info, move_file, read_file, write_file, FileOperation, OperationType,
+    FileOperation, OperationType, batch_copy_files, cleanup_temp_files, copy_file, create_backup,
+    delete_file, file_exists, get_file_info, move_file, read_file, write_file,
 };
 
 // Convenience functions for common operations

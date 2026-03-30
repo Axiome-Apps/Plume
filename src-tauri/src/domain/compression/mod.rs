@@ -16,17 +16,17 @@ pub use settings::CompressionSettings;
 
 // Engine functions - core compression operations
 pub use engine::{
-    compress_batch_files, compress_file_to_file, create_compression_stat, CompressionOutput,
+    CompressionOutput, compress_batch_files, compress_file_to_file, create_compression_stat,
 };
 
 // Statistics types and functions
 pub use stats::{
-    calculate_confidence, create_stat, estimate_compression, get_size_range, CompressionStat,
-    EstimationQuery, EstimationResult,
+    CompressionStat, EstimationQuery, EstimationResult, calculate_confidence, create_stat,
+    estimate_compression, get_size_range,
 };
 
 // Prediction service for size estimation
-pub use prediction::{create_prediction_query, CompressionPredictionService};
+pub use prediction::{CompressionPredictionService, create_prediction_query};
 
 // Convenience functions for common operations
 

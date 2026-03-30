@@ -10,14 +10,8 @@ pub mod utils;
 
 // Re-export core types and functions for easy access
 pub use config::{AppConfig, CompressionConfig, ConfigManager, PerformanceConfig, SecurityConfig};
-pub use error::{get_recovery_strategy, DomainError, DomainResult, ErrorRecovery};
+pub use error::{DomainError, DomainResult, ErrorRecovery, get_recovery_strategy};
 pub use events::{
-    compression_completed_event,
-    compression_failed_event,
-    error_event,
-    // Convenience event creators
-    file_processed_event,
-    info_event,
     ConsoleEventListener,
     DomainEvent,
     EventBus,
@@ -25,6 +19,12 @@ pub use events::{
     EventPayload,
     EventSeverity,
     EventType,
+    compression_completed_event,
+    compression_failed_event,
+    error_event,
+    // Convenience event creators
+    file_processed_event,
+    info_event,
 };
 
 // Re-export commonly used utilities with shorter paths

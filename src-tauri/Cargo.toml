@@ -1,9 +1,9 @@
 [package]
 name = "plume"
-version = "0.4.0"
+version = "0.4.1"
 description = "Smart Image Compression Desktop App"
-authors = ["you"]
-edition = "2021"
+authors = ["MrCasquette"]
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -45,7 +45,6 @@ chrono = { version = "0.4", features = ["serde"] }
 log = "0.4"
 env_logger = "0.11"
 
-rfd = "0.14"
 tempfile = "3.6"
 
 # Patch libheif-sys to only compile LIBDE265 decoder (HEIC photos).

@@ -201,13 +201,12 @@ pub fn cleanup_temp_files<P: AsRef<Path>>(dir: P, pattern: &str) -> FileResult<V
         let entry = entry?;
         let path = entry.path();
 
-        if path.is_file() {
-            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.contains(pattern) {
-                    delete_file(&path)?;
-                    cleaned_files.push(path.to_string_lossy().to_string());
-                }
-            }
+        if path.is_file()
+            && let Some(name) = path.file_name().and_then(|n| n.to_str())
+            && name.contains(pattern)
+        {
+            delete_file(&path)?;
+            cleaned_files.push(path.to_string_lossy().to_string());
         }
     }
 

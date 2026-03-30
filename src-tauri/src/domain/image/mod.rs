@@ -10,16 +10,16 @@ pub mod processing;
 
 // Re-export core types and functions for easy access
 pub use analysis::{
-    analyze_colors, analyze_compression_potential, assess_image_quality, comprehensive_analysis,
-    ColorAnalysis, CompressionPotential, QualityAssessment, RiskLevel,
+    ColorAnalysis, CompressionPotential, QualityAssessment, RiskLevel, analyze_colors,
+    analyze_compression_potential, assess_image_quality, comprehensive_analysis,
 };
 pub use error::{ImageError, ImageResult};
 pub use metadata::{
-    classify_image_type, extract_metadata, ColorSpace, Dimensions, ImageMetadata, ImageType,
+    ColorSpace, Dimensions, ImageMetadata, ImageType, classify_image_type, extract_metadata,
 };
 pub use processing::{
-    apply_sharpening, auto_crop, convert_color_space, create_progressive_jpeg, optimize_for_web,
-    resize_image, ProcessingParams, ProcessingResult,
+    ProcessingParams, ProcessingResult, apply_sharpening, auto_crop, convert_color_space,
+    create_progressive_jpeg, optimize_for_web, resize_image,
 };
 
 // Convenience functions for common image operations
@@ -63,21 +63,20 @@ pub fn prepare_for_web(
     let mut params = ProcessingParams::new(quality_setting);
 
     // Apply resize if max dimensions specified and current image is larger
-    if let Some(max_dims) = max_dimensions {
-        if metadata.dimensions.width > max_dims.width
-            || metadata.dimensions.height > max_dims.height
-        {
-            // Calculate proportional resize
-            let width_ratio = max_dims.width as f64 / metadata.dimensions.width as f64;
-            let height_ratio = max_dims.height as f64 / metadata.dimensions.height as f64;
-            let scale = width_ratio.min(height_ratio);
+    if let Some(max_dims) = max_dimensions
+        && (metadata.dimensions.width > max_dims.width
+            || metadata.dimensions.height > max_dims.height)
+    {
+        // Calculate proportional resize
+        let width_ratio = max_dims.width as f64 / metadata.dimensions.width as f64;
+        let height_ratio = max_dims.height as f64 / metadata.dimensions.height as f64;
+        let scale = width_ratio.min(height_ratio);
 
-            let new_width = (metadata.dimensions.width as f64 * scale) as u32;
-            let new_height = (metadata.dimensions.height as f64 * scale) as u32;
+        let new_width = (metadata.dimensions.width as f64 * scale) as u32;
+        let new_height = (metadata.dimensions.height as f64 * scale) as u32;
 
-            if let Ok(target_dims) = Dimensions::new(new_width.max(1), new_height.max(1)) {
-                params = params.with_resize(target_dims);
-            }
+        if let Ok(target_dims) = Dimensions::new(new_width.max(1), new_height.max(1)) {
+            params = params.with_resize(target_dims);
         }
     }
 

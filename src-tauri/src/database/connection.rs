@@ -6,7 +6,7 @@ use tauri::{AppHandle, Manager};
 use crate::domain::compression::formats::OutputFormat;
 use crate::domain::compression::settings::CompressionSettings;
 use crate::domain::compression::stats::{
-    calculate_confidence, estimate_compression, CompressionStat, EstimationQuery, EstimationResult,
+    CompressionStat, EstimationQuery, EstimationResult, calculate_confidence, estimate_compression,
 };
 
 pub struct DatabaseManager {
@@ -184,7 +184,7 @@ impl DatabaseManager {
             return Ok(0);
         }
 
-        use crate::domain::compression::stats::{get_size_range, CompressionStat};
+        use crate::domain::compression::stats::{CompressionStat, get_size_range};
 
         // (input, output, original_bytes, compressed_bytes, quality, time_ms)
         // Formats: 'jpeg'/'png'/'webp'/'heic' for input, 'webp'/'jpeg'/'png' for output

@@ -1,31 +1,33 @@
-use crate::domain::{get_file_info, read_image_file, validate_image_file, AppState};
-use base64::{engine::general_purpose, Engine as _};
+use crate::domain::{AppState, get_file_info, read_image_file, validate_image_file};
+use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tauri::{AppHandle, State};
+use tauri_plugin_dialog::DialogExt;
 
 /// Commande pour ouvrir le dialog de sélection de fichiers
 #[tauri::command]
 pub async fn select_image_files(
-    _app_handle: AppHandle,
+    app_handle: AppHandle,
     _state: State<'_, AppState>,
 ) -> Result<Vec<String>, String> {
-    use rfd::FileDialog;
-
-    let files = FileDialog::new()
+    let files = app_handle
+        .dialog()
+        .file()
         .add_filter("Images", &["png", "jpg", "jpeg", "webp", "heic", "heif"])
         .set_title("Sélectionner des images")
-        .pick_files();
+        .blocking_pick_files();
 
     match files {
         Some(paths) => {
             let path_strings: Vec<String> = paths
                 .into_iter()
+                .filter_map(|p| p.into_path().ok())
                 .map(|p| p.to_string_lossy().to_string())
                 .collect();
             Ok(path_strings)
         }
-        None => Ok(vec![]), // User cancelled
+        None => Ok(vec![]),
     }
 }
 

@@ -156,7 +156,7 @@ pub mod size {
                 return Err(crate::domain::DomainError::InvalidInput(format!(
                     "Unknown unit: {}",
                     unit_part
-                )))
+                )));
             }
         };
 
@@ -271,7 +271,7 @@ pub mod hash {
 
 /// Validation utilities
 pub mod validation {
-    use super::{path, DomainError, DomainResult};
+    use super::{DomainError, DomainResult, path};
 
     /// Validate image dimensions
     pub fn validate_dimensions(
