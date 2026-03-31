@@ -1,246 +1,102 @@
 import { invoke } from '@tauri-apps/api/core';
-import {
-  CompressImageRequestType,
-  CompressImageResponseType,
-  CompressImageRequestSchema,
-  CompressImageResponseSchema,
-} from '../domain/compression/schema';
 
-/**
- * Interface consolidée pour toutes les commandes Tauri
- * Combine validation Zod + fonctionnalités complètes
- */
+// ====== TYPES ======
 
-// ====== COMPRESSION ======
-
-/**
- * Compresse une image avec progression en temps réel via Tauri
- * Note: Utilise compress_image en interne car la fonction avec progress a été supprimée
- */
-export async function compressImageWithProgress(
-  request: CompressImageRequestType,
-  imageId: string
-): Promise<CompressImageResponseType> {
-  try {
-    // Validation du request avec Zod
-    const validatedRequest = CompressImageRequestSchema.parse(request);
-
-    // Passer l'imageId pour synchroniser les événements de progression
-    const response = await invoke<CompressImageResponseType>('compress_image', {
-      request: validatedRequest,
-      image_id: imageId,
-    });
-
-    // Validation de la response
-    return CompressImageResponseSchema.parse(response);
-  } catch (error) {
-    return {
-      success: false,
-      error: `Erreur lors de l'appel Tauri: ${error}`,
-    };
-  }
+interface CompressImageRequest {
+  file_path: string;
+  quality?: number;
+  format?: string;
 }
 
-/**
- * Compresse une image via Tauri (version legacy sans progression)
- */
-export async function compressImage(
-  request: CompressImageRequestType
-): Promise<CompressImageResponseType> {
-  try {
-    // Validation du request avec Zod
-    const validatedRequest = CompressImageRequestSchema.parse(request);
-
-    const response = await invoke<CompressImageResponseType>('compress_image', {
-      request: validatedRequest,
-      image_id: null,
-    });
-
-    // Validation de la response
-    return CompressImageResponseSchema.parse(response);
-  } catch (error) {
-    return {
-      success: false,
-      error: `Erreur lors de l'appel Tauri: ${error}`,
-    };
-  }
+interface CompressImageResult {
+  compressed_size: number;
+  output_path: string;
 }
 
-/**
- * Compresse plusieurs images en lot
- */
-export async function compressBatch(
-  filePaths: string[],
-  quality?: number,
-  format?: 'png' | 'jpeg' | 'webp' | 'auto'
-): Promise<CompressImageResponseType[]> {
-  try {
-    const responses = await invoke<CompressImageResponseType[]>('compress_batch', {
-      filePaths,
-      quality,
-      format,
-    });
-    return responses;
-  } catch (error) {
-    // En cas d'erreur globale, retourne une erreur pour chaque fichier
-    return filePaths.map(() => ({
-      success: false,
-      error: `Erreur lors de l'appel Tauri: ${error}`,
-    }));
-  }
+export interface CompressImageResponse {
+  success: boolean;
+  result?: CompressImageResult;
+  error?: string;
+}
+
+interface ProgressEstimation {
+  estimated_duration_ms: number;
+  confidence: number;
+  sample_count: number;
+}
+
+interface EstimationResult {
+  percent: number;
+  ratio: number;
+  confidence: number;
+  sample_count: number;
+}
+
+// ====== DATABASE ======
+
+export async function initDatabase(): Promise<void> {
+  await invoke<string>('init_database');
 }
 
 // ====== FILE OPERATIONS ======
 
-/**
- * Ouvre un dialog pour sélectionner des fichiers images
- */
 export async function selectImageFiles(): Promise<string[]> {
-  try {
-    const filePaths = await invoke<string[]>('select_image_files');
-    return filePaths;
-  } catch (error) {
-    console.error('Erreur sélection fichiers:', error);
-    return [];
-  }
+  return invoke<string[]>('select_image_files');
 }
 
-/**
- * Génère un preview base64 à partir d'un chemin de fichier
- */
-export async function generatePreview(filePath: string): Promise<string> {
-  try {
-    const preview = await invoke<string>('generate_preview', { filePath });
-    return preview;
-  } catch (error) {
-    console.error('Erreur génération preview:', error);
-    throw new Error(`Impossible de générer le preview: ${error}`);
-  }
+export async function getFileInformation(filePath: string): Promise<{ size: number }> {
+  return invoke<{ size: number }>('get_file_information', { filePath });
 }
 
-// ====== DATABASE STATS ======
+// ====== COMPRESSION ======
 
-export interface StatsSummary {
-  total_compressions: number;
-  webp_estimation_percent: number;
-  webp_confidence: number;
-  sample_count: number;
+export async function compressImage(
+  request: CompressImageRequest,
+  imageId: string
+): Promise<CompressImageResponse> {
+  return invoke<CompressImageResponse>('compress_image', {
+    request,
+    imageId,
+  });
 }
 
-/**
- * Teste la connexion à la base de données
- */
-export async function testDatabaseConnection(): Promise<string> {
-  try {
-    const result = await invoke<string>('test_database_connection');
-    return result;
-  } catch (error) {
-    console.error('Erreur test connexion database:', error);
-    throw new Error(`Impossible de tester la connexion: ${error}`);
-  }
-}
+// ====== STATS & ESTIMATION ======
 
-/**
- * Obtient le nombre total de statistiques dans la base
- */
-export async function getStatsCount(): Promise<number> {
-  try {
-    const count = await invoke<number>('get_stats_count');
-    return count;
-  } catch (error) {
-    console.error('Erreur récupération count stats:', error);
-    throw new Error(`Impossible de récupérer le count: ${error}`);
-  }
-}
-
-/**
- * Obtient un résumé des statistiques de compression
- */
-export async function getStatsSummary(): Promise<StatsSummary> {
-  try {
-    const summary = await invoke<StatsSummary>('get_stats_summary');
-    return summary;
-  } catch (error) {
-    console.error('Erreur récupération summary stats:', error);
-    throw new Error(`Impossible de récupérer le summary: ${error}`);
-  }
-}
-
-/**
- * Obtient les stats de la database (utilise le nouveau système unifié)
- */
-export async function getDatabaseStats(): Promise<number> {
-  try {
-    const stats = await invoke<number>('get_stats_count');
-    return stats;
-  } catch (error) {
-    console.error('Erreur récupération database stats:', error);
-    throw new Error(`Impossible de récupérer les database stats: ${error}`);
-  }
-}
-
-/**
- * Initialise la base de données
- */
-export async function initDatabase(): Promise<string> {
-  try {
-    const result = await invoke<string>('init_database');
-    return result;
-  } catch (error) {
-    console.error('Erreur initialisation database:', error);
-    throw new Error(`Impossible d'initialiser la database: ${error}`);
-  }
-}
-
-/**
- * Remplir la base de données avec des données de test réalistes
- */
-export async function seedCompressionDatabase(): Promise<string> {
-  try {
-    const result = await invoke<string>('seed_compression_database');
-    return result;
-  } catch (error) {
-    console.error('Erreur seed database:', error);
-    throw new Error(`Impossible de remplir la database: ${error}`);
-  }
-}
-
-/**
- * Obtient une prédiction de compression basée sur l'historique
- */
-export async function getCompressionPrediction(
-  inputFormat: string,
-  outputFormat: string
-): Promise<number> {
-  try {
-    const prediction = await invoke<number>('get_compression_prediction', {
-      input_format: inputFormat,
-      output_format: outputFormat,
-    });
-    return prediction;
-  } catch (error) {
-    console.error('Erreur prédiction compression:', error);
-    throw new Error(`Impossible de récupérer la prédiction: ${error}`);
-  }
-}
-
-/**
- * Teste la prédiction de compression avec des détails
- */
-export async function testCompressionPrediction(
+export async function getProgressEstimation(
   inputFormat: string,
   outputFormat: string,
   originalSize: number
-): Promise<string> {
-  try {
-    const result = await invoke<string>('test_compression_prediction', {
+): Promise<ProgressEstimation> {
+  return invoke<ProgressEstimation>('get_progress_estimation', {
+    request: {
       input_format: inputFormat,
       output_format: outputFormat,
       original_size: originalSize,
-    });
-    return result;
-  } catch (error) {
-    console.error('Erreur test prédiction:', error);
-    throw new Error(`Impossible de tester la prédiction: ${error}`);
-  }
+    },
+  });
+}
+
+export async function getCompressionEstimation(request: {
+  input_format: string;
+  output_format: string;
+  original_size: number;
+  quality_setting: number;
+  lossy_mode: boolean;
+}): Promise<EstimationResult> {
+  return invoke<EstimationResult>('get_compression_estimation', { request });
+}
+
+export async function recordCompressionStat(request: {
+  input_format: string;
+  output_format: string;
+  original_size: number;
+  compressed_size: number;
+  quality_setting: number;
+  lossy_mode: boolean;
+}): Promise<number> {
+  return invoke<number>('record_compression_stat', { request });
+}
+
+export async function resetCompressionStats(): Promise<void> {
+  await invoke('reset_compression_stats');
 }

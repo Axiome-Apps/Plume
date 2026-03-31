@@ -1,6 +1,6 @@
 import { Badge, ProgressBar } from '@/components/atoms';
 import { ImageActions, ImagePreview } from '@/components/molecules';
-import type { ImageEntity } from '@/domain/image/entity';
+import { ImageEntity } from '@/domain/image/entity';
 
 interface ImageCardProps {
   image: ImageEntity;
@@ -69,12 +69,6 @@ export function ImageCard({ image, onRemove, onCompress }: ImageCardProps) {
   );
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
+const formatFileSize = ImageEntity.formatFileSize;
 
 export default ImageCard;

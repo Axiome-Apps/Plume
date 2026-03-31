@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { toast } from 'sonner';
 import { ImageEntity } from '@/domain/image/entity';
@@ -12,16 +11,12 @@ import {
   type CompressionLevelType,
   resolveCompressionParams,
 } from '@/domain/compression/schema';
-
-// Types pour les réponses Tauri
-interface CompressImageResponse {
-  success: boolean;
-  result?: {
-    compressed_size: number;
-    output_path: string;
-  };
-  error?: string;
-}
+import {
+  compressImage as tauriCompressImage,
+  getFileInformation,
+  getProgressEstimation,
+  recordCompressionStat,
+} from '@/lib/tauri';
 
 // Types pour les événements de progression Tauri
 interface CompressionProgressEvent {
@@ -47,7 +42,6 @@ interface ImageStore {
   compressionState: CompressionState;
   isProcessing: boolean;
   compressionSettings: CompressionSettings;
-  progressState: Record<string, { progress: number }>;
   progressManagers: Record<string, AdaptiveProgressManager>;
 
   // Actions internes
@@ -95,7 +89,6 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     outputFormat: 'webp',
     compressionLevel: 'balanced',
   },
-  progressState: {},
   progressManagers: {},
 
   // Computed getters - Utiliser des fonctions au lieu de getters
@@ -152,7 +145,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
         let fileSize = 0;
         try {
-          const fileInfo = await invoke<{ size: number }>('get_file_information', { filePath });
+          const fileInfo = await getFileInformation(filePath);
           fileSize = fileInfo.size;
         } catch {
           // Non-blocking — file info is best-effort
@@ -234,19 +227,8 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     set({
       images: [],
       compressionState: 'idle',
-      progressState: {},
       progressManagers: {},
     });
-  },
-
-  resetProcessingImages: () => {
-    set(state => ({
-      images: state.images.map(img =>
-        img.status === 'processing' ? img.withStatus('pending') : img
-      ),
-      isProcessing: false,
-      compressionState: 'idle',
-    }));
   },
 
   // Actions pour la compression
@@ -281,20 +263,13 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           // Obtenir l'estimation de durée depuis la BDD (avec fallback heuristique)
           let estimatedDurationMs = 3000;
           try {
-            const estimation = await invoke<{
-              estimated_duration_ms: number;
-              confidence: number;
-              sample_count: number;
-            }>('get_progress_estimation', {
-              request: {
-                input_format: image.format.toLowerCase(),
-                output_format:
-                  outputFormatForImage === 'auto'
-                    ? image.format.toLowerCase()
-                    : outputFormatForImage,
-                original_size: image.originalSize,
-              },
-            });
+            const outputFmt =
+              outputFormatForImage === 'auto' ? image.format.toLowerCase() : outputFormatForImage;
+            const estimation = await getProgressEstimation(
+              image.format.toLowerCase(),
+              outputFmt,
+              image.originalSize
+            );
             estimatedDurationMs = estimation.estimated_duration_ms;
           } catch {
             // Fallback to default estimation
@@ -346,14 +321,10 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             },
           });
 
-          const response = await invoke<CompressImageResponse>('compress_image', {
-            request: {
-              file_path: image.path,
-              quality,
-              format: outputFormatForImage,
-            },
-            imageId: image.id,
-          });
+          const response = await tauriCompressImage(
+            { file_path: image.path, quality, format: outputFormatForImage },
+            image.id
+          );
 
           // Signaler la fin au gestionnaire adaptatif → déclenche animation 85→100
           const finalManager = get().progressManagers[image.id];
@@ -379,15 +350,13 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
             // 1. Stats store (alimente les estimations)
             try {
-              await invoke('record_compression_stat', {
-                request: {
-                  input_format: image.format.toLowerCase(),
-                  output_format: recordedFormat,
-                  original_size: image.originalSize,
-                  compressed_size: response.result.compressed_size,
-                  quality_setting: quality,
-                  lossy_mode: lossy,
-                },
+              await recordCompressionStat({
+                input_format: image.format.toLowerCase(),
+                output_format: recordedFormat,
+                original_size: image.originalSize,
+                compressed_size: response.result.compressed_size,
+                quality_setting: quality,
+                lossy_mode: lossy,
               });
             } catch {
               // Silent fail — stats recording is non-critical
@@ -514,10 +483,6 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   updateImageProgress: (imageId: string, progress: number) => {
     set(state => ({
       images: state.images.map(img => (img.id === imageId ? img.updateProgress(progress) : img)),
-      progressState: {
-        ...state.progressState,
-        [imageId]: { progress },
-      },
     }));
   },
 

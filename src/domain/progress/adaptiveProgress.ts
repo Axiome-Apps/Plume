@@ -49,10 +49,6 @@ export class AdaptiveProgressManager {
     }, UPDATE_INTERVAL_MS);
   }
 
-  onCompressionStarted(): void {
-    // No-op — kept for API compatibility with the store
-  }
-
   onCompressionCompleted(): void {
     this.compressionDone = true;
     this.completionStartTime = Date.now();
