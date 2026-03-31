@@ -206,10 +206,6 @@ export class ProgressService {
       // 2. Obtenir l'estimation du backend
       const estimation = await this.getProgressEstimation(estimationRequest);
 
-      console.log(
-        `🎯 Smart progress for ${imageId}: ${estimation.estimated_duration_ms}ms (confidence: ${estimation.confidence})`
-      );
-
       // 3. Démarrer la progression avec la configuration estimée
       this.startImageProgress(imageId, estimation.progress_config, callbacks);
     } catch (error) {

@@ -1,7 +1,6 @@
 // Domain modules with functional architecture
 pub mod compression;
 pub mod file;
-pub mod image;
 pub mod shared;
 
 // Re-export core types from each domain for easy access

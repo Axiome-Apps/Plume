@@ -47,6 +47,12 @@ env_logger = "0.11"
 
 tempfile = "3.6"
 
+# Optimize all dependencies in dev mode (compression libs are 10-50x slower without)
+[profile.dev]
+opt-level = 1
+[profile.dev.package."*"]
+opt-level = 3
+
 # Patch libheif-sys to only compile LIBDE265 decoder (HEIC photos).
 # All video codecs (x265, dav1d, rav1e, svt-av1, aom, x264) are disabled.
 [patch.crates-io]

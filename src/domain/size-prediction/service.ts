@@ -37,8 +37,8 @@ export class CompressionEstimationService {
       const validatedResult = EstimationResultSchema.parse(result);
 
       return this.enhanceEstimation(validatedResult, inputFormat, outputFormat);
-    } catch (error) {
-      console.warn("Erreur lors de l'estimation via DB, utilisation du fallback:", error);
+    } catch {
+      // DB estimation failed — use fallback
       return this.getFallbackEstimation(inputFormat, outputFormat, lossyMode);
     }
   }
@@ -70,8 +70,8 @@ export class CompressionEstimationService {
 
     try {
       await invoke<number>('record_compression_stat', { stat });
-    } catch (error) {
-      console.error("Erreur lors de l'enregistrement de la statistique:", error);
+    } catch {
+      // Silent fail — stats recording is non-critical
     }
   }
 

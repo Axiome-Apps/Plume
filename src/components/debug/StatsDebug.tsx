@@ -18,7 +18,7 @@ export const StatsDebug: FC = () => {
     try {
       const result = await invoke<StatsSummary>('get_stats_summary');
       setSummary(result);
-      console.log('📊 Stats Summary:', result);
+      // Stats loaded
     } catch (error) {
       console.error('Failed to load stats:', error);
     } finally {
@@ -30,7 +30,7 @@ export const StatsDebug: FC = () => {
     try {
       await invoke('reset_compression_stats');
       setSummary(null);
-      console.log('🗑️ Stats reset');
+      // Stats reset
     } catch (error) {
       console.error('Failed to reset stats:', error);
     }

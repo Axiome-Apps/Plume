@@ -80,7 +80,7 @@ export function useSmoothProgress(options: UseProgressOptions = {}) {
       fileSize: number,
       quality: number = 80
     ) => {
-      console.log(`🎯 Starting smooth progress for ${imageId}`);
+      // Start smooth progress
 
       // Marquer comme actif
       activeProgressionsRef.current.add(imageId);

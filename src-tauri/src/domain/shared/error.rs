@@ -60,26 +60,7 @@ impl From<crate::domain::file::FileError> for DomainError {
     }
 }
 
-/// Convert from image domain errors
-impl From<crate::domain::image::ImageError> for DomainError {
-    fn from(error: crate::domain::image::ImageError) -> Self {
-        match error {
-            crate::domain::image::ImageError::InvalidFormat(msg) => DomainError::InvalidInput(msg),
-            crate::domain::image::ImageError::UnsupportedFormat(format) => {
-                DomainError::InvalidInput(format!("Unsupported format: {}", format))
-            }
-            crate::domain::image::ImageError::ProcessingError(msg) => DomainError::Internal(msg),
-            crate::domain::image::ImageError::InvalidDimensions(msg) => {
-                DomainError::InvalidInput(msg)
-            }
-            crate::domain::image::ImageError::ColorSpaceError(msg) => DomainError::Internal(msg),
-            crate::domain::image::ImageError::MemoryError(msg) => DomainError::ResourceLimit(msg),
-            crate::domain::image::ImageError::IoError(msg) => DomainError::Internal(msg),
-        }
-    }
-}
-
-/// Convert from compression domain errors  
+/// Convert from compression domain errors
 impl From<crate::domain::compression::CompressionError> for DomainError {
     fn from(error: crate::domain::compression::CompressionError) -> Self {
         match error {

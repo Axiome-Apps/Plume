@@ -27,10 +27,12 @@ export const EstimationQuerySchema = z.object({
 });
 
 // Schéma pour le résultat d'estimation
+// percent can be negative (file grows after compression)
+// ratio can be > 1 (compressed size > original)
 export const EstimationResultSchema = z.object({
-  percent: z.number().min(0).max(100),
-  ratio: z.number().min(0).max(1),
-  confidence: z.number().min(0).max(1), // 0.0 à 1.0
+  percent: z.number().min(-100).max(100),
+  ratio: z.number().min(0),
+  confidence: z.number().min(0).max(1),
   sample_count: z.number().min(0),
 });
 
@@ -43,8 +45,8 @@ export const EstimationDisplaySchema = EstimationResultSchema.extend({
 
 // Schéma pour améliorer l'estimation existante dans imageSchemas
 export const EnhancedCompressionEstimationSchema = z.object({
-  percent: z.number().min(0).max(100),
-  ratio: z.number().min(0).max(1),
+  percent: z.number().min(-100).max(100),
+  ratio: z.number().min(0),
   confidence: z.number().min(0).max(1),
   sample_count: z.number().min(0),
   is_learning: z.boolean(),
