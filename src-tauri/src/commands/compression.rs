@@ -10,6 +10,7 @@ pub struct CompressImageRequest {
     pub quality: Option<u8>,
     pub format: Option<String>,
     pub output_path: Option<String>,
+    pub level: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -109,7 +110,15 @@ pub async fn compress_image(
                 .file_stem()
                 .and_then(|stem| stem.to_str())
                 .unwrap_or("compressed");
-            output_path.set_file_name(format!("{}_compressed.{}", filename, output_extension));
+            let level_suffix = match request.level.as_deref() {
+                Some("light") => "light",
+                Some("aggressive") => "aggressive",
+                _ => "balanced",
+            };
+            output_path.set_file_name(format!(
+                "{}_{}.{}",
+                filename, level_suffix, output_extension
+            ));
             output_path
         }
     };

@@ -172,6 +172,9 @@ See [TODO.md](./TODO.md) for detailed development plans.
 - [x] OKLCH design system with Nunito font
 - [x] DB-backed compression estimation (size + duration)
 - [ ] AVIF format support
+- [ ] Output folder selection
+- [ ] Parallel compression (multi-image batch)
+- [ ] Compression profiles (Web, Archive, etc.)
 
 ## 🤝 Contributing
 

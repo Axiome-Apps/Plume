@@ -316,7 +316,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           });
 
           const response = await tauriCompressImage(
-            { file_path: image.path, quality, format: outputFormatForImage },
+            {
+              file_path: image.path,
+              quality,
+              format: outputFormatForImage,
+              level: compressionSettings.compressionLevel,
+            },
             image.id
           );
 

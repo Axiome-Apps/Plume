@@ -15,7 +15,7 @@ pub use path::{PathUtils, generate_output_path};
 
 // File operations - core I/O functions
 pub use operations::{
-    FileOperation, OperationType, batch_copy_files, cleanup_temp_files, copy_file, create_backup,
+    FileOperation, OperationType, batch_copy_files, cleanup_temp_files, copy_file,
     delete_file, file_exists, get_file_info, move_file, read_file, write_file,
 };
 
@@ -154,10 +154,6 @@ mod integration_tests {
         let metadata = get_file_info(&source_path).unwrap();
         assert_eq!(metadata.size, test_data.len() as u64);
         assert_eq!(metadata.name, "source.txt");
-
-        // Create backup
-        let backup_path = create_backup(&source_path).unwrap();
-        assert!(std::path::Path::new(&backup_path).exists());
 
         // Copy to new location
         let target_path = temp_dir.path().join("copy.txt");

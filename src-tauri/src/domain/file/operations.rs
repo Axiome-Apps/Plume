@@ -141,39 +141,6 @@ pub fn get_file_info<P: AsRef<Path>>(path: P) -> FileResult<FileMetadata> {
     FileMetadata::from_path(path)
 }
 
-/// Create backup of file
-pub fn create_backup<P: AsRef<Path>>(path: P) -> FileResult<String> {
-    PathUtils::validate_safe_path(&path)?;
-
-    if !file_exists(&path) {
-        return Err(FileError::NotFound(
-            path.as_ref().to_string_lossy().to_string(),
-        ));
-    }
-
-    let backup_path = generate_backup_path(&path)?;
-    copy_file(&path, &backup_path)?;
-
-    Ok(backup_path.to_string_lossy().to_string())
-}
-
-/// Generate backup file path
-fn generate_backup_path<P: AsRef<Path>>(path: P) -> FileResult<std::path::PathBuf> {
-    let path_ref = path.as_ref();
-    let stem = PathUtils::get_file_stem(path_ref)?;
-    let extension = path_ref
-        .extension()
-        .and_then(|s| s.to_str())
-        .map(|s| format!(".{}", s))
-        .unwrap_or_default();
-
-    let parent = PathUtils::get_parent_dir(path_ref)?;
-    let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-
-    let backup_name = format!("{}_backup_{}{}", stem, timestamp, extension);
-    Ok(parent.join(backup_name))
-}
-
 /// Batch file operations
 pub fn batch_copy_files<P: AsRef<Path>, Q: AsRef<Path>>(
     files: &[P],
@@ -283,19 +250,4 @@ mod tests {
         assert!(!file_exists(&test_path));
     }
 
-    #[test]
-    fn test_create_backup() {
-        let temp_dir = TempDir::new().unwrap();
-        let test_path = temp_dir.path().join("test.txt");
-        let test_data = b"Test data";
-
-        fs::write(&test_path, test_data).unwrap();
-
-        let backup_path = create_backup(&test_path).unwrap();
-        assert!(file_exists(&test_path));
-        assert!(std::path::Path::new(&backup_path).exists());
-
-        let backup_data = read_file(&backup_path).unwrap();
-        assert_eq!(backup_data, test_data);
-    }
 }

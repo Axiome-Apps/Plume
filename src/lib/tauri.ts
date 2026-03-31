@@ -7,6 +7,7 @@ interface CompressImageRequest {
   file_path: string;
   quality?: number;
   format?: string;
+  level?: string;
 }
 
 interface CompressImageResult {
