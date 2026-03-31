@@ -15,8 +15,8 @@ pub use path::{PathUtils, generate_output_path};
 
 // File operations - core I/O functions
 pub use operations::{
-    FileOperation, OperationType, batch_copy_files, cleanup_temp_files, copy_file,
-    delete_file, file_exists, get_file_info, move_file, read_file, write_file,
+    FileOperation, OperationType, batch_copy_files, cleanup_temp_files, copy_file, delete_file,
+    file_exists, get_file_info, move_file, read_file, write_file,
 };
 
 // Convenience functions for common operations

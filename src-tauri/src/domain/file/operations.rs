@@ -249,5 +249,4 @@ mod tests {
         assert!(delete_result.success);
         assert!(!file_exists(&test_path));
     }
-
 }
