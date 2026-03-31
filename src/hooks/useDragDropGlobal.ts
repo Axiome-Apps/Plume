@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import { DragDropEventEntity } from '@/domain/drag-drop/entity';
 
 /**
@@ -25,6 +26,13 @@ export function useDragDropGlobal(onFilesDropped: (paths: string[]) => void) {
             const validImagePaths = dragDropEvent.processDropEvent();
 
             if (validImagePaths && validImagePaths.length > 0) {
+              const totalDropped = dragDropEvent.paths?.length ?? 0;
+              const rejected = totalDropped - validImagePaths.length;
+              if (rejected > 0) {
+                toast.info(
+                  `${rejected} fichier${rejected > 1 ? 's' : ''} non supporté${rejected > 1 ? 's' : ''} ignoré${rejected > 1 ? 's' : ''}`
+                );
+              }
               callbackRef.current(validImagePaths);
             }
           } catch (error) {

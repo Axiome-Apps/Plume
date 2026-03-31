@@ -1,4 +1,5 @@
 export { UploadIcon } from './UploadIcon';
+export { FolderIcon } from './FolderIcon';
 export { TrashIcon } from './TrashIcon';
 export { CheckIcon } from './CheckIcon';
 export { XIcon } from './XIcon';

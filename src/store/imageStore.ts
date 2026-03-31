@@ -1,5 +1,17 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
+
+function translateError(error: string | undefined): string {
+  if (!error) return 'Erreur inconnue';
+  if (error.includes('Permission denied')) return 'Accès refusé — le dossier est en lecture seule';
+  if (error.includes('File validation failed')) return 'Fichier invalide ou corrompu';
+  if (error.includes('Unsupported') || error.includes('unsupported'))
+    return 'Format de fichier non supporté';
+  if (error.includes('Failed to read')) return 'Impossible de lire le fichier';
+  if (error.includes('Failed to write')) return "Impossible d'écrire le fichier compressé";
+  if (error.includes('No space left')) return 'Espace disque insuffisant';
+  return 'Erreur de compression';
+}
 import { ImageEntity } from '@/domain/image/entity';
 import { ImageType } from '@/domain/image/schema';
 import { detectImageFormat } from '@/domain/constants';
@@ -320,8 +332,8 @@ export const useImageStore = create<ImageStore>((set, get) => ({
               outputPath: response.result.output_path,
             };
 
-            if (response.result.compressed_size >= image.originalSize) {
-              toast.info(`${image.name} est déjà optimisé`);
+            if (response.result.savings_percent === 0) {
+              toast.info(`${image.name} est déjà optimisé — fichier original conservé`);
             }
           } else {
             // Signaler l'erreur au gestionnaire adaptatif
@@ -333,7 +345,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             set(state => ({
               images: state.images.map(img => (img.id === image.id ? img.toError() : img)),
             }));
-            toast.error(`Erreur compression ${image.name}: ${response.error}`);
+            toast.error(`${image.name} : ${translateError(response.error)}`);
           }
         } catch (error) {
           // Signaler l'erreur au gestionnaire adaptatif
@@ -345,7 +357,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           set(state => ({
             images: state.images.map(img => (img.id === image.id ? img.toError() : img)),
           }));
-          toast.error(`Erreur compression ${image.name}: ${error}`);
+          toast.error(`${image.name} : ${translateError(String(error))}`);
         }
       }
 

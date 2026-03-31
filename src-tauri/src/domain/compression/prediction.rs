@@ -58,4 +58,3 @@ pub fn create_prediction_query(
         lossy_mode,
     }
 }
-

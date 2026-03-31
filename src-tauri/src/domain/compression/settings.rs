@@ -85,5 +85,4 @@ mod tests {
         let settings = CompressionSettings::new(0, OutputFormat::WebP);
         assert_eq!(settings.quality, 1);
     }
-
 }

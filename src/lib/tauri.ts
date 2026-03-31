@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { revealItemInDir } from '@tauri-apps/plugin-opener';
 
 // ====== TYPES ======
 
@@ -11,6 +12,7 @@ interface CompressImageRequest {
 interface CompressImageResult {
   compressed_size: number;
   output_path: string;
+  savings_percent: number;
 }
 
 export interface CompressImageResponse {
@@ -46,6 +48,10 @@ export async function selectImageFiles(): Promise<string[]> {
 
 export async function getFileInformation(filePath: string): Promise<{ size: number }> {
   return invoke<{ size: number }>('get_file_information', { filePath });
+}
+
+export async function revealInFolder(filePath: string): Promise<void> {
+  await revealItemInDir(filePath);
 }
 
 // ====== COMPRESSION ======

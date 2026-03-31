@@ -146,15 +146,32 @@ pub async fn compress_image(
                 log::warn!("Failed to save compression stat: {}", e);
             }
 
+            // If compressed file is larger, delete it and keep the original
+            let (final_size, final_path, savings) =
+                if compression_output.compressed_size >= compression_output.original_size {
+                    let _ = std::fs::remove_file(&compression_output.output_path);
+                    (
+                        compression_output.original_size,
+                        file_path.to_string_lossy().to_string(),
+                        0.0,
+                    )
+                } else {
+                    (
+                        compression_output.compressed_size,
+                        compression_output.output_path.to_string_lossy().to_string(),
+                        compression_output.savings_percent,
+                    )
+                };
+
             Ok(CompressImageResponse {
                 success: true,
                 image_id,
-                output_path: Some(compression_output.output_path.to_string_lossy().to_string()),
+                output_path: Some(final_path.clone()),
                 result: Some(CompressionResult {
                     original_size: compression_output.original_size,
-                    compressed_size: compression_output.compressed_size,
-                    savings_percent: compression_output.savings_percent,
-                    output_path: compression_output.output_path.to_string_lossy().to_string(),
+                    compressed_size: final_size,
+                    savings_percent: savings,
+                    output_path: final_path,
                 }),
                 error: None,
             })

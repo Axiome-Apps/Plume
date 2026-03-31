@@ -53,4 +53,3 @@ pub fn quick_compress_file<P: AsRef<std::path::Path>>(
     let settings = web_optimized_settings();
     compress_file_to_file(input_path, output_path, &settings)
 }
-
