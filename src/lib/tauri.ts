@@ -45,7 +45,7 @@ export async function selectImageFiles(): Promise<string[]> {
 }
 
 export async function getFileInformation(filePath: string): Promise<{ size: number }> {
-  return invoke<{ size: number }>('get_file_information', { file_path: filePath });
+  return invoke<{ size: number }>('get_file_information', { filePath });
 }
 
 // ====== COMPRESSION ======
