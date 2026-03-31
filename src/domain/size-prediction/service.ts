@@ -4,7 +4,7 @@ import {
   EnhancedCompressionEstimationType,
   EnhancedCompressionEstimationSchema,
 } from './schema';
-import { getCompressionEstimation, resetCompressionStats } from '@/lib/tauri';
+import { getCompressionEstimation } from '@/lib/tauri';
 
 export class CompressionEstimationService {
   async getEstimation(
@@ -29,10 +29,6 @@ export class CompressionEstimationService {
     } catch {
       return this.getFallbackEstimation(inputFormat, outputFormat, lossyMode);
     }
-  }
-
-  async resetAllStats(): Promise<void> {
-    await resetCompressionStats();
   }
 
   private enhanceEstimation(

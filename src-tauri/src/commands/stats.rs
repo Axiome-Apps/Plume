@@ -22,7 +22,6 @@ pub struct RecordStatRequest {
     pub lossy_mode: bool,
 }
 
-/// Get compression estimation based on historical data
 #[tauri::command]
 pub async fn get_compression_estimation(
     request: GetEstimationRequest,
@@ -41,7 +40,6 @@ pub async fn get_compression_estimation(
     db.get_compression_estimation(&query)
 }
 
-/// Record a compression statistic for learning
 #[tauri::command]
 pub async fn record_compression_stat(
     request: RecordStatRequest,
@@ -81,9 +79,6 @@ pub struct ProgressEstimationResult {
     pub sample_count: u32,
 }
 
-/// Get estimated compression duration in ms based on historical DB data.
-/// Falls back to a size/format heuristic when DB has fewer than 3 samples.
-#[allow(dead_code)] // used via tauri::generate_handler! — not visible to Rust's dead_code lint
 #[tauri::command]
 pub async fn get_progress_estimation(
     request: ProgressEstimationRequest,
@@ -105,7 +100,7 @@ pub async fn get_progress_estimation(
         });
     }
 
-    // Fallback heuristic when DB has no data yet
+    // Fallback heuristic when DB has no data
     let size_mb = request.original_size as f64 / (1024.0 * 1024.0);
     let is_heic = matches!(
         request.input_format.to_lowercase().as_str(),
@@ -134,57 +129,9 @@ pub async fn get_progress_estimation(
     })
 }
 
-/// Reset all compression statistics
 #[tauri::command]
 pub async fn reset_compression_stats(app: AppHandle) -> Result<(), String> {
     let db = DatabaseManager::new(&app)?;
     db.connect()?;
     db.clear_compression_stats()
-}
-
-/// Get total number of compression statistics
-#[tauri::command]
-pub async fn get_stats_count(app: AppHandle) -> Result<u32, String> {
-    let db = DatabaseManager::new(&app)?;
-    db.connect()?;
-    db.count_compression_stats()
-}
-
-/// Get compression statistics summary
-#[tauri::command]
-pub async fn get_stats_summary(app: AppHandle) -> Result<StatsSummary, String> {
-    let db = DatabaseManager::new(&app)?;
-    db.connect()?;
-
-    let total_stats = db.count_compression_stats()?;
-
-    let webp_estimation = db
-        .get_compression_estimation(&EstimationQuery {
-            input_format: "png".to_string(),
-            output_format: "webp".to_string(),
-            original_size: 1000000,
-            quality_setting: 80,
-            lossy_mode: true,
-        })
-        .unwrap_or(EstimationResult {
-            percent: 0.0,
-            ratio: 1.0,
-            confidence: 0.0,
-            sample_count: 0,
-        });
-
-    Ok(StatsSummary {
-        total_compressions: total_stats,
-        webp_estimation_percent: webp_estimation.percent,
-        webp_confidence: webp_estimation.confidence,
-        sample_count: webp_estimation.sample_count,
-    })
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct StatsSummary {
-    pub total_compressions: u32,
-    pub webp_estimation_percent: f64,
-    pub webp_confidence: f64,
-    pub sample_count: u32,
 }

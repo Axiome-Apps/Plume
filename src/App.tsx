@@ -9,14 +9,12 @@ import { initDatabase } from '@/lib/tauri';
 function App() {
   const currentView = useImageStore(state => state.currentView());
   const handleExternalDrop = useImageStore(state => state.handleExternalDrop);
-  const initializeProgressListener = useImageStore(state => state.initializeProgressListener);
 
   useDragDropGlobal(handleExternalDrop);
 
   useEffect(() => {
-    initializeProgressListener();
     initDatabase().catch(() => {});
-  }, [initializeProgressListener]);
+  }, []);
 
   return <AppLayout>{currentView === 'drop' ? <DropZone /> : <ImageList />}</AppLayout>;
 }

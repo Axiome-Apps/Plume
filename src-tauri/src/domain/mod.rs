@@ -22,7 +22,4 @@ pub use file::{
 };
 
 // Shared domain exports
-pub use shared::{
-    AppState, DomainError, DomainResult, compression_completed_event, compression_failed_event,
-    format_bytes, initialize,
-};
+pub use shared::{AppState, DomainError, DomainResult, format_bytes, initialize};

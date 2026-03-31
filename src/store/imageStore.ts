@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { listen } from '@tauri-apps/api/event';
 import { toast } from 'sonner';
 import { ImageEntity } from '@/domain/image/entity';
 import { ImageType } from '@/domain/image/schema';
@@ -15,17 +14,7 @@ import {
   compressImage as tauriCompressImage,
   getFileInformation,
   getProgressEstimation,
-  recordCompressionStat,
 } from '@/lib/tauri';
-
-// Types pour les événements de progression Tauri
-interface CompressionProgressEvent {
-  image_id: string;
-  image_name: string;
-  stage: 'Loading' | 'Compressing' | 'Saving' | 'Complete' | 'Error';
-  progress: number; // 0.0 to 1.0
-  estimated_time_remaining?: number; // seconds
-}
 
 // Types pour la gestion d'état
 type CompressionState = 'idle' | 'processing' | 'completed' | 'error';
@@ -43,9 +32,6 @@ interface ImageStore {
   isProcessing: boolean;
   compressionSettings: CompressionSettings;
   progressManagers: Record<string, AdaptiveProgressManager>;
-
-  // Actions internes
-  initializeProgressListener: () => void;
 
   // Computed getters - Fonctions au lieu de propriétés
   currentView: () => AppView;
@@ -250,11 +236,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           }));
 
           // Resolve compression params for this image
-          const {
-            quality,
-            format: outputFormatForImage,
-            lossy,
-          } = resolveCompressionParams(
+          const { quality, format: outputFormatForImage } = resolveCompressionParams(
             compressionSettings.outputFormat,
             compressionSettings.compressionLevel,
             image.format
@@ -340,26 +322,6 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
             if (response.result.compressed_size >= image.originalSize) {
               toast.info(`${image.name} est déjà optimisé`);
-            }
-
-            // Enregistrer dans les deux bases de données
-            const recordedFormat =
-              outputFormatForImage === 'auto'
-                ? image.format.toLowerCase()
-                : outputFormatForImage.toLowerCase();
-
-            // 1. Stats store (alimente les estimations)
-            try {
-              await recordCompressionStat({
-                input_format: image.format.toLowerCase(),
-                output_format: recordedFormat,
-                original_size: image.originalSize,
-                compressed_size: response.result.compressed_size,
-                quality_setting: quality,
-                lossy_mode: lossy,
-              });
-            } catch {
-              // Silent fail — stats recording is non-critical
             }
           } else {
             // Signaler l'erreur au gestionnaire adaptatif
@@ -484,38 +446,5 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     set(state => ({
       images: state.images.map(img => (img.id === imageId ? img.updateProgress(progress) : img)),
     }));
-  },
-
-  // Initialiser l'écoute des événements de progression Tauri
-  initializeProgressListener: () => {
-    // Stocker unlisten dans le state pour pouvoir le nettoyer
-    let unlisten: (() => void) | undefined;
-
-    const setupListener = async () => {
-      try {
-        if (unlisten) {
-          unlisten();
-          unlisten = undefined;
-        }
-
-        unlisten = await listen<CompressionProgressEvent>('compression-progress', event => {
-          const progressData = event.payload;
-          const progressPercent = Math.round(progressData.progress * 100);
-          get().updateImageProgress(progressData.image_id, progressPercent);
-
-          if (progressData.stage === 'Error') {
-            set(state => ({
-              images: state.images.map(img =>
-                img.id === progressData.image_id ? img.toError() : img
-              ),
-            }));
-          }
-        });
-      } catch (error) {
-        console.error('Failed to setup compression progress listener:', error);
-      }
-    };
-
-    setupListener();
   },
 }));

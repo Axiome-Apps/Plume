@@ -6,11 +6,7 @@ import { selectImageFiles } from '../../lib/tauri';
 import { useImageStore } from '@/store/imageStore';
 import { useTranslation } from '@/hooks/useTranslation';
 
-interface DropZoneProps {
-  className?: string;
-}
-
-const DropZone: React.FC<DropZoneProps> = () => {
+const DropZone: React.FC = () => {
   const { t } = useTranslation();
   const handleExternalDrop = useImageStore(state => state.handleExternalDrop);
 
@@ -25,10 +21,6 @@ const DropZone: React.FC<DropZoneProps> = () => {
     }
   }, [handleExternalDrop]);
 
-  const getAcceptedFormats = () => {
-    return SUPPORTED_FORMATS_DISPLAY;
-  };
-
   return (
     <div
       className="border-2 border-dashed rounded-xl p-16 text-center bg-white transition-all duration-300
@@ -39,7 +31,7 @@ const DropZone: React.FC<DropZoneProps> = () => {
       <h3 className="text-xl font-semibold text-text mb-2">{t('compression.selectFiles')}</h3>
 
       <p className="text-text/50 mb-8">
-        {getAcceptedFormats()} {t('common.supported')}
+        {SUPPORTED_FORMATS_DISPLAY} {t('common.supported')}
       </p>
 
       <Button onClick={handleFilesSelected} size="lg">

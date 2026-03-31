@@ -45,7 +45,7 @@ export async function selectImageFiles(): Promise<string[]> {
 }
 
 export async function getFileInformation(filePath: string): Promise<{ size: number }> {
-  return invoke<{ size: number }>('get_file_information', { filePath });
+  return invoke<{ size: number }>('get_file_information', { file_path: filePath });
 }
 
 // ====== COMPRESSION ======
@@ -84,19 +84,4 @@ export async function getCompressionEstimation(request: {
   lossy_mode: boolean;
 }): Promise<EstimationResult> {
   return invoke<EstimationResult>('get_compression_estimation', { request });
-}
-
-export async function recordCompressionStat(request: {
-  input_format: string;
-  output_format: string;
-  original_size: number;
-  compressed_size: number;
-  quality_setting: number;
-  lossy_mode: boolean;
-}): Promise<number> {
-  return invoke<number>('record_compression_stat', { request });
-}
-
-export async function resetCompressionStats(): Promise<void> {
-  await invoke('reset_compression_stats');
 }
