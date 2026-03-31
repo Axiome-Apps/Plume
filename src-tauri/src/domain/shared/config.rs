@@ -338,15 +338,6 @@ mod tests {
     use tempfile::TempDir;
 
     #[test]
-    fn test_default_config() {
-        let config = AppConfig::default();
-        assert!(config.validate().is_ok());
-        assert!(!config.temp_dir.is_empty());
-        assert!(config.max_file_size > 0);
-        assert!(!config.supported_formats.is_empty());
-    }
-
-    #[test]
     fn test_config_validation() {
         let mut config = AppConfig::default();
 

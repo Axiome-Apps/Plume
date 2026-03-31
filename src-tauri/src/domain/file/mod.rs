@@ -114,13 +114,17 @@ mod integration_tests {
         // Write test file
         fs::write(&test_path, test_data).unwrap();
 
-        // Validate (will pass basic checks even with fake data)
+        // Validate and read as image file
         let metadata = get_file_info(&test_path).unwrap();
         assert!(metadata.is_image);
 
-        // Read as image file
-        let data = read_file(&test_path).unwrap();
-        assert_eq!(data, test_data);
+        let data = read_image_file(&test_path).unwrap();
+        assert_eq!(data, test_data.as_slice());
+
+        // Unsupported format should fail
+        let txt_path = temp_dir.path().join("test.txt");
+        fs::write(&txt_path, b"not an image").unwrap();
+        assert!(read_image_file(&txt_path).is_err());
 
         // Write compressed version
         let compressed_data = b"fake compressed data";

@@ -186,9 +186,26 @@ mod tests {
 
     #[test]
     fn test_validate_safe_path() {
+        // Relative paths are safe
         assert!(PathUtils::validate_safe_path("safe/path.jpg").is_ok());
+        // Traversal is blocked
         assert!(PathUtils::validate_safe_path("../unsafe/path.jpg").is_err());
-        assert!(PathUtils::validate_safe_path("/absolute/path.jpg").is_err());
+        // System paths are blocked
+        assert!(PathUtils::validate_safe_path("/etc/passwd").is_err());
+    }
+
+    #[test]
+    fn test_validate_safe_path_allowed_directories() {
+        // Home directory should be allowed
+        if let Some(home) = dirs::home_dir() {
+            let home_path = home.join("Documents/photo.jpg");
+            assert!(PathUtils::validate_safe_path(&home_path).is_ok());
+        }
+        // External volumes should be allowed (macOS)
+        assert!(PathUtils::validate_safe_path("/Volumes/USB/photo.jpg").is_ok());
+        assert!(PathUtils::validate_safe_path("/media/usb/photo.jpg").is_ok());
+        // System paths remain blocked
+        assert!(PathUtils::validate_safe_path("/usr/bin/test").is_err());
     }
 
     #[test]
@@ -236,5 +253,21 @@ mod tests {
 
         let result_with_dot = generate_output_path(input, ".jpg", None::<&str>).unwrap();
         assert_eq!(result_with_dot, PathBuf::from("input/test.jpg"));
+    }
+
+    #[test]
+    fn test_generate_output_path_collision() {
+        let temp_dir = TempDir::new().unwrap();
+        let input_path = temp_dir.path().join("photo.png");
+        let collision_path = temp_dir.path().join("photo.webp");
+
+        fs::write(&input_path, b"input").unwrap();
+        fs::write(&collision_path, b"existing").unwrap();
+
+        let result =
+            generate_output_path(&input_path, "webp", Some(&temp_dir.path().to_path_buf()))
+                .unwrap();
+        // Should not overwrite — should be "photo (1).webp"
+        assert!(result.to_string_lossy().contains("photo (1).webp"));
     }
 }

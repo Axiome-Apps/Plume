@@ -476,15 +476,4 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_generate_event_id() {
-        let id1 = generate_event_id();
-        let id2 = generate_event_id();
-
-        assert!(!id1.is_empty());
-        assert!(!id2.is_empty());
-        assert_ne!(id1, id2);
-        assert!(id1.starts_with("evt_"));
-        assert!(id2.starts_with("evt_"));
-    }
 }

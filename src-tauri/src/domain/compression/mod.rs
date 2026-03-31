@@ -54,17 +54,3 @@ pub fn quick_compress_file<P: AsRef<std::path::Path>>(
     compress_file_to_file(input_path, output_path, &settings)
 }
 
-#[cfg(test)]
-mod integration_tests {
-    use super::*;
-
-    #[test]
-    fn test_estimation_workflow() {
-        let settings = CompressionSettings::new(80, OutputFormat::WebP);
-        let estimate = estimate_compression("png", "webp", 1000000, &settings);
-
-        assert!(estimate.percent > 0.0);
-        assert!(estimate.ratio < 1.0);
-        assert!(estimate.confidence >= 0.0 && estimate.confidence <= 1.0);
-    }
-}

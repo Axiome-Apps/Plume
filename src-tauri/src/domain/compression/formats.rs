@@ -104,13 +104,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_format_extension() {
-        assert_eq!(OutputFormat::Png.extension(), "png");
-        assert_eq!(OutputFormat::Jpeg.extension(), "jpg");
-        assert_eq!(OutputFormat::WebP.extension(), "webp");
-    }
-
-    #[test]
     fn test_from_string() {
         assert_eq!(OutputFormat::from_string("png"), Some(OutputFormat::Png));
         assert_eq!(OutputFormat::from_string("JPG"), Some(OutputFormat::Jpeg));

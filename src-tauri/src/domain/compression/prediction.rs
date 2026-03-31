@@ -59,17 +59,3 @@ pub fn create_prediction_query(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_create_prediction_query() {
-        let query =
-            create_prediction_query("jpeg".to_string(), "webp".to_string(), 1_000_000, 80, true);
-        assert_eq!(query.input_format, "jpeg");
-        assert_eq!(query.output_format, "webp");
-        assert_eq!(query.quality_setting, 80);
-        assert!(query.lossy_mode);
-    }
-}

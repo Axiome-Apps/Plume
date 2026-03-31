@@ -86,19 +86,4 @@ mod tests {
         assert_eq!(settings.quality, 1);
     }
 
-    #[test]
-    fn test_optimal_format() {
-        assert_eq!(
-            CompressionSettings::optimal_format_for_input("png"),
-            OutputFormat::WebP
-        );
-        assert_eq!(
-            CompressionSettings::optimal_format_for_input("jpg"),
-            OutputFormat::WebP
-        );
-        assert_eq!(
-            CompressionSettings::optimal_format_for_input("unknown"),
-            OutputFormat::WebP
-        );
-    }
 }

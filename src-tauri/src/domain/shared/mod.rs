@@ -146,24 +146,6 @@ mod integration_tests {
     use super::*;
 
     #[test]
-    fn test_shared_utilities_integration() {
-        // Test path utilities
-        assert!(is_safe_path("safe/path/file.jpg"));
-        assert!(!is_safe_path("../unsafe/path"));
-
-        // Test size utilities
-        assert_eq!(format_bytes(1024), "1.0 KB");
-        assert_eq!(calculate_savings_percent(1000, 500), 50.0);
-
-        // Test string utilities
-        assert_eq!(sanitize_filename("file<>name.jpg"), "file__name.jpg");
-
-        // Test validation
-        assert!(validate_quality(80).is_ok());
-        assert!(validate_quality(0).is_err());
-    }
-
-    #[test]
     fn test_app_state() {
         let state = AppState::new();
 

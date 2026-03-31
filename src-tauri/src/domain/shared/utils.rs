@@ -367,6 +367,11 @@ mod tests {
     }
 
     #[test]
+    fn test_calculate_compression_ratio_zero_original() {
+        assert_eq!(size::calculate_compression_ratio(0, 500), 0.0);
+    }
+
+    #[test]
     fn test_parse_size_string() {
         assert_eq!(size::parse_size_string("1024").unwrap(), 1024);
         assert_eq!(size::parse_size_string("1KB").unwrap(), 1024);

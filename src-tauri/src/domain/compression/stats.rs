@@ -169,27 +169,64 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_size_range() {
-        assert_eq!(get_size_range(500_000), "small");
-        assert_eq!(get_size_range(3_000_000), "medium");
-        assert_eq!(get_size_range(10_000_000), "large");
+    fn test_size_range_boundaries() {
+        assert_eq!(get_size_range(0), "small");
+        assert_eq!(get_size_range(1_000_000), "small");
+        assert_eq!(get_size_range(1_000_001), "medium");
+        assert_eq!(get_size_range(5_000_000), "medium");
+        assert_eq!(get_size_range(5_000_001), "large");
     }
 
     #[test]
-    fn test_estimate_compression() {
+    fn test_estimate_compression_values() {
+        // PNG→WebP at q80: base=85%, delta=0, sensitivity=0.5 → percent=85.0
         let settings = CompressionSettings::new(80, OutputFormat::WebP);
-        let result = estimate_compression("png", "webp", 1000000, &settings);
-
-        assert!(result.percent > 50.0);
-        assert!(result.confidence > 0.5);
-        assert_eq!(result.ratio, (100.0 - result.percent) / 100.0);
+        let result = estimate_compression("png", "webp", 1_000_000, &settings);
+        assert_eq!(result.percent, 85.0);
+        assert_eq!(result.confidence, 0.9);
+        assert_eq!(result.sample_count, 100);
     }
 
     #[test]
-    fn test_calculate_confidence() {
-        assert_eq!(calculate_confidence(0, 0.0), 0.0);
-        assert!(calculate_confidence(100, 0.1) > 0.8);
-        assert!(calculate_confidence(3, 0.0) < 0.5);
+    fn test_estimate_compression_quality_direction() {
+        let low = CompressionSettings::new(60, OutputFormat::WebP);
+        let mid = CompressionSettings::new(80, OutputFormat::WebP);
+        let high = CompressionSettings::new(95, OutputFormat::WebP);
+
+        let low_result = estimate_compression("png", "webp", 1_000_000, &low);
+        let mid_result = estimate_compression("png", "webp", 1_000_000, &mid);
+        let high_result = estimate_compression("png", "webp", 1_000_000, &high);
+
+        // Lower quality → more compression (higher percent)
+        assert!(low_result.percent > mid_result.percent);
+        assert!(mid_result.percent > high_result.percent);
+        // All values clamped within [0, 99]
+        assert!(low_result.percent <= 99.0);
+        assert!(high_result.percent >= 0.0);
+    }
+
+    #[test]
+    fn test_calculate_confidence_variance() {
+        let no_variance = calculate_confidence(100, 0.0);
+        let high_variance = calculate_confidence(100, 5.0);
+        // Same sample count, more variance → less confidence
+        assert!(no_variance > high_variance);
+        // Zero variance returns base confidence unmodified
+        assert_eq!(no_variance, 0.9);
+    }
+
+    #[test]
+    fn test_create_stat_compressed_larger_than_original() {
+        let settings = CompressionSettings::new(80, OutputFormat::WebP);
+        let stat = create_stat("jpeg".into(), "webp".into(), 500, 600, &settings);
+        assert!(stat.size_reduction_percent < 0.0); // Negative = file grew
+    }
+
+    #[test]
+    fn test_create_stat_zero_original() {
+        let settings = CompressionSettings::new(80, OutputFormat::WebP);
+        let stat = create_stat("jpeg".into(), "webp".into(), 0, 0, &settings);
+        assert_eq!(stat.size_reduction_percent, 0.0); // No division by zero
     }
 
     #[test]

@@ -694,4 +694,28 @@ mod tests {
         let result = inject_icc_into_webp(&small, &icc);
         assert_eq!(result, small);
     }
+
+    #[test]
+    fn test_inject_icc_into_non_webp_riff() {
+        // RIFF header with "WAVE" instead of "WEBP" — should return unchanged
+        let mut wave = Vec::new();
+        wave.extend_from_slice(b"RIFF");
+        wave.extend_from_slice(&100u32.to_le_bytes());
+        wave.extend_from_slice(b"WAVE");
+        wave.extend(vec![0u8; 100]);
+        let icc = vec![1, 2, 3];
+        let result = inject_icc_into_webp(&wave, &icc);
+        assert_eq!(result, wave);
+    }
+
+    #[test]
+    fn test_compression_output_zero_size() {
+        let output = CompressionOutput::new(
+            std::path::PathBuf::from("/tmp/test.webp"),
+            0,
+            0,
+            OutputFormat::WebP,
+        );
+        assert_eq!(output.savings_percent, 0.0);
+    }
 }
