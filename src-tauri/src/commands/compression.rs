@@ -39,9 +39,7 @@ pub async fn compress_image(
     let start_time = std::time::Instant::now();
     let file_path = Path::new(&request.file_path);
 
-    let image_id = image_id.unwrap_or_else(|| {
-        format!("img_{}", start_time.elapsed().as_nanos())
-    });
+    let image_id = image_id.unwrap_or_else(|| format!("img_{}", start_time.elapsed().as_nanos()));
 
     // Validate image file
     let metadata = match validate_image_file(file_path) {
@@ -116,6 +114,11 @@ pub async fn compress_image(
         }
     };
 
+    // Get pixel count for duration estimation accuracy
+    let pixel_count = image::image_dimensions(file_path)
+        .map(|(w, h)| w as u64 * h as u64)
+        .ok();
+
     // Compress
     match crate::domain::compression::compress_file_to_file(file_path, &output_path, &settings) {
         Ok(compression_output) => {
@@ -132,8 +135,8 @@ pub async fn compress_image(
                 compression_output.original_size,
                 compression_output.compressed_size,
                 processing_time,
+                pixel_count,
                 &settings,
-                format!("plume-v{}", env!("CARGO_PKG_VERSION")),
             );
 
             if let Err(e) = DatabaseManager::new(&app_handle).and_then(|db| {

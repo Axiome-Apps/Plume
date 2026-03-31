@@ -91,6 +91,7 @@ pub async fn get_progress_estimation(
         &request.input_format,
         &request.output_format,
         request.original_size,
+        None, // pixel_count not available from frontend yet — DB matches by size_range fallback
     )? {
         let confidence = (count as f64 / 20.0).min(1.0);
         return Ok(ProgressEstimationResult {
