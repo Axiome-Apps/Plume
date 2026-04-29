@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Plume",
-    "description": "Compress your images with optimal quality"
+    "description": "Compress images, simply",
+    "tagline": "Image compression"
   },
   "header": {
     "title": {
@@ -12,7 +13,7 @@
     "empty": "Clear",
     "totalSize": "total",
     "compression": {
-      "pending": "Compress all",
+      "pending": "Compress",
       "active": "Compressing..."
     },
     "controls": {
@@ -34,23 +35,49 @@
   },
   "common": {
     "supported": "supported",
-    "browse": "Click to browse"
+    "browse": "Browse",
+    "import": "Import"
   },
   "compression": {
-    "selectFiles": "Select or drop files",
+    "selectFiles": "Drop an image or click to browse",
     "pending": "Pending",
     "processing": "Processing...",
-    "completed": "Completed",
+    "completed": "Done",
     "error": "Error"
+  },
+  "batch": {
+    "pendingTagline_one": "{{count}} batch pending",
+    "pendingTagline_other": "{{count}} batches pending",
+    "eyebrow": "Current batch",
+    "kpi": {
+      "estimated": "Estimated savings",
+      "realized": "Actual savings",
+      "gained": "{{unit}} saved"
+    },
+    "imagesCount": "Images · {{count}}",
+    "dropHintBefore": "Drop images here · or ",
+    "dropHintAction": "browse"
+  },
+  "settings": {
+    "eyebrow": "Settings — applied to the batch",
+    "format": "Format",
+    "intensity": "Intensity",
+    "cta_one": "Compress {{count}} image",
+    "cta_other": "Compress {{count}} images"
+  },
+  "actions": {
+    "compress": "Compress",
+    "delete": "Delete",
+    "openFolder": "Open folder"
   },
   "stats": {
     "finalSize": "Final size:",
-    "economy": "Economy:",
-    "estimation": "Estimation:"
+    "economy": "Savings:",
+    "estimation": "Estimate:"
   },
   "success": {
-    "title": "All images have been successfully compressed!",
-    "description": "Your compressed images have been saved to their original folder.",
+    "title": "All images compressed",
+    "description": "Compressed files are saved in their source folder.",
     "startOver": "Start over"
   }
 }

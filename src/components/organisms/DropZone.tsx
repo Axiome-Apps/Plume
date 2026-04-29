@@ -23,21 +23,19 @@ const DropZone: React.FC = () => {
 
   return (
     <div
-      className="border-2 border-dashed rounded-xl p-16 text-center bg-white transition-all duration-300
-        border-secondary/30 hover:border-primary hover:bg-primary/5 hover:-translate-y-1 hover:shadow-lg"
+      className="border border-dashed border-rule-2 rounded-xl p-12 sm:p-16 text-center bg-surface
+        transition-colors hover:border-primary-light"
     >
-      <UploadIcon size={48} className="text-primary mx-auto mb-4" />
+      <UploadIcon size={40} className="text-primary-light mx-auto mb-5" />
 
-      <h3 className="text-xl font-semibold text-text mb-2">{t('compression.selectFiles')}</h3>
-
-      <p className="text-text/50 mb-8">
+      <h3 className="ax-heading text-fg mb-1">{t('compression.selectFiles')}</h3>
+      <p className="ax-caption text-fg-3 mb-6">
         {SUPPORTED_FORMATS_DISPLAY} {t('common.supported')}
       </p>
 
       <Button onClick={handleFilesSelected} size="lg">
-        <UploadIcon size={20} className="mr-2" />
-        <span className="hidden sm:inline"> {t('common.browse')}</span>
-        <span className="sm:hidden">Parcourir</span>
+        <UploadIcon size={18} />
+        {t('common.browse')}
       </Button>
     </div>
   );

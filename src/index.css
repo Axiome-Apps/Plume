@@ -16,28 +16,125 @@
   font-display: swap;
 }
 
-@theme {
-  /* Font */
-  --font-sans: 'Nunito', system-ui, sans-serif;
-
-  /* Core */
-  --color-primary: oklch(0.5591 0.0809 272.6);
-  --color-secondary: oklch(0.752 0.053 272.89);
-  --color-accent: oklch(0.6386 0.0937 272.27);
-
-  /* Surfaces & Text */
-  --color-background: oklch(0.9816 0.0017 247.84);
-  --color-text: oklch(0.1558 0.0063 285.64);
-
-  /* Semantic */
-  --color-success: oklch(0.697 0.1116 156);
-  --color-error: oklch(0.5591 0.1539 20.36);
-  --color-warning: oklch(0.8181 0.1265 79.78);
+@font-face {
+  font-family: 'Satoshi';
+  src: url('@/assets/fonts/Satoshi/Satoshi-Variable.woff2') format('woff2');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
 }
 
-/* Fix scroll horizontal - force max-width */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('@/assets/fonts/Satoshi/Satoshi-VariableItalic.woff2') format('woff2');
+  font-weight: 300 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: 'Nunito', system-ui, sans-serif;
+  --font-display: 'Satoshi', 'Nunito', system-ui, sans-serif;
+
+  /* Surfaces */
+  --color-bg: oklch(0.21 0.02 272);
+  --color-surface: oklch(0.255 0.022 272);
+  --color-surface-2: oklch(0.3 0.025 272);
+
+  /* Marque */
+  --color-primary: oklch(0.5591 0.0809 272.6);
+  --color-primary-deep: oklch(0.42 0.1 272.6);
+  --color-primary-light: oklch(0.74 0.07 272.6);
+
+  /* Encres & filets */
+  --color-fg: oklch(0.97 0.01 272);
+  --color-fg-2: oklch(0.82 0.012 272);
+  --color-fg-3: oklch(0.62 0.015 272);
+  --color-rule: oklch(0.32 0.02 272);
+  --color-rule-2: oklch(0.4 0.022 272);
+
+  /* Sémantique */
+  --color-success: oklch(0.78 0.18 156);
+  --color-warning: oklch(0.78 0.14 60);
+  --color-error: oklch(0.65 0.16 20);
+
+  /* Aliases compat (anciens tokens) */
+  --color-background: var(--color-bg);
+  --color-text: var(--color-fg);
+  --color-secondary: var(--color-rule);
+  --color-accent: var(--color-primary-light);
+
+  /* Rayons */
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+
+  /* Ombres */
+  --shadow-glow:
+    0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 22px -10px rgba(120, 136, 200, 0.55);
+  --shadow-lift: 0 14px 38px -14px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Typo utilities Axiome */
+.ax-display {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.ax-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+.ax-heading {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.ax-body-plus {
+  font-size: 15.5px;
+  font-weight: 400;
+}
+.ax-body {
+  font-size: 14px;
+  font-weight: 400;
+}
+.ax-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ax-caption {
+  font-size: 11.5px;
+  font-weight: 400;
+}
+.ax-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+}
+.ax-tabular {
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }

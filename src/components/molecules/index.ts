@@ -1,7 +1,6 @@
-export { ImageCard } from './ImageCard';
+export { default as ImageRow } from './ImageRow';
 export { ImagePreview } from './ImagePreview';
-export { CompressionStats } from './CompressionStats';
 export { ImageActions } from './ImageActions';
-export { CompressionControls } from './CompressionControls';
-export { ImageListHeader } from './ImageListHeader';
+export { default as BatchKpiCard } from './BatchKpiCard';
+export { default as SettingsPanel } from './SettingsPanel';
 export { CompressionSuccess } from './CompressionSuccess';

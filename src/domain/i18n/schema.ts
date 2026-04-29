@@ -8,6 +8,7 @@ export const TranslationKeysSchema = z.object({
   app: z.object({
     name: z.string(),
     description: z.string(),
+    tagline: z.string(),
   }),
   header: z.object({
     title: z.object({
@@ -41,6 +42,7 @@ export const TranslationKeysSchema = z.object({
   common: z.object({
     supported: z.string(),
     browse: z.string(),
+    import: z.string(),
   }),
   compression: z.object({
     selectFiles: z.string(),
@@ -48,6 +50,31 @@ export const TranslationKeysSchema = z.object({
     processing: z.string(),
     completed: z.string(),
     error: z.string(),
+  }),
+  batch: z.object({
+    pendingTagline_one: z.string(),
+    pendingTagline_other: z.string(),
+    eyebrow: z.string(),
+    kpi: z.object({
+      estimated: z.string(),
+      realized: z.string(),
+      gained: z.string(),
+    }),
+    imagesCount: z.string(),
+    dropHintBefore: z.string(),
+    dropHintAction: z.string(),
+  }),
+  settings: z.object({
+    eyebrow: z.string(),
+    format: z.string(),
+    intensity: z.string(),
+    cta_one: z.string(),
+    cta_other: z.string(),
+  }),
+  actions: z.object({
+    compress: z.string(),
+    delete: z.string(),
+    openFolder: z.string(),
   }),
   stats: z.object({
     finalSize: z.string(),
@@ -73,6 +100,12 @@ export type TranslationKeyType =
   | `header.controls.level.${keyof TranslationKeysType['header']['controls']['level']}`
   | `common.${keyof TranslationKeysType['common']}`
   | `compression.${keyof TranslationKeysType['compression']}`
+  | `batch.${keyof Omit<TranslationKeysType['batch'], 'kpi'>}`
+  | `batch.kpi.${keyof TranslationKeysType['batch']['kpi']}`
+  | 'batch.pendingTagline'
+  | `settings.${keyof TranslationKeysType['settings']}`
+  | 'settings.cta'
+  | `actions.${keyof TranslationKeysType['actions']}`
   | `stats.${keyof TranslationKeysType['stats']}`
   | `success.${keyof TranslationKeysType['success']}`;
 

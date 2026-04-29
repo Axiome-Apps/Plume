@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Plume",
-    "description": "Compressez vos images avec une qualité optimale"
+    "description": "Compresser des images, simplement",
+    "tagline": "Compression d'images"
   },
   "header": {
     "title": {
@@ -34,23 +35,49 @@
   },
   "common": {
     "supported": "supportés",
-    "browse": "Cliquez pour parcourir"
+    "browse": "Parcourir",
+    "import": "Importer"
   },
   "compression": {
-    "selectFiles": "Sélectionnez ou déposez vos images",
+    "selectFiles": "Glisser une image ou cliquer pour parcourir",
     "pending": "En attente",
     "processing": "Traitement...",
     "completed": "Terminée",
     "error": "Erreur"
   },
+  "batch": {
+    "pendingTagline_one": "{{count}} lot en attente",
+    "pendingTagline_other": "{{count}} lots en attente",
+    "eyebrow": "Lot en cours",
+    "kpi": {
+      "estimated": "Économie estimée",
+      "realized": "Économie réalisée",
+      "gained": "{{unit}} gagnés"
+    },
+    "imagesCount": "Images · {{count}}",
+    "dropHintBefore": "Glisser des images ici · ou ",
+    "dropHintAction": "parcourir"
+  },
+  "settings": {
+    "eyebrow": "Réglages — appliqués au lot",
+    "format": "Format",
+    "intensity": "Intensité",
+    "cta_one": "Compresser {{count}} image",
+    "cta_other": "Compresser {{count}} images"
+  },
+  "actions": {
+    "compress": "Compresser",
+    "delete": "Supprimer",
+    "openFolder": "Ouvrir le dossier"
+  },
   "stats": {
-    "finalSize": "Taille finale:",
-    "economy": "Économie:",
-    "estimation": "Estimation:"
+    "finalSize": "Taille finale :",
+    "economy": "Économie :",
+    "estimation": "Estimation :"
   },
   "success": {
-    "title": "Toutes les images ont été compressées avec succès !",
-    "description": "Vos images compressées ont été sauvegardées dans leur dossier d'origine.",
+    "title": "Toutes les images sont compressées",
+    "description": "Les fichiers compressés sont enregistrés dans le dossier d'origine.",
     "startOver": "Recommencer"
   }
 }

@@ -1,5 +1,7 @@
 import { Button } from '@/components/atoms';
-import { FeatherIcon, FolderIcon, TrashIcon } from '@/components/icons';
+import { FolderIcon, TrashIcon } from '@/components/icons';
+import { LogoPlume } from '@/components/brand';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { ImageStatus } from '@/domain/image';
 
 interface ImageActionsProps {
@@ -9,23 +11,23 @@ interface ImageActionsProps {
   onRevealInFolder?: () => void;
 }
 
-const squareBtn = '!p-0 h-16 w-16 !rounded-full';
-
 export function ImageActions({
   status,
   onCompress,
   onRemove,
   onRevealInFolder,
 }: ImageActionsProps) {
+  const { t } = useTranslation();
+
   return (
-    <div className="flex gap-2 h-full">
+    <div className="flex gap-2">
       {status === 'pending' && (
         <>
-          <Button onClick={onCompress} color="accent" className={squareBtn} title="Compresser">
-            <FeatherIcon size={28} />
+          <Button variant="primary" size="sm" onClick={onCompress} title={t('actions.compress')}>
+            <LogoPlume size={20} color="white" />
           </Button>
-          <Button onClick={onRemove} color="error" className={squareBtn} title="Supprimer">
-            <TrashIcon size={28} />
+          <Button variant="icon" size="sm" onClick={onRemove} title={t('actions.delete')}>
+            <TrashIcon size={16} />
           </Button>
         </>
       )}
@@ -33,22 +35,22 @@ export function ImageActions({
       {status === 'completed' && (
         <>
           <Button
+            variant="ghost"
+            size="sm"
             onClick={onRevealInFolder}
-            color="success"
-            className={squareBtn}
-            title="Ouvrir le dossier"
+            title={t('actions.openFolder')}
           >
-            <FolderIcon size={28} />
+            <FolderIcon size={16} />
           </Button>
-          <Button onClick={onRemove} color="error" className={squareBtn} title="Supprimer">
-            <TrashIcon size={28} />
+          <Button variant="icon" size="sm" onClick={onRemove} title={t('actions.delete')}>
+            <TrashIcon size={16} />
           </Button>
         </>
       )}
 
       {(status === 'processing' || status === 'error') && (
-        <Button onClick={onRemove} color="error" className={squareBtn} title="Supprimer">
-          <TrashIcon size={28} />
+        <Button variant="icon" size="sm" onClick={onRemove} title={t('actions.delete')}>
+          <TrashIcon size={16} />
         </Button>
       )}
     </div>

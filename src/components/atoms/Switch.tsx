@@ -3,10 +3,9 @@ import { FC } from 'react';
 interface SwitchProps {
   checked: boolean;
   onChange: () => void;
-  checkedLabel: string;
-  uncheckedLabel: string;
+  checkedLabel?: string;
+  uncheckedLabel?: string;
   className?: string;
-  color?: 'success' | 'primary';
 }
 
 export const Switch: FC<SwitchProps> = ({
@@ -15,30 +14,22 @@ export const Switch: FC<SwitchProps> = ({
   checkedLabel,
   uncheckedLabel,
   className = '',
-  color = 'success',
 }) => {
-  const colorClasses = {
-    success: 'bg-success',
-    primary: 'bg-primary',
-  };
-
+  const label = checked ? checkedLabel : uncheckedLabel;
   return (
-    <label className={`flex items-center gap-2 cursor-pointer ${className}`}>
+    <label className={`inline-flex items-center gap-2 cursor-pointer ${className}`}>
       <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
-      <div
-        className={`relative w-12 h-6 rounded-full transition-colors ${
-          checked ? colorClasses[color] : 'bg-secondary/40'
+      <span
+        className={`relative inline-block w-8 h-[18px] rounded-full transition-colors duration-150 ${
+          checked ? 'bg-primary' : 'bg-surface-2'
         }`}
       >
-        <div
-          className={`absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform top-0.5 ${
-            checked ? 'translate-x-6' : 'translate-x-0.5'
-          }`}
+        <span
+          className="absolute top-[2px] left-[2px] w-[14px] h-[14px] bg-white rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.35)] transition-transform duration-150"
+          style={{ transform: checked ? 'translateX(14px)' : 'translateX(0)' }}
         />
-      </div>
-      <span className="text-sm font-medium text-text/70">
-        {checked ? checkedLabel : uncheckedLabel}
       </span>
+      {label && <span className="ax-caption text-fg-2">{label}</span>}
     </label>
   );
 };
