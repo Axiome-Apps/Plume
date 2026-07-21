@@ -1,10 +1,18 @@
 name: CI
 
+# Tier BASIQUE, rapide, sur chaque push/PR : lint, type-check, garde de version, fmt + clippy.
+# Pas de tests ni de build ici — ils sont réservés à la gate de release (release.yml), qui ne
+# tourne qu'au bump. Objectif : feedback en secondes sur main/PR.
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
@@ -20,6 +28,12 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
+
+      # Garde anti-dérive des versions : les 4 fichiers (package.json, tauri.conf.json,
+      # Cargo.toml, Cargo.lock) doivent s'accorder. Échoue si quelqu'un a édité à la main
+      # au lieu de passer par `pnpm bump`. Node seul suffit — aucune install requise.
+      - name: Version consistency guard
+        run: node scripts/check-version.mjs
 
       - name: Install frontend dependencies
         run: pnpm install
@@ -64,8 +78,7 @@ jobs:
       - name: Format check
         run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
 
+      # Clippy compile réellement le crate → attrape les régressions de compilation sur push.
+      # Les `cargo test` (assertions) sont dans la gate de release, pas ici (tier basique).
       - name: Clippy
         run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
-
-      - name: Tests
-        run: cargo test --manifest-path src-tauri/Cargo.toml

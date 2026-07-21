@@ -1,12 +1,88 @@
 name: Release
 
+# Déclenchée UNIQUEMENT par un tag `vX.Y.Z`, et ce tag n'est produit que par `pnpm bump`
+# (scripts/bump.mjs). Donc : builds ⇔ bump, jamais autrement.
+#
+# Tier AVANCÉ en trois temps :
+#   1. gate    — tests + checks stricts + garde de version (tag == les 4 fichiers). Un échec
+#                ici bloque tout : aucun binaire mal versionné ou cassé ne part.
+#   2. build   — matrice 4 plateformes (tauri-action) → GitHub Release avec les assets.
+#   3. homebrew — met à jour le cask du tap (SHA256 des DMG) après publication des assets.
+
 on:
   push:
     tags:
       - 'v*.*.*'
 
+concurrency: release-${{ github.ref }}
+
 jobs:
-  release:
+  # ── Gate avancée : rien ne se construit tant qu'elle n'est pas verte. ────────────────────
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libasound2-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            nasm
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      # Le tag doit correspondre EXACTEMENT aux 4 fichiers de version. Barrière ultime contre
+      # un tag posé à la main ou désynchronisé.
+      - name: Version matches tag
+        run: node scripts/check-version.mjs --expect "${{ github.ref_name }}"
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Frontend tests
+        run: pnpm test --passWithNoTests
+
+      - name: Clippy (strict)
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+
+      - name: Rust tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  # ── Builds : uniquement après une gate verte. ───────────────────────────────────────────
+  build:
+    needs: gate
     permissions:
       contents: write
     strategy:
@@ -99,3 +175,50 @@ jobs:
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'test') }}
           args: ${{ matrix.args }}
+
+  # ── Homebrew : met à jour le cask du tap avec les SHA256 des DMG publiés. ────────────────
+  # Nécessite le secret HOMEBREW_TAP_TOKEN (PAT avec write sur Axiome-Apps/homebrew-tap).
+  # Ignoré pour les pré-releases (les utilisateurs stables ne doivent pas les recevoir).
+  homebrew:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.ref_name, 'alpha') && !contains(github.ref_name, 'beta') && !contains(github.ref_name, 'rc') && !contains(github.ref_name, 'test') }}
+    steps:
+      - name: Checkout Plume (scripts)
+        uses: actions/checkout@v6
+
+      - name: Checkout tap
+        uses: actions/checkout@v6
+        with:
+          repository: Axiome-Apps/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      # Les DMG sont attachés à la Release par le job `build` (macOS arm64 + x64). `build` étant
+      # terminé, les assets existent. GITHUB_TOKEN suffit pour lire une release du même repo.
+      - name: Download release DMGs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release download "${{ github.ref_name }}" --repo "${{ github.repository }}" --pattern "*.dmg" --dir dmg
+
+      - name: Update cask
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          V="${VERSION#v}"
+          ARM_SHA=$(sha256sum "dmg/Plume_${V}_aarch64.dmg" | cut -d' ' -f1)
+          INTEL_SHA=$(sha256sum "dmg/Plume_${V}_x64.dmg" | cut -d' ' -f1)
+          node scripts/update-cask.mjs "tap/Casks/plume.rb" "$V" "$ARM_SHA" "$INTEL_SHA"
+
+      - name: Commit & push tap
+        working-directory: tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "Cask déjà à jour, rien à committer."
+            exit 0
+          fi
+          git add Casks/plume.rb
+          git commit -m "chore: update plume to ${{ github.ref_name }}"
+          git push
