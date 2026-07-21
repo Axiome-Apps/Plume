@@ -25,6 +25,7 @@
 ## v0.5.1 — Bug Fixes
 
 - [ ] Fix "Reveal in Finder" not working on macOS (tauri-plugin-opener / outputPath issue)
+- [ ] Fix non-functional "open" buttons (folder icon) — wire up or remove
 - [ ] Lock quality slider when output format is PNG (oxipng is always lossless)
 
 ## v0.6.0 — Compression Profiles
@@ -35,6 +36,7 @@
 
 ## v0.7.0 — Output & Workflow
 
+- [ ] Add entire folder as input (recursive scan, filtered by supported image extensions)
 - [ ] Output folder selection (choose where compressed files go)
 - [ ] Parallel compression (multi-image batch with concurrency limit)
 - [ ] Batch progress indicator (global "X of Y done")
