@@ -41,6 +41,7 @@ Immutable conventions and best practices guide for Plume development.
 **Single entry point** : Tous les appels `invoke()` passent par `src/lib/tauri.ts` — jamais d'import direct de `@tauri-apps/api/core` ailleurs
 **Naming** : Tauri 2 auto-convertit camelCase ↔ snake_case — ne PAS convertir manuellement les noms de paramètres
 **Responsabilité** : Le front affiche, le back agit et enregistre (stats, compression, écriture fichier)
+Décision + rationale → [ADR-0004](../docs-internal/adr/ADR-0004-tauri-ipc-boundary.md)
 
 ## Architectural Patterns
 
@@ -48,11 +49,11 @@ Immutable conventions and best practices guide for Plume development.
 
 **Rust Fonctionnel** : Pure functions + data • Modules par responsabilité • Traits pour extensibilité
 
-**Compression pipeline** : Image → estimation (DB) → compression (Rust engine) → stat enregistrée (DB avec pixel_count + timing) → résultat au frontend
+**Compression pipeline** : Image → estimation (DB) → compression (Rust engine) → stat enregistrée (DB avec pixel_count + timing) → résultat au frontend — → [ADR-0001](../docs-internal/adr/ADR-0001-compression-pipeline.md), estimation [ADR-0005](../docs-internal/adr/ADR-0005-db-backed-estimation.md)
 
-**Progress** : Frontend-only (`AdaptiveProgressManager`) — smooth ease-out jusqu'à 85%, hold, puis 350ms ease to 100% sur signal backend. Pas d'événements de progression backend.
+**Progress** : Frontend-only (`AdaptiveProgressManager`) — smooth ease-out jusqu'à 85%, hold, puis 350ms ease to 100% sur signal backend. Pas d'événements de progression backend. → [ADR-0002](../docs-internal/adr/ADR-0002-frontend-only-progress.md)
 
-**Output naming** : `{name}_{level}.{ext}` (balanced, light, aggressive) — même params = écrase, params différents = nouveau fichier
+**Output naming** : `{name}_{level}.{ext}` (balanced, light, aggressive) — même params = écrase, params différents = nouveau fichier — → [ADR-0003](../docs-internal/adr/ADR-0003-output-naming.md)
 
 ## Release Management
 

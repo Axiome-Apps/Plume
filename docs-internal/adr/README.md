@@ -23,15 +23,15 @@ Statut : accepté | proposé | remplacé par ADR-00YY   ·   Date
 
 ## Index
 
-| N°                                       | Titre                                                            | Statut    | Détail                                              |
-| ---------------------------------------- | ---------------------------------------------------------------- | --------- | --------------------------------------------------- |
-| 0001                                     | Pipeline de compression (image → estimation → engine → stat)     | à rédiger | —                                                   |
-| 0002                                     | Progression frontend-only (`AdaptiveProgressManager`)            | à rédiger | —                                                   |
-| 0003                                     | Nommage de sortie (`{name}_{level}.{ext}`, écrase vs nouveau)    | à rédiger | —                                                   |
-| 0004                                     | Frontière IPC Tauri (point d'entrée unique `src/lib/tauri.ts`)   | à rédiger | —                                                   |
-| 0005                                     | Estimation adossée SQLite (`pixel_count` + timing)               | à rédiger | —                                                   |
-| [0006](./ADR-0006-versioning-release.md) | Versioning & release : SSOT 4 fichiers, CI deux tiers, cask auto | accepté   | [release-runbook.md](../release/release-runbook.md) |
+| N°                                           | Titre                                                            | Statut  | Détail                                              |
+| -------------------------------------------- | ---------------------------------------------------------------- | ------- | --------------------------------------------------- |
+| [0001](./ADR-0001-compression-pipeline.md)   | Pipeline de compression (estimation → engine → stat → résultat)  | accepté | —                                                   |
+| [0002](./ADR-0002-frontend-only-progress.md) | Progression frontend-only (`AdaptiveProgressManager`)            | accepté | —                                                   |
+| [0003](./ADR-0003-output-naming.md)          | Nommage de sortie (`{name}_{level}.{ext}`, écrase vs nouveau)    | accepté | —                                                   |
+| [0004](./ADR-0004-tauri-ipc-boundary.md)     | Frontière IPC Tauri (point d'entrée unique `src/lib/tauri.ts`)   | accepté | —                                                   |
+| [0005](./ADR-0005-db-backed-estimation.md)   | Estimation adossée SQLite (`pixel_count` + timing)               | accepté | —                                                   |
+| [0006](./ADR-0006-versioning-release.md)     | Versioning & release : SSOT 4 fichiers, CI deux tiers, cask auto | accepté | [release-runbook.md](../release/release-runbook.md) |
 
-Les ADR 0001–0005 documentent des décisions **déjà en vigueur dans le code** mais pas encore
-formalisées. Elles sont numérotées par ordre chronologique de décision et rédigées au fil de l'eau
-(migration incrémentale du `.claude/CLAUDE.md` vers `docs-internal/`).
+Les ADR 0001–0005 documentent des décisions **déjà en vigueur dans le code**, formalisées a
+posteriori. Leurs _options envisagées_ sont **reconstruites depuis le code** (à confirmer/compléter
+par l'auteur des décisions d'origine).
