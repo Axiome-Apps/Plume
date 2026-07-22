@@ -45,8 +45,8 @@ personne n'édite une version à la main.
 - **CI deux tiers** :
   - **Basique** (push/PR), scindé par techno pour ne jamais lancer de job inutile :
     `ci.yml` (JS/TS : `check-version` + lint + type-check, toujours) et `rust.yml` (fmt + clippy,
-    **filtré sur `src-tauri/**`** → un commit docs/front ne paie pas la compilation native).
-    **Pas de tests ni de build\*\* → feedback en secondes.
+    filtré sur les chemins `src-tauri/` → un commit docs/front ne paie pas la compilation native).
+    Pas de tests ni de build → feedback en secondes.
   - **Avancé** (`release.yml`, tag `v*`) en 3 jobs enchaînés : `gate` (`check-version --expect` +
     tests front + `cargo test` + clippy strict) → `build` (4 plateformes → GitHub Release) →
     `homebrew` (SHA256 des DMG → `scripts/update-cask.mjs` → push le tap).
