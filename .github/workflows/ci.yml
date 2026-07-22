@@ -1,8 +1,8 @@
 name: CI
 
-# Tier BASIQUE, rapide, sur chaque push/PR : lint, type-check, garde de version, fmt + clippy.
-# Pas de tests ni de build ici — ils sont réservés à la gate de release (release.yml), qui ne
-# tourne qu'au bump. Objectif : feedback en secondes sur main/PR.
+# Tier BASIQUE côté JS/TS, sur chaque push/PR : garde de version, lint, type-check. En secondes.
+# Le Rust (fmt + clippy) vit dans rust.yml, filtré sur `src-tauri/**` → un commit docs/front ne
+# paie jamais la compilation native. Les tests + builds sont dans release.yml (gate au bump).
 
 on:
   push:
@@ -43,42 +43,3 @@ jobs:
 
       - name: Type check
         run: pnpm type-check
-
-  rust-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Rust setup
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libssl-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            libasound2-dev \
-            libjavascriptcoregtk-4.1-dev \
-            libsoup-3.0-dev \
-            nasm
-
-      - name: Format check
-        run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
-
-      # Clippy compile réellement le crate → attrape les régressions de compilation sur push.
-      # Les `cargo test` (assertions) sont dans la gate de release, pas ici (tier basique).
-      - name: Clippy
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings

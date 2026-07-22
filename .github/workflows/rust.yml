@@ -1,0 +1,63 @@
+name: Rust
+
+# Tier BASIQUE côté Rust : fmt + clippy. Filtré sur les chemins Rust → ne se déclenche QUE
+# quand `src-tauri/**` (ou la toolchain) change. Un commit docs/front ne paie jamais la
+# compilation native (mozjpeg/libheif/nasm). Les `cargo test` sont dans la gate de release.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src-tauri/**'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/rust.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src-tauri/**'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/rust.yml'
+
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libasound2-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            nasm
+
+      - name: Format check
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+
+      # Clippy compile réellement le crate → attrape les régressions de compilation.
+      # Les `cargo test` (assertions) sont dans la gate de release, pas ici (tier basique).
+      - name: Clippy
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings

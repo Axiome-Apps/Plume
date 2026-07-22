@@ -43,8 +43,10 @@ personne n'édite une version à la main.
 - **`pnpm check-version [--expect vX.Y.Z]`** (`scripts/check-version.mjs`) : échoue si les 4 fichiers
   divergent, et — avec `--expect` — s'ils ne valent pas le tag. Garde anti-dérive.
 - **CI deux tiers** :
-  - **Basique** (`ci.yml`, push/PR) : `check-version` + lint + type-check + `cargo fmt --check` +
-    clippy. **Pas de tests ni de build** → feedback en secondes.
+  - **Basique** (push/PR), scindé par techno pour ne jamais lancer de job inutile :
+    `ci.yml` (JS/TS : `check-version` + lint + type-check, toujours) et `rust.yml` (fmt + clippy,
+    **filtré sur `src-tauri/**`** → un commit docs/front ne paie pas la compilation native).
+    **Pas de tests ni de build\*\* → feedback en secondes.
   - **Avancé** (`release.yml`, tag `v*`) en 3 jobs enchaînés : `gate` (`check-version --expect` +
     tests front + `cargo test` + clippy strict) → `build` (4 plateformes → GitHub Release) →
     `homebrew` (SHA256 des DMG → `scripts/update-cask.mjs` → push le tap).

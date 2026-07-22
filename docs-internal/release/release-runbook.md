@@ -35,8 +35,10 @@ Le push du tag — **et lui seul** — déclenche `release.yml`. Rien d'autre à
 3. **`homebrew`** — télécharge les DMG, calcule les SHA256, réécrit le cask via
    `scripts/update-cask.mjs` et push `Axiome-Apps/homebrew-tap`. **Ignoré** pour les pré-releases.
 
-Le tier **basique** (`ci.yml`) tourne en parallèle sur push/PR : garde de version + lint +
-type-check + fmt + clippy. Pas de tests ni de build (ils sont dans `gate`).
+Le tier **basique** tourne en parallèle sur push/PR, scindé par techno : `ci.yml` (garde de
+version + lint + type-check, toujours) et `rust.yml` (fmt + clippy, **filtré sur `src-tauri/**`** →
+un commit docs/front ne déclenche pas la compilation Rust). Pas de tests ni de build (ils sont dans
+`gate`).
 
 ## Setup du secret Homebrew (une fois)
 
