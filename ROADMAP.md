@@ -53,6 +53,7 @@
 
 - [ ] Remove dead EventBus infrastructure (~400 lines in shared/events.rs)
 - [ ] Fix `compressImage(imageId)` — currently compresses all pending images instead of targeted one
+- [ ] Validate ADR-0001..0005 "options envisagées" — reconstructed from code, confirm/complete the rationale and rejected alternatives (`docs-internal/adr/`)
 
 ---
 
