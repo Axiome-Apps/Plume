@@ -43,21 +43,29 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'off', // Allow for Tauri APIs
-      
+
       // React Hooks rules
       ...reactHooks.configs.recommended.rules,
-      
+
       // React Refresh rules
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
-      
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+
       // General rules
       'no-console': 'off', // Temporarily disabled during development
-      'no-debugger': 'warn', 
+      'no-debugger': 'warn',
       'prefer-const': 'error',
       'no-var': 'error',
+    },
+  },
+  {
+    // Node scripts (build/release tooling) — Node globals, ESM
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
     },
   },
   {
