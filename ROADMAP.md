@@ -38,6 +38,7 @@
 
 - [ ] Add entire folder as input (recursive scan, filtered by supported image extensions)
 - [ ] Output folder selection (choose where compressed files go)
+- [ ] Collision-safe output naming (never overwrite existing files → `photo (1).webp`) — scaffolding existed (`generate_output_path`/`make_unique_filename`) but was unused and removed; revisit alongside output folder selection
 - [ ] Parallel compression (multi-image batch with concurrency limit)
 - [ ] Batch progress indicator (global "X of Y done")
 

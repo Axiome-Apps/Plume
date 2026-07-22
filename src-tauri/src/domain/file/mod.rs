@@ -11,7 +11,7 @@ pub mod path;
 // Re-export core types and functions for easy access
 pub use error::{FileError, FileResult};
 pub use metadata::{FileMetadata, format_file_size, get_file_extension, is_supported_image_file};
-pub use path::{PathUtils, generate_output_path};
+pub use path::PathUtils;
 
 // File operations - core I/O functions
 pub use operations::{
@@ -32,20 +32,6 @@ pub fn read_image_file<P: AsRef<std::path::Path>>(path: P) -> FileResult<Vec<u8>
     }
 
     read_file(path)
-}
-
-/// Write compressed image with auto-naming
-pub fn write_compressed_image<P: AsRef<std::path::Path>>(
-    original_path: P,
-    compressed_data: &[u8],
-    output_format: &str,
-    output_dir: Option<P>,
-) -> FileResult<String> {
-    let output_path = generate_output_path(&original_path, output_format, output_dir.as_ref())?;
-
-    write_file(&output_path, compressed_data)?;
-
-    Ok(output_path.to_string_lossy().to_string())
 }
 
 /// Get safe temp file path
@@ -125,19 +111,6 @@ mod integration_tests {
         let txt_path = temp_dir.path().join("test.txt");
         fs::write(&txt_path, b"not an image").unwrap();
         assert!(read_image_file(&txt_path).is_err());
-
-        // Write compressed version
-        let compressed_data = b"fake compressed data";
-        let output_path = write_compressed_image(
-            &test_path,
-            compressed_data,
-            "webp",
-            Some(&temp_dir.path().to_path_buf()),
-        )
-        .unwrap();
-
-        assert!(std::path::Path::new(&output_path).exists());
-        assert!(output_path.ends_with(".webp"));
     }
 
     #[test]

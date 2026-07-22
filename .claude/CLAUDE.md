@@ -50,7 +50,7 @@ Immutable conventions and best practices guide for Plume development.
 
 **Compression pipeline** : Image → estimation (DB) → compression (Rust engine) → stat enregistrée (DB avec pixel_count + timing) → résultat au frontend
 
-**Progress** : Frontend-only (`AdaptiveProgressManager`) — smooth ease-out à 95%, hold, 350ms ease to 100% sur signal backend. Pas d'événements de progression backend.
+**Progress** : Frontend-only (`AdaptiveProgressManager`) — smooth ease-out jusqu'à 85%, hold, puis 350ms ease to 100% sur signal backend. Pas d'événements de progression backend.
 
 **Output naming** : `{name}_{level}.{ext}` (balanced, light, aggressive) — même params = écrase, params différents = nouveau fichier
 

@@ -17,7 +17,7 @@ pub use compression::{
 // File domain exports
 pub use file::{
     FileError, FileMetadata, FileResult, PathUtils, cleanup_temp_files, copy_file,
-    format_file_size, generate_output_path, get_file_extension, get_file_info, get_temp_file_path,
+    format_file_size, get_file_extension, get_file_info, get_temp_file_path,
     is_supported_image_file, read_file, read_image_file, validate_image_file, write_file,
 };
 

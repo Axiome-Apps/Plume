@@ -60,42 +60,6 @@ impl PathUtils {
             .ok_or_else(|| FileError::InvalidPath("No parent directory".to_string()))
     }
 
-    /// Create a unique file name if the original exists
-    pub fn make_unique_filename<P: AsRef<Path>>(path: P) -> PathBuf {
-        let path_ref = path.as_ref();
-
-        if !path_ref.exists() {
-            return path_ref.to_path_buf();
-        }
-
-        let stem = path_ref
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("file");
-
-        let extension = path_ref
-            .extension()
-            .and_then(|s| s.to_str())
-            .map(|s| format!(".{}", s))
-            .unwrap_or_default();
-
-        let parent = path_ref.parent().unwrap_or(Path::new("."));
-
-        for i in 1..=9999 {
-            let new_name = format!("{} ({}){}", stem, i, extension);
-            let new_path = parent.join(new_name);
-
-            if !new_path.exists() {
-                return new_path;
-            }
-        }
-
-        // Fallback with timestamp
-        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-        let new_name = format!("{}_{}_{}", stem, timestamp, extension);
-        parent.join(new_name)
-    }
-
     /// Ensure directory exists, creating it if necessary
     pub fn ensure_dir_exists<P: AsRef<Path>>(path: P) -> FileResult<()> {
         let path_ref = path.as_ref();
@@ -153,36 +117,9 @@ impl PathUtils {
     }
 }
 
-/// Generate output path for compressed file
-pub fn generate_output_path<P: AsRef<Path>>(
-    input_path: P,
-    output_extension: &str,
-    output_dir: Option<P>,
-) -> FileResult<PathBuf> {
-    let input_path_ref = input_path.as_ref();
-
-    let base_dir = if let Some(dir) = output_dir {
-        dir.as_ref().to_path_buf()
-    } else {
-        PathUtils::get_parent_dir(input_path_ref)?
-    };
-
-    let stem = PathUtils::get_file_stem(input_path_ref)?;
-    let output_name = if output_extension.starts_with('.') {
-        format!("{}{}", stem, output_extension)
-    } else {
-        format!("{}.{}", stem, output_extension)
-    };
-
-    let output_path = base_dir.join(output_name);
-    Ok(PathUtils::make_unique_filename(output_path))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
-    use tempfile::TempDir;
 
     #[test]
     fn test_validate_safe_path() {
@@ -221,21 +158,6 @@ mod tests {
     }
 
     #[test]
-    fn test_make_unique_filename() {
-        let temp_dir = TempDir::new().unwrap();
-        let test_path = temp_dir.path().join("test.txt");
-
-        // First call should return the original path
-        assert_eq!(PathUtils::make_unique_filename(&test_path), test_path);
-
-        // Create the file, now it should generate a unique name
-        fs::write(&test_path, "content").unwrap();
-        let unique_path = PathUtils::make_unique_filename(&test_path);
-        assert_ne!(unique_path, test_path);
-        assert!(unique_path.to_string_lossy().contains("test (1).txt"));
-    }
-
-    #[test]
     fn test_get_file_stem() {
         assert_eq!(PathUtils::get_file_stem("test.jpg").unwrap(), "test");
         assert_eq!(PathUtils::get_file_stem("path/test.png").unwrap(), "test");
@@ -245,29 +167,4 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_generate_output_path() {
-        let input = "input/test.png";
-        let result = generate_output_path(input, "webp", None::<&str>).unwrap();
-        assert_eq!(result, PathBuf::from("input/test.webp"));
-
-        let result_with_dot = generate_output_path(input, ".jpg", None::<&str>).unwrap();
-        assert_eq!(result_with_dot, PathBuf::from("input/test.jpg"));
-    }
-
-    #[test]
-    fn test_generate_output_path_collision() {
-        let temp_dir = TempDir::new().unwrap();
-        let input_path = temp_dir.path().join("photo.png");
-        let collision_path = temp_dir.path().join("photo.webp");
-
-        fs::write(&input_path, b"input").unwrap();
-        fs::write(&collision_path, b"existing").unwrap();
-
-        let result =
-            generate_output_path(&input_path, "webp", Some(&temp_dir.path().to_path_buf()))
-                .unwrap();
-        // Should not overwrite — should be "photo (1).webp"
-        assert!(result.to_string_lossy().contains("photo (1).webp"));
-    }
 }
