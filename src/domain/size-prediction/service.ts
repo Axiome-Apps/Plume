@@ -4,6 +4,7 @@ import {
   EnhancedCompressionEstimationSchema,
 } from './schema';
 import { getCompressionEstimation } from '@/lib/tauri';
+import { translate } from '@/domain/i18n';
 
 export class CompressionEstimationService {
   async getEstimation(
@@ -38,11 +39,11 @@ export class CompressionEstimationService {
     const isLearning = result.sample_count > 0;
 
     let description = isLearning
-      ? `Basé sur ${result.sample_count} compression${result.sample_count > 1 ? 's' : ''} similaire${result.sample_count > 1 ? 's' : ''}`
-      : 'Estimation basée sur des données de référence';
+      ? translate('estimation.basedOnSamples', { count: result.sample_count })
+      : translate('estimation.referenceData');
 
     if (inputFormat.toLowerCase() !== outputFormat.toLowerCase()) {
-      description += ` (${inputFormat.toUpperCase()} → ${outputFormat.toUpperCase()})`;
+      description += ` ${conversionSuffix(inputFormat, outputFormat)}`;
     }
 
     return EnhancedCompressionEstimationSchema.parse({
@@ -80,9 +81,16 @@ export class CompressionEstimationService {
       confidence: 0.3,
       sample_count: 0,
       is_learning: false,
-      description: `Estimation par défaut (${inputFormat.toUpperCase()} → ${outputFormat.toUpperCase()})`,
+      description: `${translate('estimation.fallback')} ${conversionSuffix(inputFormat, outputFormat)}`,
     });
   }
+}
+
+function conversionSuffix(inputFormat: string, outputFormat: string): string {
+  return translate('estimation.conversion', {
+    from: inputFormat.toUpperCase(),
+    to: outputFormat.toUpperCase(),
+  });
 }
 
 export const sizePredictionService = new CompressionEstimationService();

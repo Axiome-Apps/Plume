@@ -79,5 +79,41 @@
     "title": "All images compressed",
     "description": "Compressed files are saved in their source folder.",
     "startOver": "Start over"
+  },
+  "units": {
+    "B": "B",
+    "KB": "KB",
+    "MB": "MB",
+    "GB": "GB",
+    "TB": "TB"
+  },
+  "dialog": {
+    "selectImages": "Select images"
+  },
+  "errors": {
+    "unknown": "Unknown error",
+    "permissionDenied": "Access denied — the folder is read-only",
+    "invalidFile": "Invalid or corrupted file",
+    "unsupportedFormat": "Unsupported file format",
+    "readFailed": "Could not read the file",
+    "writeFailed": "Could not write the compressed file",
+    "noSpace": "Not enough disk space",
+    "compressionFailed": "Compression error"
+  },
+  "toasts": {
+    "imagesAdded_one": "{{count}} image added",
+    "imagesAdded_other": "{{count}} images added",
+    "addFailed": "Could not add the files",
+    "alreadyOptimized": "{{name}} is already optimized — original file kept",
+    "compressionError": "{{name}}: {{reason}}",
+    "unsupportedIgnored_one": "{{count}} unsupported file ignored",
+    "unsupportedIgnored_other": "{{count}} unsupported files ignored"
+  },
+  "estimation": {
+    "basedOnSamples_one": "Based on {{count}} similar compression",
+    "basedOnSamples_other": "Based on {{count}} similar compressions",
+    "referenceData": "Estimate based on reference data",
+    "fallback": "Default estimate",
+    "conversion": "({{from}} → {{to}})"
   }
 }

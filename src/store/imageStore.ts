@@ -1,17 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 
-function translateError(error: string | null | undefined): string {
-  if (!error) return 'Erreur inconnue';
-  if (error.includes('Permission denied')) return 'Accès refusé — le dossier est en lecture seule';
-  if (error.includes('File validation failed')) return 'Fichier invalide ou corrompu';
-  if (error.includes('Unsupported') || error.includes('unsupported'))
-    return 'Format de fichier non supporté';
-  if (error.includes('Failed to read')) return 'Impossible de lire le fichier';
-  if (error.includes('Failed to write')) return "Impossible d'écrire le fichier compressé";
-  if (error.includes('No space left')) return 'Espace disque insuffisant';
-  return 'Erreur de compression';
-}
 import { ImageEntity } from '@/domain/image/entity';
 import { ImageType } from '@/domain/image/schema';
 import { detectImageFormat, imageFormatFromExtension } from '@/domain/constants';
@@ -27,6 +16,25 @@ import {
   getFileInformation,
   getProgressEstimation,
 } from '@/lib/tauri';
+import { translate } from '@/domain/i18n';
+import type { TranslationKeyType } from '@/domain/i18n';
+
+/** Map a backend error string to the message shown to the user. */
+function errorMessage(error: string | null | undefined): string {
+  const key = ((): TranslationKeyType => {
+    if (!error) return 'errors.unknown';
+    if (error.includes('Permission denied')) return 'errors.permissionDenied';
+    if (error.includes('File validation failed')) return 'errors.invalidFile';
+    if (error.includes('Unsupported') || error.includes('unsupported'))
+      return 'errors.unsupportedFormat';
+    if (error.includes('Failed to read')) return 'errors.readFailed';
+    if (error.includes('Failed to write')) return 'errors.writeFailed';
+    if (error.includes('No space left')) return 'errors.noSpace';
+    return 'errors.compressionFailed';
+  })();
+
+  return translate(key);
+}
 
 // State management types
 type CompressionState = 'idle' | 'processing' | 'completed' | 'error';
@@ -172,11 +180,9 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         images: [...state.images, ...newImages],
       }));
 
-      toast.success(
-        `${uniqueFilePaths.length} image${uniqueFilePaths.length > 1 ? 's' : ''} ajoutée${uniqueFilePaths.length > 1 ? 's' : ''}`
-      );
+      toast.success(translate('toasts.imagesAdded', { count: uniqueFilePaths.length }));
     } catch {
-      toast.error("Erreur lors de l'ajout des fichiers");
+      toast.error(translate('toasts.addFailed'));
     }
   },
 
@@ -211,7 +217,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     try {
       for (const image of pendingImages) {
         try {
-          // Marquer l'image comme en cours de traitement
+          // Mark the image as being processed
           set(state => ({
             images: state.images.map(img => (img.id === image.id ? img.toProcessing(0) : img)),
           }));
@@ -304,7 +310,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             };
 
             if (response.result.savings_percent === 0) {
-              toast.info(`${image.name} est déjà optimisé — fichier original conservé`);
+              toast.info(translate('toasts.alreadyOptimized', { name: image.name }));
             }
           } else {
             // Signal the error to the adaptive manager
@@ -316,7 +322,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             set(state => ({
               images: state.images.map(img => (img.id === image.id ? img.toError() : img)),
             }));
-            toast.error(`${image.name} : ${translateError(response.error)}`);
+            toast.error(
+              translate('toasts.compressionError', {
+                name: image.name,
+                reason: errorMessage(response.error),
+              })
+            );
           }
         } catch (error) {
           // Signal the error to the adaptive manager
@@ -328,7 +339,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           set(state => ({
             images: state.images.map(img => (img.id === image.id ? img.toError() : img)),
           }));
-          toast.error(`${image.name} : ${translateError(String(error))}`);
+          toast.error(
+            translate('toasts.compressionError', {
+              name: image.name,
+              reason: errorMessage(String(error)),
+            })
+          );
         }
       }
 

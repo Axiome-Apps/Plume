@@ -6,6 +6,7 @@ import {
   type CompressionLevelType,
 } from '@/domain/compression/schema';
 import { FileInfoSchema, SelectedFilesSchema, type FileInfoType } from '@/domain/image/schema';
+import { translate } from '@/domain/i18n';
 import {
   EstimationResultSchema,
   ProgressEstimationSchema,
@@ -42,7 +43,9 @@ export async function initDatabase(): Promise<void> {
 // ====== FILE OPERATIONS ======
 
 export async function selectImageFiles(): Promise<string[]> {
-  return SelectedFilesSchema.parse(await invoke('select_image_files'));
+  return SelectedFilesSchema.parse(
+    await invoke('select_image_files', { title: translate('dialog.selectImages') })
+  );
 }
 
 export async function getFileInformation(filePath: string): Promise<FileInfoType> {

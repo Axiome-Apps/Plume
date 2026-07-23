@@ -24,7 +24,7 @@ const BatchKpiCard: FC = () => {
             {savedFigure.value}
           </span>
           <span className="text-white/75 text-base font-medium">
-            {t('batch.kpi.gained', { unit: savedFigure.unit })}
+            {t('batch.kpi.gained', { unit: t(`units.${savedFigure.unit}`) })}
           </span>
         </div>
 

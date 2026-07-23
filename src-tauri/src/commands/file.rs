@@ -4,13 +4,18 @@ use std::path::Path;
 use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
+/// The dialog title comes from the frontend: interface strings are translated
+/// there, and the backend carries none.
 #[tauri::command]
-pub async fn select_image_files(app_handle: AppHandle) -> Result<Vec<String>, String> {
+pub async fn select_image_files(
+    app_handle: AppHandle,
+    title: String,
+) -> Result<Vec<String>, String> {
     let files = app_handle
         .dialog()
         .file()
         .add_filter("Images", &["png", "jpg", "jpeg", "webp", "heic", "heif"])
-        .set_title("Sélectionner des images")
+        .set_title(title)
         .blocking_pick_files();
 
     match files {

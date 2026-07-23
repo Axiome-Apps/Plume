@@ -86,6 +86,42 @@ export const TranslationKeysSchema = z.object({
     description: z.string(),
     startOver: z.string(),
   }),
+  units: z.object({
+    B: z.string(),
+    KB: z.string(),
+    MB: z.string(),
+    GB: z.string(),
+    TB: z.string(),
+  }),
+  dialog: z.object({
+    selectImages: z.string(),
+  }),
+  errors: z.object({
+    unknown: z.string(),
+    permissionDenied: z.string(),
+    invalidFile: z.string(),
+    unsupportedFormat: z.string(),
+    readFailed: z.string(),
+    writeFailed: z.string(),
+    noSpace: z.string(),
+    compressionFailed: z.string(),
+  }),
+  toasts: z.object({
+    imagesAdded_one: z.string(),
+    imagesAdded_other: z.string(),
+    addFailed: z.string(),
+    alreadyOptimized: z.string(),
+    compressionError: z.string(),
+    unsupportedIgnored_one: z.string(),
+    unsupportedIgnored_other: z.string(),
+  }),
+  estimation: z.object({
+    basedOnSamples_one: z.string(),
+    basedOnSamples_other: z.string(),
+    referenceData: z.string(),
+    fallback: z.string(),
+    conversion: z.string(),
+  }),
 });
 
 export type TranslationKeysType = z.infer<typeof TranslationKeysSchema>;
@@ -107,7 +143,15 @@ export type TranslationKeyType =
   | 'settings.cta'
   | `actions.${keyof TranslationKeysType['actions']}`
   | `stats.${keyof TranslationKeysType['stats']}`
-  | `success.${keyof TranslationKeysType['success']}`;
+  | `success.${keyof TranslationKeysType['success']}`
+  | `units.${keyof TranslationKeysType['units']}`
+  | `dialog.${keyof TranslationKeysType['dialog']}`
+  | `errors.${keyof TranslationKeysType['errors']}`
+  | `toasts.${keyof TranslationKeysType['toasts']}`
+  | 'toasts.imagesAdded'
+  | 'toasts.unsupportedIgnored'
+  | `estimation.${keyof TranslationKeysType['estimation']}`
+  | 'estimation.basedOnSamples';
 
 /**
  * Validation function for translation files.

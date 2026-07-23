@@ -18,7 +18,7 @@ const PlumeHeader: FC = () => {
       const paths = await selectImageFiles();
       if (paths.length > 0) handleExternalDrop(paths);
     } catch (error) {
-      console.error('Erreur sélection fichiers:', error);
+      console.error('File selection failed:', error);
     }
   }, [handleExternalDrop]);
 

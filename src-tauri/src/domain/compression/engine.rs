@@ -72,24 +72,24 @@ fn decode_image_with_icc(
         "png" => {
             let img =
                 image::load_from_memory_with_format(input_data, ImageFormat::Png).map_err(|e| {
-                    CompressionError::ProcessingError(format!("Erreur décodage image: {}", e))
+                    CompressionError::ProcessingError(format!("Image decoding failed: {}", e))
                 })?;
             Ok((img, None))
         }
         "jpg" | "jpeg" => {
             let img = image::load_from_memory_with_format(input_data, ImageFormat::Jpeg).map_err(
-                |e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e)),
+                |e| CompressionError::ProcessingError(format!("Image decoding failed: {}", e)),
             )?;
             Ok((img, None))
         }
         "webp" => {
             let img = image::load_from_memory_with_format(input_data, ImageFormat::WebP).map_err(
-                |e| CompressionError::ProcessingError(format!("Erreur décodage image: {}", e)),
+                |e| CompressionError::ProcessingError(format!("Image decoding failed: {}", e)),
             )?;
             Ok((img, None))
         }
         _ => Err(CompressionError::UnsupportedFormat(format!(
-            "Format {} non supporté",
+            "Unsupported format: {}",
             input_format
         ))),
     }

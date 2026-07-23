@@ -79,5 +79,41 @@
     "title": "Toutes les images sont compressées",
     "description": "Les fichiers compressés sont enregistrés dans le dossier d'origine.",
     "startOver": "Recommencer"
+  },
+  "units": {
+    "B": "o",
+    "KB": "Ko",
+    "MB": "Mo",
+    "GB": "Go",
+    "TB": "To"
+  },
+  "dialog": {
+    "selectImages": "Sélectionner des images"
+  },
+  "errors": {
+    "unknown": "Erreur inconnue",
+    "permissionDenied": "Accès refusé — le dossier est en lecture seule",
+    "invalidFile": "Fichier invalide ou corrompu",
+    "unsupportedFormat": "Format de fichier non supporté",
+    "readFailed": "Impossible de lire le fichier",
+    "writeFailed": "Impossible d'écrire le fichier compressé",
+    "noSpace": "Espace disque insuffisant",
+    "compressionFailed": "Erreur de compression"
+  },
+  "toasts": {
+    "imagesAdded_one": "{{count}} image ajoutée",
+    "imagesAdded_other": "{{count}} images ajoutées",
+    "addFailed": "Erreur lors de l'ajout des fichiers",
+    "alreadyOptimized": "{{name}} est déjà optimisé — fichier original conservé",
+    "compressionError": "{{name}} : {{reason}}",
+    "unsupportedIgnored_one": "{{count}} fichier non supporté ignoré",
+    "unsupportedIgnored_other": "{{count}} fichiers non supportés ignorés"
+  },
+  "estimation": {
+    "basedOnSamples_one": "Basé sur {{count}} compression similaire",
+    "basedOnSamples_other": "Basé sur {{count}} compressions similaires",
+    "referenceData": "Estimation basée sur des données de référence",
+    "fallback": "Estimation par défaut",
+    "conversion": "({{from}} → {{to}})"
   }
 }

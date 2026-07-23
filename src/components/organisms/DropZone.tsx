@@ -17,7 +17,7 @@ const DropZone: React.FC = () => {
         handleExternalDrop(filePaths);
       }
     } catch (error) {
-      console.error('Erreur sélection fichiers:', error);
+      console.error('File selection failed:', error);
     }
   }, [handleExternalDrop]);
 
