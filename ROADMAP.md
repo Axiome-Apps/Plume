@@ -30,11 +30,6 @@ The current version lives in `package.json` — the single source of truth, prop
       been removed; revisit together with output folder selection. `resolve_output_path` in
       `domain/compression/naming.rs` is the single place that decides where a file lands
 - [ ] Batch progress indicator — global "X of Y done"
-- [ ] Count in-flight images in the batch KPI. `summarizeBatch` splits on pending vs completed, so
-      an image being compressed belongs to neither and its size drops out of the totals until it
-      finishes — the figure dips mid-run. Long-standing behaviour, preserved as-is during the
-      refactor rather than changed silently, and now pinned by a test in
-      `src/domain/image/__tests__/batch.test.ts` that must be updated alongside the fix
 
 ## Performance
 

@@ -81,23 +81,81 @@ describe('summarizeBatch', () => {
     });
   });
 
-  it('stays on the projection as long as one image is still pending', () => {
-    const summary = summarizeBatch([
-      makeImage({ id: 'a', status: 'completed', originalSize: 1000, compressedSize: 400 }),
-      makeImage({ id: 'b', originalSize: 2000, estimatedCompression: estimation(50) }),
-    ]);
+  describe('mid-run — measured and projected figures side by side', () => {
+    it('counts a finished image from its result and a waiting one from its estimation', () => {
+      const summary = summarizeBatch([
+        makeImage({ id: 'a', status: 'completed', originalSize: 1000, compressedSize: 400 }),
+        makeImage({ id: 'b', originalSize: 2000, estimatedCompression: estimation(50) }),
+      ]);
 
-    expect(summary.isRealized).toBe(false);
-    expect(summary.totalOriginal).toBe(2000);
-    expect(summary.totalAfter).toBe(1000);
+      expect(summary.isRealized).toBe(false);
+      expect(summary.totalOriginal).toBe(3000);
+      expect(summary.totalAfter).toBe(400 + 1000);
+    });
+
+    it('keeps an in-flight image in the totals instead of dropping it', () => {
+      const summary = summarizeBatch([
+        makeImage({ id: 'a', status: 'completed', originalSize: 1000, compressedSize: 400 }),
+        makeImage({
+          id: 'b',
+          status: 'processing',
+          originalSize: 5000,
+          progress: 40,
+          estimatedCompression: estimation(50),
+        }),
+      ]);
+
+      expect(summary.totalOriginal).toBe(6000);
+      expect(summary.totalAfter).toBe(400 + 2500);
+    });
+
+    it('holds the original total steady as an image moves through the pipeline', () => {
+      const waiting = makeImage({
+        id: 'b',
+        originalSize: 5000,
+        estimatedCompression: estimation(50),
+      });
+      const done = makeImage({
+        id: 'a',
+        status: 'completed',
+        originalSize: 1000,
+        compressedSize: 400,
+      });
+
+      const beforeStart = summarizeBatch([done, waiting]).totalOriginal;
+      const inFlight = summarizeBatch([done, waiting.toProcessing()]).totalOriginal;
+      const finished = summarizeBatch([
+        done,
+        waiting.toProcessing().toCompleted(2000),
+      ]).totalOriginal;
+
+      expect([beforeStart, inFlight, finished]).toEqual([6000, 6000, 6000]);
+    });
+
+    it('is not realized while an image is still being compressed', () => {
+      const summary = summarizeBatch([
+        makeImage({ id: 'a', status: 'completed', originalSize: 1000, compressedSize: 400 }),
+        makeImage({
+          id: 'b',
+          status: 'processing',
+          originalSize: 1000,
+          estimatedCompression: estimation(50),
+        }),
+      ]);
+
+      expect(summary.isRealized).toBe(false);
+    });
   });
 
-  // Known gap, tracked in ROADMAP.md: an image being compressed is neither
-  // pending nor completed, so its size leaves the totals until it finishes.
-  it('drops in-flight images out of the totals', () => {
+  it('leaves a failed image out — it will never produce a saving', () => {
     const summary = summarizeBatch([
       makeImage({ id: 'a', status: 'completed', originalSize: 1000, compressedSize: 400 }),
-      makeImage({ id: 'b', status: 'processing', originalSize: 5000, progress: 40 }),
+      makeImage({
+        id: 'b',
+        status: 'error',
+        originalSize: 9000,
+        estimatedCompression: estimation(50),
+      }),
     ]);
 
     expect(summary.isRealized).toBe(true);

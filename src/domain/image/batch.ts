@@ -3,9 +3,13 @@ import { ImageEntity } from './entity';
 /**
  * Aggregate figures for the current batch.
  *
- * Before compression the totals are projections built from each image's
- * estimation; once every image is done they become the measured result. The
- * two cases never mix, so `isRealized` tells the UI which label to show.
+ * Every image that has a basis to be counted contributes, whatever its status:
+ * a finished one contributes its measured size, one still waiting or being
+ * compressed contributes its projection. So the totals cover the whole batch
+ * from start to finish instead of shrinking while a file is in flight.
+ *
+ * `isRealized` says whether every counted figure is measured rather than
+ * projected — it is what tells the UI to stop calling the number an estimate.
  */
 export interface BatchSummary {
   isRealized: boolean;
@@ -16,27 +20,47 @@ export interface BatchSummary {
   formats: string[];
 }
 
+interface Contribution {
+  original: number;
+  after: number;
+  realized: boolean;
+}
+
+/**
+ * What a single image adds to the totals, or null when there is no basis to
+ * count it — an image that failed, or one whose estimation has not come back
+ * yet. Neither can be turned into a size, and guessing one would report a
+ * saving that will never happen.
+ */
+function contributionOf(image: ImageEntity): Contribution | null {
+  if (image.isCompleted() && image.compressedSize !== undefined) {
+    return { original: image.originalSize, after: image.compressedSize, realized: true };
+  }
+
+  const estimation = image.estimatedCompression;
+  if (estimation && (image.isPending() || image.isProcessing())) {
+    return {
+      original: image.originalSize,
+      after: image.originalSize * (1 - estimation.percent / 100),
+      realized: false,
+    };
+  }
+
+  return null;
+}
+
 export function summarizeBatch(images: ImageEntity[]): BatchSummary {
-  const pending = images.filter(image => image.isPending() && image.estimatedCompression);
-  const completed = images.filter(
-    image => image.isCompleted() && image.compressedSize !== undefined
-  );
+  const counted = images
+    .map(contributionOf)
+    .filter((contribution): contribution is Contribution => contribution !== null);
 
-  const isRealized = completed.length > 0 && pending.length === 0;
-  const considered = isRealized ? completed : pending;
-
-  const totalOriginal = considered.reduce((sum, image) => sum + image.originalSize, 0);
-
-  const totalAfter = isRealized
-    ? completed.reduce((sum, image) => sum + (image.compressedSize ?? 0), 0)
-    : pending.reduce(
-        (sum, image) =>
-          sum + image.originalSize * (1 - (image.estimatedCompression?.percent ?? 0) / 100),
-        0
-      );
+  const totalOriginal = counted.reduce((sum, contribution) => sum + contribution.original, 0);
+  const totalAfter = counted.reduce((sum, contribution) => sum + contribution.after, 0);
 
   const saved = Math.max(0, totalOriginal - totalAfter);
   const percent = totalOriginal > 0 ? Math.round((saved / totalOriginal) * 100) : 0;
+
+  const isRealized = counted.length > 0 && counted.every(contribution => contribution.realized);
 
   const formats = Array.from(new Set(images.map(image => image.format.toUpperCase())));
 
