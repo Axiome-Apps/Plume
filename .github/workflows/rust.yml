@@ -1,8 +1,8 @@
 name: Rust
 
-# Tier BASIQUE côté Rust : fmt + clippy. Filtré sur les chemins Rust → ne se déclenche QUE
-# quand `src-tauri/**` (ou la toolchain) change. Un commit docs/front ne paie jamais la
-# compilation native (mozjpeg/libheif/nasm). Les `cargo test` sont dans la gate de release.
+# BASIC tier for Rust: fmt + clippy. Path-filtered → only triggers when `src-tauri/**` (or the
+# toolchain) changes. A docs or frontend commit never pays for the native build
+# (mozjpeg/libheif/nasm). `cargo test` lives in the release gate.
 
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
       - name: Format check
         run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
 
-      # Clippy compile réellement le crate → attrape les régressions de compilation.
-      # Les `cargo test` (assertions) sont dans la gate de release, pas ici (tier basique).
+      # Clippy actually compiles the crate → catches build regressions.
+      # `cargo test` (assertions) lives in the release gate, not here (basic tier).
       - name: Clippy
         run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings

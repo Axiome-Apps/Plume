@@ -1,8 +1,8 @@
 name: CI
 
-# Tier BASIQUE côté JS/TS, sur chaque push/PR : garde de version, lint, type-check, tests front.
-# En secondes. Le Rust (fmt + clippy) vit dans rust.yml, filtré sur `src-tauri/**` → un commit
-# docs/front ne paie jamais la compilation native. Les tests Rust + builds sont dans release.yml.
+# BASIC tier for JS/TS, on every push/PR: version guard, lint, type-check, frontend tests.
+# Runs in seconds. Rust (fmt + clippy) lives in rust.yml, path-filtered on `src-tauri/**` → a
+# docs or frontend commit never pays for the native build. Rust tests + builds are in release.yml.
 
 on:
   push:
@@ -29,9 +29,9 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
 
-      # Garde anti-dérive des versions : les 4 fichiers (package.json, tauri.conf.json,
-      # Cargo.toml, Cargo.lock) doivent s'accorder. Échoue si quelqu'un a édité à la main
-      # au lieu de passer par `pnpm bump`. Node seul suffit — aucune install requise.
+      # Version drift guard: the 4 files (package.json, tauri.conf.json, Cargo.toml,
+      # Cargo.lock) must agree. Fails if someone edited one by hand instead of running
+      # `pnpm bump`. Node alone is enough — no install required.
       - name: Version consistency guard
         run: node scripts/check-version.mjs
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Garde de cohérence : les 4 fichiers de version doivent s'accorder, et — en release —
-// coïncider avec le tag poussé. Miroir léger du drift-guard d'echoppe : attrape une
-// édition manuelle divergente dès la CI, avant qu'un binaire mal versionné ne parte.
+// Consistency guard: the 4 version files must agree and — during a release — match the pushed
+// tag. A lightweight mirror of echoppe's drift guard: catches a divergent hand edit in CI,
+// before a mis-versioned binary ever ships.
 //
-//   node scripts/check-version.mjs                 # les 4 fichiers sont-ils alignés ?
-//   node scripts/check-version.mjs --expect v0.7.0 # …et valent-ils la version du tag ?
+//   node scripts/check-version.mjs                 # are the 4 files aligned?
+//   node scripts/check-version.mjs --expect v0.7.0 # …and do they match the tag?
 
 import { TARGETS, isValidVersion, readVersion } from "./versions.mjs";
 
@@ -14,7 +14,7 @@ function fail(message) {
 }
 
 const expectFlag = process.argv.indexOf("--expect");
-// Tolère la forme taggée `vX.Y.Z` comme la forme nue `X.Y.Z`.
+// Accepts the tagged form `vX.Y.Z` as well as the bare `X.Y.Z`.
 const expected =
   expectFlag !== -1 ? (process.argv[expectFlag + 1] ?? "").replace(/^v/, "") : undefined;
 
@@ -23,14 +23,16 @@ const found = TARGETS.map((target) => ({ label: target.label, version: readVersi
 const distinct = [...new Set(found.map((f) => f.version))];
 if (distinct.length > 1) {
   const detail = found.map((f) => `  ${f.label} → ${f.version}`).join("\n");
-  fail(`Versions divergentes entre les fichiers :\n${detail}\n→ lancer 'pnpm bump' plutôt qu'éditer à la main.`);
+  fail(`Versions diverge between files:\n${detail}\n→ run 'pnpm bump' instead of editing by hand.`);
 }
 
 const [version] = distinct;
-if (!isValidVersion(version)) fail(`Version invalide : « ${version} » (attendu major.minor.patch).`);
+if (!isValidVersion(version)) fail(`Invalid version: "${version}" (expected major.minor.patch).`);
 
 if (expected !== undefined && version !== expected) {
-  fail(`Le tag (v${expected}) ne correspond pas aux fichiers (v${version}).`);
+  fail(`The tag (v${expected}) does not match the files (v${version}).`);
 }
 
-console.log(`✓ Version cohérente sur les 4 fichiers : v${version}${expected !== undefined ? " (== tag)" : ""}`);
+console.log(
+  `✓ Version consistent across the 4 files: v${version}${expected !== undefined ? " (== tag)" : ""}`
+);

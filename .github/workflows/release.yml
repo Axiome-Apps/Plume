@@ -1,13 +1,13 @@
 name: Release
 
-# Déclenchée UNIQUEMENT par un tag `vX.Y.Z`, et ce tag n'est produit que par `pnpm bump`
-# (scripts/bump.mjs). Donc : builds ⇔ bump, jamais autrement.
+# Triggered ONLY by a `vX.Y.Z` tag, and that tag is only ever produced by `pnpm bump`
+# (scripts/bump.mjs). So: builds ⇔ bump, never otherwise.
 #
-# Tier AVANCÉ en trois temps :
-#   1. gate    — tests + checks stricts + garde de version (tag == les 4 fichiers). Un échec
-#                ici bloque tout : aucun binaire mal versionné ou cassé ne part.
-#   2. build   — matrice 4 plateformes (tauri-action) → GitHub Release avec les assets.
-#   3. homebrew — met à jour le cask du tap (SHA256 des DMG) après publication des assets.
+# ADVANCED tier, in three stages:
+#   1. gate     — tests + strict checks + version guard (tag == the 4 files). A failure here
+#                 blocks everything: no mis-versioned or broken binary ever ships.
+#   2. build    — 4-platform matrix (tauri-action) → GitHub Release with the assets.
+#   3. homebrew — updates the tap cask (DMG SHA256s) once the assets are published.
 
 on:
   push:
@@ -17,7 +17,7 @@ on:
 concurrency: release-${{ github.ref }}
 
 jobs:
-  # ── Gate avancée : rien ne se construit tant qu'elle n'est pas verte. ────────────────────
+  # ── Advanced gate: nothing gets built until this is green. ───────────────────────────────
   gate:
     runs-on: ubuntu-latest
     steps:
@@ -60,8 +60,8 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
-      # Le tag doit correspondre EXACTEMENT aux 4 fichiers de version. Barrière ultime contre
-      # un tag posé à la main ou désynchronisé.
+      # The tag must match the 4 version files EXACTLY. Last barrier against a tag placed by
+      # hand or left out of sync.
       - name: Version matches tag
         run: node scripts/check-version.mjs --expect "${{ github.ref_name }}"
 
@@ -80,7 +80,7 @@ jobs:
       - name: Rust tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
-  # ── Builds : uniquement après une gate verte. ───────────────────────────────────────────
+  # ── Builds: only after a green gate. ────────────────────────────────────────────────────
   build:
     needs: gate
     permissions:
@@ -176,9 +176,9 @@ jobs:
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') || contains(github.ref_name, 'test') }}
           args: ${{ matrix.args }}
 
-  # ── Homebrew : met à jour le cask du tap avec les SHA256 des DMG publiés. ────────────────
-  # Nécessite le secret HOMEBREW_TAP_TOKEN (PAT avec write sur Axiome-Apps/homebrew-tap).
-  # Ignoré pour les pré-releases (les utilisateurs stables ne doivent pas les recevoir).
+  # ── Homebrew: updates the tap cask with the SHA256s of the published DMGs. ──────────────
+  # Requires the HOMEBREW_TAP_TOKEN secret (PAT with write on Axiome-Apps/homebrew-tap).
+  # Skipped for pre-releases — users on the stable channel must not receive them.
   homebrew:
     needs: build
     runs-on: ubuntu-latest
@@ -194,8 +194,9 @@ jobs:
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: tap
 
-      # Les DMG sont attachés à la Release par le job `build` (macOS arm64 + x64). `build` étant
-      # terminé, les assets existent. GITHUB_TOKEN suffit pour lire une release du même repo.
+      # The DMGs are attached to the Release by the `build` job (macOS arm64 + x64). Since
+      # `build` has finished, the assets exist. GITHUB_TOKEN is enough to read a release from
+      # the same repo.
       - name: Download release DMGs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -216,7 +217,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if git diff --quiet; then
-            echo "Cask déjà à jour, rien à committer."
+            echo "Cask already up to date, nothing to commit."
             exit 0
           fi
           git add Casks/plume.rb
