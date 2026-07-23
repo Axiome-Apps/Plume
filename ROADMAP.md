@@ -56,9 +56,10 @@ The current version lives in `package.json` — the single source of truth, prop
 
 ### Testing
 
-- [ ] Cover `imageStore` and `lib/tauri.ts` — the two modules where the refactor changed behaviour
-      (error mapping, Zod parsing at the IPC boundary) and the only ones left with no test. Both
-      need the Tauri mocks in `src/test/setup.ts`, which are configured but still unused
+- [ ] Cover the `startCompression` run itself — the guards and every other store action are tested,
+      but the loop that drives a compression from start to finish is not. It interleaves the
+      progress manager's timers with an awaited IPC call, so it needs fake timers plus a
+      controllable `compressImage` promise
 - [ ] Cover `size-prediction/service.ts` — its fallback table is the second answer to the question
       `commands/stats.rs` also answers, so a test would pin down what it is supposed to return
 

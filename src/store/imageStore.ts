@@ -11,30 +11,17 @@ import {
   type CompressionLevelType,
   resolveCompressionParams,
 } from '@/domain/compression/schema';
+import { compressionErrorKey } from '@/domain/compression/errors';
 import {
   compressImage as tauriCompressImage,
   getFileInformation,
   getProgressEstimation,
 } from '@/lib/tauri';
 import { translate } from '@/domain/i18n';
-import type { TranslationKeyType } from '@/domain/i18n';
 
 /** Map a backend error string to the message shown to the user. */
 function errorMessage(error: string | null | undefined): string {
-  const key = ((): TranslationKeyType => {
-    if (!error) return 'errors.unknown';
-    if (error.includes('Permission denied')) return 'errors.permissionDenied';
-    if (error.includes('File validation failed')) return 'errors.invalidFile';
-    if (error.includes('Unsupported') || error.includes('unsupported'))
-      return 'errors.unsupportedFormat';
-    if (error.includes('Failed to read')) return 'errors.readFailed';
-    if (error.includes('Failed to write')) return 'errors.writeFailed';
-    if (error.includes('No space left')) return 'errors.noSpace';
-    if (error.includes('Invalid output path')) return 'errors.invalidPath';
-    return 'errors.compressionFailed';
-  })();
-
-  return translate(key);
+  return translate(compressionErrorKey(error));
 }
 
 // State management types

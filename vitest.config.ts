@@ -28,10 +28,10 @@ export default defineConfig({
       // (The previous values were nested under a `global` key, which Vitest
       // reads as a file glob, so nothing was ever enforced.)
       thresholds: {
-        branches: 70,
-        functions: 60,
-        lines: 13,
-        statements: 13,
+        branches: 80,
+        functions: 68,
+        lines: 27,
+        statements: 27,
       },
     },
   },

@@ -1,51 +1,23 @@
 import '@testing-library/jest-dom/vitest';
 import { vi, beforeEach, afterEach } from 'vitest';
 
-// Mock Tauri API
-const mockTauriAPI = {
-  invoke: vi.fn(),
-  getCurrentWebview: vi.fn(() => ({
-    onDragDropEvent: vi.fn(),
-  })),
-};
+/**
+ * Global test setup.
+ *
+ * There is deliberately no Tauri mock here. The app never reads `window.__TAURI__`:
+ * it imports `invoke` from `@tauri-apps/api/core`, so a global stub intercepts
+ * nothing. Mock the module in the test that needs it:
+ *
+ *   vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+ *   vi.mocked(invoke).mockResolvedValue(payload);
+ *
+ * See `src/lib/__tests__/tauri.test.ts` for the pattern in use.
+ */
 
-// Global mocks for Tauri
-Object.defineProperty(window, '__TAURI__', {
-  value: mockTauriAPI,
-  writable: true,
-});
-
-// Extend global object type
-declare global {
-  var mockTauriInvoke: (command: string, response: unknown) => void;
-  var mockTauriInvokeError: (command: string, error: Error) => void;
-}
-
-// Mock functions that are commonly used in tests
-globalThis.mockTauriInvoke = (command: string, response: unknown) => {
-  mockTauriAPI.invoke.mockImplementation((cmd: string) => {
-    if (cmd === command) {
-      return Promise.resolve(response);
-    }
-    return Promise.reject(new Error(`Unhandled Tauri command: ${cmd}`));
-  });
-};
-
-globalThis.mockTauriInvokeError = (command: string, error: Error) => {
-  mockTauriAPI.invoke.mockImplementation((cmd: string) => {
-    if (cmd === command) {
-      return Promise.reject(error);
-    }
-    return Promise.reject(new Error(`Unhandled Tauri command: ${cmd}`));
-  });
-};
-
-// Reset all mocks before each test
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// Cleanup after tests
 afterEach(() => {
   vi.restoreAllMocks();
 });
