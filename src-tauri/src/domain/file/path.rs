@@ -1,5 +1,5 @@
 use crate::domain::file::error::{FileError, FileResult};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Path utilities and validation
 pub struct PathUtils;
@@ -61,27 +61,6 @@ impl PathUtils {
             .ok_or_else(|| FileError::InvalidPath("Cannot extract file stem".to_string()))
     }
 
-    /// Change file extension
-    pub fn change_extension<P: AsRef<Path>>(path: P, new_extension: &str) -> PathBuf {
-        let path_ref = path.as_ref();
-        let stem = path_ref
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("file");
-
-        let parent = path_ref.parent().unwrap_or(Path::new("."));
-
-        if new_extension.is_empty() {
-            parent.join(stem)
-        } else {
-            let ext = if new_extension.starts_with('.') {
-                new_extension.to_string()
-            } else {
-                format!(".{}", new_extension)
-            };
-            parent.join(format!("{}{}", stem, ext))
-        }
-    }
 }
 
 #[cfg(test)]
@@ -110,18 +89,6 @@ mod tests {
         assert!(PathUtils::validate_safe_path("/media/usb/photo.jpg").is_ok());
         // System paths remain blocked
         assert!(PathUtils::validate_safe_path("/usr/bin/test").is_err());
-    }
-
-    #[test]
-    fn test_change_extension() {
-        assert_eq!(
-            PathUtils::change_extension("test.jpg", "webp"),
-            PathBuf::from("test.webp")
-        );
-        assert_eq!(
-            PathUtils::change_extension("path/test.png", ".jpg"),
-            PathBuf::from("path/test.jpg")
-        );
     }
 
     #[test]

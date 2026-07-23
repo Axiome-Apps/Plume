@@ -6,9 +6,10 @@ pub mod file;
 
 // Compression domain exports
 pub use compression::{
-    CompressionError, CompressionOutput, CompressionResult, CompressionSettings, CompressionStat,
-    EstimationQuery, EstimationResult, InputFormat, OutputFormat, calculate_confidence,
-    compress_file_to_file, create_stat, estimate_compression, get_size_range,
+    CompressionError, CompressionLevel, CompressionOutput, CompressionResult, CompressionSettings,
+    CompressionStat, EstimationQuery, EstimationResult, InputFormat, OutputFormat,
+    calculate_confidence, compress_file_to_file, create_stat, estimate_compression, get_size_range,
+    resolve_output_path,
 };
 
 // File domain exports

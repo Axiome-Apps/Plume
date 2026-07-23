@@ -1,5 +1,5 @@
 use crate::database::DatabaseManager;
-use crate::domain::{OutputFormat, validate_image_file};
+use crate::domain::{CompressionLevel, OutputFormat, validate_image_file};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tauri::AppHandle;
@@ -10,7 +10,7 @@ pub struct CompressImageRequest {
     pub quality: Option<u8>,
     pub format: Option<String>,
     pub output_path: Option<String>,
-    pub level: Option<String>,
+    pub level: Option<CompressionLevel>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -92,37 +92,12 @@ pub async fn compress_image(
         OutputFormat::Jpeg => "jpg",
     };
 
-    let output_path = match request.output_path.as_ref() {
-        Some(custom_path) => {
-            let path = Path::new(custom_path);
-            if path.is_dir() {
-                let filename = file_path
-                    .file_stem()
-                    .and_then(|stem| stem.to_str())
-                    .unwrap_or("compressed");
-                path.join(format!("{}.{}", filename, output_extension))
-            } else {
-                path.to_path_buf()
-            }
-        }
-        None => {
-            let mut output_path = file_path.to_path_buf();
-            let filename = file_path
-                .file_stem()
-                .and_then(|stem| stem.to_str())
-                .unwrap_or("compressed");
-            let level_suffix = match request.level.as_deref() {
-                Some("light") => "light",
-                Some("aggressive") => "aggressive",
-                _ => "balanced",
-            };
-            output_path.set_file_name(format!(
-                "{}_{}.{}",
-                filename, level_suffix, output_extension
-            ));
-            output_path
-        }
-    };
+    let output_path = crate::domain::resolve_output_path(
+        file_path,
+        request.output_path.as_deref().map(Path::new),
+        request.level.unwrap_or(CompressionLevel::Balanced),
+        output_extension,
+    );
 
     // The output path is built here (or supplied by the frontend) and written by the
     // engine through std::fs, so it never goes through get_file_info. Validate it
