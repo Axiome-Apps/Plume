@@ -51,11 +51,27 @@
 
 ## Technical Debt
 
-- [ ] Remove dead EventBus infrastructure (~400 lines in shared/events.rs)
+### Dead code
+
+- [x] Remove dead EventBus infrastructure (`domain/shared/events.rs` + `AppState.event_bus` wiring)
+- [x] Remove `domain/compression/progress.rs` — vestigial since progress went frontend-only (ADR-0002)
+- [x] Remove unused frontend components — `Badge`, `Switch`, `FileInfo`, `Spinner` and 6 unreferenced icons
+
+### Correctness
+
 - [ ] Fix `compressImage(imageId)` — currently compresses all pending images instead of targeted one
-- [ ] Validate ADR-0001..0005 "options envisagées" — reconstructed from code, confirm/complete the rationale and rejected alternatives (`docs-internal/adr/`)
+- [ ] Revise progress timing edge cases — JPEG compression and very small PNGs are mis-estimated; recalibrate the static fallback timings against real data
+
+### Testing
+
+- [ ] Unit tests for domain entities and compression services
+- [ ] Test coverage configuration
+
+### Documentation
+
+- [ ] Validate ADR-0001, 0003, 0004 "options envisagées" — reconstructed from code, confirm/complete the rationale and rejected alternatives (`docs/adr/`). ADR-0002 and 0005 are confirmed.
 
 ---
 
-**Last Updated**: March 2026
+**Last Updated**: July 2026
 **Current Version**: v0.5.0

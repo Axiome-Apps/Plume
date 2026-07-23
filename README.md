@@ -162,7 +162,7 @@ pnpm lint
 
 ## 📋 Roadmap
 
-See [TODO.md](./TODO.md) for detailed development plans.
+See [ROADMAP.md](./ROADMAP.md) for detailed development plans.
 
 ### Upcoming Features
 
@@ -217,7 +217,14 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 
 ## License
 
-Plume is licensed under **CeCILL v2.1**. For more details, see the [LICENSE](./LICENSE.md) file.
+Plume is licensed under the **GNU General Public License v3.0 or later**. See the
+[LICENSE](./LICENSE) file for the full text.
+
+Copyright © 2025-2026 Vincent Cottalorda
+
+Plume bundles third-party components, notably libheif and libde265 (LGPL-3.0), which are statically
+linked into the distributed binary. See [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) for the
+full attribution list.
 
 ## 📞 Support
 

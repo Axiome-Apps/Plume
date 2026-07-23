@@ -29,12 +29,14 @@ This project and everyone participating in it is governed by our commitment to c
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/plume.git
    cd plume
    ```
 
 3. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
@@ -49,8 +51,9 @@ This project and everyone participating in it is governed by our commitment to c
 ### Branch Naming Convention
 
 Use descriptive branch names:
+
 - `feat/add-avif-support` - New features
-- `fix/compression-memory-leak` - Bug fixes  
+- `fix/compression-memory-leak` - Bug fixes
 - `docs/update-readme` - Documentation
 - `refactor/optimize-png-algorithm` - Code improvements
 - `test/add-integration-tests` - Testing improvements
@@ -71,6 +74,7 @@ Closes #123
 ```
 
 **Types:**
+
 - `feat`: New features
 - `fix`: Bug fixes
 - `docs`: Documentation changes
@@ -88,12 +92,13 @@ Closes #123
 3. **Add/update tests** for your changes
 4. **Update documentation** if needed
 5. **Run the test suite**:
+
    ```bash
    # Frontend
    pnpm test
    pnpm lint
    pnpm type-check
-   
+
    # Backend
    cd src-tauri
    cargo test
@@ -118,18 +123,21 @@ Closes #123
 ## 🎨 Code Style
 
 ### TypeScript/React
+
 - Use **TypeScript** for all new code
 - Follow **ESLint** and **Prettier** configurations
 - Use **functional components** with hooks
 - Prefer **named exports** over default exports
 
 ### Rust
+
 - Run `cargo fmt` before committing
 - Address all `cargo clippy` warnings
 - Use meaningful variable and function names
 - Add documentation for public APIs
 
 ### File Naming
+
 - Components: `PascalCase.tsx`
 - Utilities: `camelCase.ts`
 - Constants: `SCREAMING_SNAKE_CASE`
@@ -137,6 +145,7 @@ Closes #123
 ## 🧪 Testing
 
 ### Frontend Testing
+
 - **Unit tests**: Test individual components and utilities
 - **Integration tests**: Test component interactions
 - **E2E tests**: Test complete user workflows
@@ -153,6 +162,7 @@ pnpm test:coverage
 ```
 
 ### Backend Testing
+
 - **Unit tests**: Test individual functions
 - **Integration tests**: Test API endpoints
 - **Property-based tests**: For compression algorithms
@@ -171,6 +181,7 @@ cargo test -- --nocapture
 ```
 
 ### Test Guidelines
+
 - Write tests for new features
 - Update tests for bug fixes
 - Aim for good coverage (>80%)
@@ -180,12 +191,14 @@ cargo test -- --nocapture
 ## 📚 Documentation
 
 ### Code Documentation
+
 - **JSDoc** for TypeScript functions
 - **rustdoc** for Rust public APIs
 - Clear variable and function names
 - Comments for complex logic
 
 ### User Documentation
+
 - Update README.md for new features
 - Add examples for new APIs
 - Update screenshots for UI changes
@@ -194,42 +207,55 @@ cargo test -- --nocapture
 
 ```
 plume/
-├── src/                          # Frontend source
-│   ├── components/               # React components
+├── src/                         # Frontend source
+│   ├── components/              # React components (atomic design)
 │   │   ├── atoms/               # Basic UI elements
 │   │   ├── molecules/           # Component combinations
 │   │   ├── organisms/           # Complex components
-│   │   └── templates/           # Page layouts
-│   ├── domain/                  # Business logic
-│   │   ├── entities/            # Core objects
-│   │   ├── schemas/             # Validation schemas
-│   │   └── services/            # Use cases
-│   ├── infrastructure/          # External adapters
-│   └── presentation/            # React hooks & UI logic
+│   │   ├── templates/           # Page layouts
+│   │   ├── brand/               # Logo & brand assets
+│   │   └── icons/               # SVG icon set
+│   ├── domain/                  # Business logic, sliced by concept
+│   │   ├── compression/         # Output formats & levels
+│   │   ├── image/               # Queued image entity & schema
+│   │   ├── drag-drop/           # Drop events & extension filtering
+│   │   ├── progress/            # AdaptiveProgressManager
+│   │   ├── size-prediction/     # Estimation + static fallback
+│   │   └── i18n/                # FR/EN configuration
+│   ├── hooks/                   # Custom React hooks
+│   ├── lib/tauri.ts             # Single IPC entry point
+│   ├── store/                   # Zustand state
+│   └── locales/                 # Translation files
 ├── src-tauri/                   # Backend source
 │   ├── src/
-│   │   ├── commands/           # Tauri commands
-│   │   ├── domain/             # Business entities
-│   │   └── infrastructure/     # Technical implementations
+│   │   ├── commands/            # Tauri command handlers
+│   │   ├── database/            # SQLite connection & migrations
+│   │   └── domain/              # compression / file / shared
 │   └── Cargo.toml
-└── docs/                       # Documentation
+└── docs/               # ADRs, internal reference, release runbook
 ```
+
+Architecture details: [`docs/reference/architecture.md`](./docs/reference/architecture.md).
+Structural decisions and their rationale: [`docs/adr/`](./docs/adr/README.md).
 
 ## 🎯 Contribution Areas
 
 ### High Priority
+
 - 🖼️ **New image formats** (HEIF, AVIF, JPEG XL)
 - ⚡ **Performance optimizations**
 - 🐛 **Bug fixes and stability**
 - 🧪 **Test coverage improvements**
 
 ### Medium Priority
+
 - 🎨 **UI/UX enhancements**
 - 📱 **Platform-specific features**
 - 🌐 **Internationalization**
 - 📊 **Analytics and metrics**
 
 ### Low Priority
+
 - 📚 **Documentation improvements**
 - 🔧 **Developer tooling**
 - 🎪 **Demo and examples**
@@ -258,7 +284,8 @@ plume/
 
 ## 📄 License
 
-By contributing to Plume, you agree that your contributions will be licensed under the [CeCILL v2.1 License](./LICENSE.md).
+By contributing to Plume, you agree that your contributions will be licensed under the
+[GNU General Public License v3.0 or later](./LICENSE).
 
 ---
 
