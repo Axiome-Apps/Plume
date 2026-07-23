@@ -17,60 +17,59 @@
 }
 
 @font-face {
-  font-family: 'Satoshi';
-  src: url('@/assets/fonts/Satoshi/Satoshi-Variable.woff2') format('woff2');
-  font-weight: 300 900;
+  font-family: 'JetBrains Mono';
+  src: url('@/assets/fonts/JetBrainsMono/JetBrainsMono-Regular.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Satoshi';
-  src: url('@/assets/fonts/Satoshi/Satoshi-VariableItalic.woff2') format('woff2');
-  font-weight: 300 900;
-  font-style: italic;
+  font-family: 'JetBrains Mono';
+  src: url('@/assets/fonts/JetBrainsMono/JetBrainsMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
   font-display: swap;
 }
 
 @theme {
+  /* Nunito carries the whole hierarchy: headings, body, labels, eyebrows. */
   --font-sans: 'Nunito', system-ui, sans-serif;
-  --font-display: 'Satoshi', 'Nunito', system-ui, sans-serif;
+  /* Metadata, dimensions, durations, oklch values. Never for body copy. */
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* Surfaces */
   --color-bg: oklch(0.21 0.02 272);
   --color-surface: oklch(0.255 0.022 272);
   --color-surface-2: oklch(0.3 0.025 272);
 
-  /* Marque */
+  /* Brand */
   --color-primary: oklch(0.5591 0.0809 272.6);
   --color-primary-deep: oklch(0.42 0.1 272.6);
   --color-primary-light: oklch(0.74 0.07 272.6);
 
-  /* Encres & filets */
+  /* Inks */
   --color-fg: oklch(0.97 0.01 272);
   --color-fg-2: oklch(0.82 0.012 272);
   --color-fg-3: oklch(0.62 0.015 272);
-  --color-rule: oklch(0.32 0.02 272);
-  --color-rule-2: oklch(0.4 0.022 272);
 
-  /* Sémantique */
+  /* Rules */
+  --color-line: oklch(0.32 0.02 272);
+  --color-line-2: oklch(0.4 0.022 272);
+
+  /* Semantic */
   --color-success: oklch(0.78 0.18 156);
   --color-warning: oklch(0.78 0.14 60);
   --color-error: oklch(0.65 0.16 20);
 
-  /* Aliases compat (anciens tokens) */
-  --color-background: var(--color-bg);
-  --color-text: var(--color-fg);
-  --color-secondary: var(--color-rule);
-  --color-accent: var(--color-primary-light);
-
-  /* Rayons */
+  /* Radii */
   --radius-sm: 6px;
   --radius-md: 9px;
   --radius-lg: 12px;
   --radius-xl: 14px;
+  --radius-pill: 999px;
 
-  /* Ombres */
+  /* Shadows */
   --shadow-glow:
     0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 8px 22px -10px rgba(120, 136, 200, 0.55);
   --shadow-lift: 0 14px 38px -14px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -90,51 +89,56 @@ body {
   line-height: 1.5;
 }
 
-/* Typo utilities Axiome */
-.ax-display {
-  font-family: var(--font-display);
+/* Axiome type scale — see the Axiome design system (Typography §03).
+   Weight and size carry the hierarchy, never colour. */
+.display {
   font-size: 48px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.05;
 }
-.ax-title {
-  font-family: var(--font-display);
+.title {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.15;
 }
-.ax-heading {
+.heading {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
-.ax-body-plus {
+.body-plus {
   font-size: 15.5px;
   font-weight: 400;
 }
-.ax-body {
+.body {
   font-size: 14px;
   font-weight: 400;
 }
-.ax-label {
+.label {
   font-size: 13px;
   font-weight: 600;
 }
-.ax-caption {
+.caption {
   font-size: 11.5px;
   font-weight: 400;
 }
-.ax-eyebrow {
+.eyebrow {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-fg-3);
 }
-.ax-tabular {
-  font-size: 12px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+
+/* Measurable values only: timestamps, durations, dimensions, prices, oklch,
+   hex. Figures align by construction. Never body copy. */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings:
+    'tnum' 1,
+    'lnum' 1;
 }

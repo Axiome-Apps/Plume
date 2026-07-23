@@ -38,11 +38,11 @@ const SettingsPanel: FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <span className="ax-eyebrow">{t('settings.eyebrow')}</span>
+        <span className="eyebrow text-fg-3">{t('settings.eyebrow')}</span>
         <Stroke width={20} color="var(--color-primary-light)" />
       </div>
 
-      <section className="bg-surface border border-rule rounded-xl p-5 space-y-4">
+      <section className="bg-surface border border-line rounded-xl p-5 space-y-4">
         <Row label={t('settings.format')} tooltip={t('header.controls.format.tooltip')}>
           <SegmentedControl
             options={formatOptions}
@@ -96,7 +96,7 @@ const Row: FC<{ label: string; tooltip?: string; children: ReactNode }> = ({
 }) => (
   <div>
     <div className="flex items-center justify-between mb-2">
-      <span className="ax-label text-fg-2">{label}</span>
+      <span className="label text-fg-2">{label}</span>
       {tooltip && (
         <Tooltip title={label}>
           <div className="whitespace-pre-line">{tooltip}</div>
@@ -107,6 +107,6 @@ const Row: FC<{ label: string; tooltip?: string; children: ReactNode }> = ({
   </div>
 );
 
-const Separator: FC = () => <div className="h-px bg-rule" />;
+const Separator: FC = () => <div className="h-px bg-line" />;
 
 export default SettingsPanel;

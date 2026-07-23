@@ -24,7 +24,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, className = '' }) => {
               '!bg-surface !text-fg !border !border-error/40 font-medium text-left text-sm rounded-lg',
             success:
               '!bg-surface !text-fg !border !border-success/40 font-medium text-left text-sm rounded-lg',
-            info: '!bg-surface !text-fg !border !border-rule font-medium text-left text-sm rounded-lg',
+            info: '!bg-surface !text-fg !border !border-line font-medium text-left text-sm rounded-lg',
           },
         }}
         icons={{

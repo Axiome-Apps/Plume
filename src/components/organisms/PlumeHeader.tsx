@@ -32,11 +32,11 @@ const PlumeHeader: FC = () => {
       <div className="flex items-center gap-4 min-w-0">
         <LogoPlume size={36} />
         <div className="min-w-0">
-          <h1 className="ax-title text-fg leading-none">{t('app.name')}</h1>
+          <h1 className="title text-fg leading-none">{t('app.name')}</h1>
           <div className="mt-2 text-primary-light">
             <Stroke width={36} strokeWidth={1.8} />
           </div>
-          <p className="mt-2 ax-caption text-fg-3">{tagline}</p>
+          <p className="mt-2 caption text-fg-3">{tagline}</p>
         </div>
       </div>
 

@@ -29,15 +29,17 @@ const ImageList: React.FC = () => {
       {/* Colonne gauche : lot en cours */}
       <div className="flex flex-col gap-4 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="ax-eyebrow">{t('batch.eyebrow')}</span>
+          <span className="eyebrow text-fg-3">{t('batch.eyebrow')}</span>
           <Stroke width={20} color="var(--color-primary-light)" />
         </div>
 
         <BatchKpiCard />
 
-        <div className="bg-surface border border-rule rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-rule">
-            <span className="ax-eyebrow">{t('batch.imagesCount', { count: images.length })}</span>
+        <div className="bg-surface border border-line rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-line">
+            <span className="eyebrow text-fg-3">
+              {t('batch.imagesCount', { count: images.length })}
+            </span>
           </div>
 
           <div className="flex flex-col">
@@ -57,7 +59,7 @@ const ImageList: React.FC = () => {
           <button
             type="button"
             onClick={browse}
-            className="m-4 px-4 py-3 w-[calc(100%-2rem)] border border-dashed border-rule-2 rounded-md ax-caption text-fg-3 hover:text-fg hover:border-primary-light transition-colors text-center cursor-pointer bg-transparent"
+            className="m-4 px-4 py-3 w-[calc(100%-2rem)] border border-dashed border-line-2 rounded-md caption text-fg-3 hover:text-fg hover:border-primary-light transition-colors text-center cursor-pointer bg-transparent"
           >
             {t('batch.dropHintBefore')}
             <span className="text-primary-light font-semibold">{t('batch.dropHintAction')}</span>

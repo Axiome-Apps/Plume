@@ -53,13 +53,13 @@ export const Tooltip: FC<TooltipProps> = ({ title, children, className = '' }) =
 
   return (
     <div className="relative group" onMouseEnter={recalculate}>
-      <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center text-white text-xs font-bold cursor-help shrink-0">
+      <div className="w-5 h-5 rounded-full bg-surface-2 flex items-center justify-center text-white text-xs font-bold cursor-help shrink-0">
         ?
       </div>
       <div
         ref={tooltipRef}
         style={{ left: style.left, transform: style.transform, maxWidth: style.maxWidth }}
-        className={`absolute bottom-full mb-2 bg-secondary text-white text-xs rounded-lg px-3 py-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-10 w-max ${className}`}
+        className={`absolute bottom-full mb-2 bg-surface-2 shadow-lift text-white text-xs rounded-lg px-3 py-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-10 w-max ${className}`}
       >
         <div className="text-center">
           <div className="font-semibold mb-1">{title}</div>
@@ -67,7 +67,7 @@ export const Tooltip: FC<TooltipProps> = ({ title, children, className = '' }) =
         </div>
         <div
           style={{ left: arrowOffset }}
-          className="absolute top-full -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-secondary"
+          className="absolute top-full -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-surface-2"
         />
       </div>
     </div>

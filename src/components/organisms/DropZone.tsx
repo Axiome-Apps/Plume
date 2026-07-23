@@ -23,13 +23,13 @@ const DropZone: React.FC = () => {
 
   return (
     <div
-      className="border border-dashed border-rule-2 rounded-xl p-12 sm:p-16 text-center bg-surface
+      className="border border-dashed border-line-2 rounded-xl p-12 sm:p-16 text-center bg-surface
         transition-colors hover:border-primary-light"
     >
       <UploadIcon size={40} className="text-primary-light mx-auto mb-5" />
 
-      <h3 className="ax-heading text-fg mb-1">{t('compression.selectFiles')}</h3>
-      <p className="ax-caption text-fg-3 mb-6">
+      <h3 className="heading text-fg mb-1">{t('compression.selectFiles')}</h3>
+      <p className="caption text-fg-3 mb-6">
         {SUPPORTED_FORMATS_DISPLAY} {t('common.supported')}
       </p>
 

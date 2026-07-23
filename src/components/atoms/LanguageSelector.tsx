@@ -18,7 +18,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = 
       <select
         value={currentLanguage}
         onChange={e => changeLanguage(e.target.value as 'fr' | 'en')}
-        className="appearance-none bg-bg border border-rule rounded-md h-9 pl-3 pr-8 text-[13px] font-medium text-fg-2 hover:border-rule-2 hover:text-fg focus:border-primary-light focus:outline-none focus:ring-2 focus:ring-primary-deep cursor-pointer"
+        className="appearance-none bg-bg border border-line rounded-md h-9 pl-3 pr-8 text-[13px] font-medium text-fg-2 hover:border-line-2 hover:text-fg focus:border-primary-light focus:outline-none focus:ring-2 focus:ring-primary-deep cursor-pointer"
       >
         {AVAILABLE_LANGUAGES.map(lang => (
           <option key={lang.code} value={lang.code} className="bg-surface text-fg">

@@ -25,12 +25,12 @@ const ImageRow: FC<ImageRowProps> = ({ image, onCompress, onRemove, onRevealInFo
   const completedSavings = image.savings;
 
   return (
-    <div className="grid grid-cols-[40px_1fr_auto_auto] items-center gap-4 px-5 py-3 border-b border-rule last:border-b-0">
+    <div className="grid grid-cols-[40px_1fr_auto_auto] items-center gap-4 px-5 py-3 border-b border-line last:border-b-0">
       <ImagePreview imageUrl={image.preview} status={image.status} className="w-9 h-9" />
 
       <div className="min-w-0">
-        <div className="ax-label text-fg truncate">{image.name}</div>
-        <div className="ax-tabular text-fg-3 mt-0.5 truncate">{meta}</div>
+        <div className="label text-fg truncate">{image.name}</div>
+        <div className="mono text-fg-3 mt-0.5 truncate">{meta}</div>
         {image.status === 'processing' && image.progress !== undefined && (
           <div className="mt-2">
             <ProgressBar progress={image.progress} />
@@ -39,16 +39,12 @@ const ImageRow: FC<ImageRowProps> = ({ image, onCompress, onRemove, onRevealInFo
       </div>
 
       <div className="text-right">
-        {finalSize && <div className="ax-label text-fg tabular-nums">{finalSize}</div>}
+        {finalSize && <div className="mono text-fg">{finalSize}</div>}
         {completedSavings !== undefined && completedSavings > 0 ? (
-          <div className="text-[oklch(0.85_0.15_156)] ax-caption font-semibold mt-0.5 tabular-nums">
-            −{completedSavings}%
-          </div>
+          <div className="text-success mono mt-0.5">−{completedSavings}%</div>
         ) : (
           savingsPct !== undefined && (
-            <div className="text-[oklch(0.85_0.15_156)] ax-caption font-semibold mt-0.5 tabular-nums">
-              −{savingsPct.toFixed(0)}%
-            </div>
+            <div className="text-success mono mt-0.5">−{savingsPct.toFixed(0)}%</div>
           )
         )}
       </div>

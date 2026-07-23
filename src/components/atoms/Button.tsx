@@ -13,11 +13,10 @@ const BASE =
   'inline-flex items-center justify-center gap-2 font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-deep focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:cursor-not-allowed';
 
 const VARIANT: Record<ButtonVariant, string> = {
-  primary:
-    'bg-primary text-white border-0 hover:bg-primary-deep shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_8px_22px_-10px_rgba(120,136,200,0.55)] cursor-pointer',
-  ghost: 'bg-surface text-fg-2 border border-rule hover:border-rule-2 hover:text-fg cursor-pointer',
+  primary: 'bg-primary text-white border-0 hover:bg-primary-deep shadow-glow cursor-pointer',
+  ghost: 'bg-surface text-fg-2 border border-line hover:border-line-2 hover:text-fg cursor-pointer',
   link: 'bg-transparent text-primary-light hover:text-fg cursor-pointer px-0 py-0',
-  icon: 'bg-surface text-fg-2 border border-rule hover:border-rule-2 hover:text-fg cursor-pointer',
+  icon: 'bg-surface text-fg-2 border border-line hover:border-line-2 hover:text-fg cursor-pointer',
   destructive: 'bg-transparent text-error border border-error/40 hover:bg-error/10 cursor-pointer',
 };
 

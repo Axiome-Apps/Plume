@@ -31,12 +31,12 @@ const BatchKpiCard: FC = () => {
   const formatList = unique(images.map(i => i.format.toUpperCase())).join(' · ');
 
   return (
-    <div className="relative overflow-hidden rounded-xl px-6 py-5 shadow-[var(--shadow-glow)] bg-[linear-gradient(135deg,var(--color-primary)_0%,var(--color-primary-deep)_100%)]">
+    <div className="relative overflow-hidden rounded-xl px-6 py-5 shadow-glow bg-[linear-gradient(135deg,var(--color-primary)_0%,var(--color-primary-deep)_100%)]">
       <Blob />
       <div className="relative z-10">
-        <div className="ax-eyebrow text-white/70">{eyebrow}</div>
+        <div className="eyebrow text-white">{eyebrow}</div>
         <div className="mt-2 flex items-baseline gap-3">
-          <span className="font-display text-white text-[38px] font-bold leading-none tracking-[-0.02em] tabular-nums">
+          <span className="font-sans text-white text-[38px] font-bold leading-none tracking-[-0.02em] tabular-nums">
             {formatNumber(saved)}
           </span>
           <span className="text-white/75 text-base font-medium">
@@ -51,11 +51,11 @@ const BatchKpiCard: FC = () => {
           />
         </div>
 
-        <div className="mt-2 flex items-center justify-between ax-caption text-white/70">
-          <span className="tabular-nums">
+        <div className="mt-2 flex items-center justify-between text-white/70">
+          <span className="mono">
             {formatBytes(totalOriginal)} {formatList && `· ${formatList}`}
           </span>
-          <span className="text-white font-semibold tabular-nums">
+          <span className="mono text-white font-medium">
             −{pct}% · ~{formatBytes(totalAfter)}
           </span>
         </div>

@@ -16,11 +16,11 @@ export const CompressionSuccess: FC = () => {
   const shouldShow = pendingImages.length === 0 && !isProcessing && completedImages.length > 0;
   if (!shouldShow) return null;
   return (
-    <div className="bg-surface rounded-xl p-6 border border-rule text-center">
+    <div className="bg-surface rounded-xl p-6 border border-line text-center">
       <div className="mb-4 flex flex-col items-center">
-        <h3 className="ax-heading text-fg mb-1">{t('success.title')}</h3>
+        <h3 className="heading text-fg mb-1">{t('success.title')}</h3>
         <Stroke width={36} color="var(--color-primary-light)" />
-        <p className="ax-body text-fg-2 mt-3">{t('success.description')}</p>
+        <p className="body text-fg-2 mt-3">{t('success.description')}</p>
       </div>
       <div className="flex justify-center">
         <Button variant="ghost" onClick={clearImages}>
