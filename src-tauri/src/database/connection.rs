@@ -15,19 +15,19 @@ pub struct DatabaseManager {
 }
 
 impl DatabaseManager {
-    /// Initialise le gestionnaire de base de données avec le chemin AppData
+    /// Initializes the database manager with the AppData path
     pub fn new(app: &AppHandle) -> Result<Self, String> {
-        // Récupère le dossier AppData de l'application
+        // Resolve the application AppData directory
         let app_data = app
             .path()
             .app_data_dir()
             .map_err(|e| format!("Failed to get app data directory: {}", e))?;
 
-        // Crée le dossier s'il n'existe pas
+        // Create the directory if it does not exist
         std::fs::create_dir_all(&app_data)
             .map_err(|e| format!("Failed to create app data directory: {}", e))?;
 
-        // Chemin complet vers la base de données
+        // Full path to the database
         let db_path = app_data.join("compression_stats.db");
 
         Ok(Self {
@@ -36,7 +36,7 @@ impl DatabaseManager {
         })
     }
 
-    /// Établit la connexion à la base de données
+    /// Opens the database connection
     pub fn connect(&self) -> Result<(), String> {
         let conn = Connection::open(&self.db_path)
             .map_err(|e| format!("Failed to open database: {}", e))?;
@@ -47,7 +47,7 @@ impl DatabaseManager {
         Ok(())
     }
 
-    /// Exécute une requête avec la connexion
+    /// Runs a query using the connection
     pub fn with_connection<F, R>(&self, f: F) -> Result<R, String>
     where
         F: FnOnce(&Connection) -> SqlResult<R>,

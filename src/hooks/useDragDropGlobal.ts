@@ -3,8 +3,8 @@ import { toast } from 'sonner';
 import { DragDropEventEntity } from '@/domain/drag-drop/entity';
 
 /**
- * Hook pour gérer le drag & drop global de l'application
- * Encapsule toute la logique d'écoute des événements Tauri
+ * Hook handling application-wide drag & drop.
+ * Encapsulates all the Tauri event listening logic.
  */
 export function useDragDropGlobal(onFilesDropped: (paths: string[]) => void) {
   const callbackRef = useRef(onFilesDropped);

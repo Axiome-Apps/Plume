@@ -1,12 +1,12 @@
 import { DragDropEventSchema, DragDropEventType, DragDropPayloadType } from './schema';
 
 /**
- * Entité DragDropEvent - Encapsule la logique métier des événements drag & drop
+ * DragDropEvent entity - encapsulates drag & drop event business logic.
  */
 export class DragDropEventEntity {
   constructor(private _data: DragDropEventType) {}
 
-  // Factory method avec validation
+  // Factory method with validation
   static fromRawEvent(rawEvent: unknown): DragDropEventEntity {
     const validatedEvent = DragDropEventSchema.parse(rawEvent);
     return new DragDropEventEntity(validatedEvent);
@@ -46,7 +46,7 @@ export class DragDropEventEntity {
     return this.type === 'leave';
   }
 
-  // Méthodes utilitaires
+  // Utility methods
   hasFiles(): boolean {
     return this.paths !== undefined && this.paths.length > 0;
   }
@@ -61,7 +61,7 @@ export class DragDropEventEntity {
     );
   }
 
-  // Méthode principale pour traiter les drops
+  // Main method handling drops
   processDropEvent(): string[] | null {
     if (!this.isDrop()) return null;
     if (!this.hasFiles()) return [];
@@ -69,7 +69,7 @@ export class DragDropEventEntity {
     return this.getValidImagePaths();
   }
 
-  // Sérialisation
+  // Serialization
   toJSON(): DragDropEventType {
     return { ...this._data };
   }

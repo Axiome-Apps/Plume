@@ -1,5 +1,5 @@
 /**
- * Constantes partagées du domaine - Source unique de vérité pour les formats
+ * Shared domain constants - single source of truth for formats.
  */
 
 export type ImageFormat = 'png' | 'jpeg' | 'webp' | 'heic';

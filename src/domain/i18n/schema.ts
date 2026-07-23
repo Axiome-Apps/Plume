@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 /**
- * Schema de validation pour les clés de traduction
- * Définit la structure type-safe des traductions (imbriquée)
+ * Validation schema for translation keys.
+ * Defines the type-safe (nested) translation structure.
  */
 export const TranslationKeysSchema = z.object({
   app: z.object({
@@ -90,7 +90,7 @@ export const TranslationKeysSchema = z.object({
 
 export type TranslationKeysType = z.infer<typeof TranslationKeysSchema>;
 
-// Type pour les clés imbriquées (ex: 'app.name', 'common.download')
+// Type for nested keys (e.g. 'app.name', 'common.download')
 export type TranslationKeyType =
   | `app.${keyof TranslationKeysType['app']}`
   | `header.${keyof TranslationKeysType['header']}`
@@ -110,7 +110,7 @@ export type TranslationKeyType =
   | `success.${keyof TranslationKeysType['success']}`;
 
 /**
- * Fonction de validation des fichiers de traduction
+ * Validation function for translation files.
  */
 export function validateTranslations(translations: unknown): TranslationKeysType {
   return TranslationKeysSchema.parse(translations);

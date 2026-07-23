@@ -2,9 +2,9 @@ import { z } from 'zod';
 import { EstimationResultSchema } from '@/domain/size-prediction/schema';
 import { IMAGE_FORMATS } from '@/domain/constants';
 
-// Schema principal pour une image
+// Main image schema
 export const ImageSchema = z.object({
-  // Propriétés de base (toujours présentes)
+  // Base properties (always present)
   id: z.string(),
   name: z.string(),
   originalSize: z.number().positive(),
@@ -13,7 +13,7 @@ export const ImageSchema = z.object({
   path: z.string(),
   status: z.enum(['pending', 'processing', 'completed', 'error']),
 
-  // Propriétés conditionnelles selon le status
+  // Status-dependent properties
   estimatedCompression: EstimationResultSchema.optional(),
   progress: z.number().min(0).max(100).optional(),
   compressedSize: z.number().positive().optional(),
@@ -21,6 +21,6 @@ export const ImageSchema = z.object({
   outputPath: z.string().optional(),
 });
 
-// Types principaux - Convention: SchemaName + Type
+// Main types - convention: SchemaName + Type
 export type ImageType = z.infer<typeof ImageSchema>;
 export type ImageStatus = ImageType['status'];

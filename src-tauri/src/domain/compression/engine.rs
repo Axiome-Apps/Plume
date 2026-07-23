@@ -222,7 +222,7 @@ fn compress_to_webp_file(
 
     let (img, icc_profile) = decode_image_with_icc(&input_data, input_format)?;
 
-    // Encode en WebP avec webp crate + WebPConfig optimisé
+    // Encode to WebP using the webp crate + tuned WebPConfig
     let has_alpha = img.color().has_alpha();
 
     let encoded = if has_alpha {

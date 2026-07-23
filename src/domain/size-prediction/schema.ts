@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
-// Schéma pour les plages de taille
+// Size range schema
 export const SizeRangeSchema = z.enum(['small', 'medium', 'large']);
 
-// Schéma pour une statistique de compression (simplifié)
+// Compression stat schema (simplified)
 export const CompressionStatSchema = z.object({
   id: z.number().optional(),
   input_format: z.string(),
@@ -17,7 +17,7 @@ export const CompressionStatSchema = z.object({
   timestamp: z.string(),
 });
 
-// Schéma pour une requête d'estimation
+// Estimation query schema
 export const EstimationQuerySchema = z.object({
   input_format: z.string(),
   output_format: z.string(),
@@ -26,7 +26,7 @@ export const EstimationQuerySchema = z.object({
   lossy_mode: z.boolean(),
 });
 
-// Schéma pour le résultat d'estimation
+// Estimation result schema
 // percent can be negative (file grows after compression)
 // ratio can be > 1 (compressed size > original)
 export const EstimationResultSchema = z.object({
@@ -36,14 +36,14 @@ export const EstimationResultSchema = z.object({
   sample_count: z.number().min(0),
 });
 
-// Schéma pour l'affichage d'estimation (version enrichie)
+// Estimation display schema (enriched version)
 export const EstimationDisplaySchema = EstimationResultSchema.extend({
   confidence_level: z.enum(['low', 'medium', 'high']),
   description: z.string(),
-  is_learning: z.boolean(), // true si basé sur des données utilisateur
+  is_learning: z.boolean(), // true when based on user data
 });
 
-// Schéma pour améliorer l'estimation existante dans imageSchemas
+// Schema enriching the existing estimation in imageSchemas
 export const EnhancedCompressionEstimationSchema = z.object({
   percent: z.number().min(-100).max(100),
   ratio: z.number().min(0),
@@ -53,7 +53,7 @@ export const EnhancedCompressionEstimationSchema = z.object({
   description: z.string().optional(),
 });
 
-// Inférence des types TypeScript - Convention: SchemaName + Type
+// TypeScript type inference - convention: SchemaName + Type
 export type SizeRangeType = z.infer<typeof SizeRangeSchema>;
 export type CompressionStatType = z.infer<typeof CompressionStatSchema>;
 export type EstimationQueryType = z.infer<typeof EstimationQuerySchema>;
@@ -61,7 +61,7 @@ export type EstimationResultType = z.infer<typeof EstimationResultSchema>;
 export type EstimationDisplayType = z.infer<typeof EstimationDisplaySchema>;
 export type EnhancedCompressionEstimationType = z.infer<typeof EnhancedCompressionEstimationSchema>;
 
-// Constantes utiles
+// Useful constants
 export const SIZE_THRESHOLDS = {
   SMALL_MAX: 1_000_000, // 1MB
   MEDIUM_MAX: 5_000_000, // 5MB
@@ -73,7 +73,7 @@ export const CONFIDENCE_LEVELS = {
   HIGH: 0.9,
 } as const;
 
-// Helper pour déterminer la plage de taille
+// Helper resolving the size range
 export const getSizeRange = (sizeInBytes: number): SizeRangeType => {
   if (sizeInBytes < SIZE_THRESHOLDS.SMALL_MAX) {
     return 'small';
@@ -84,7 +84,7 @@ export const getSizeRange = (sizeInBytes: number): SizeRangeType => {
   }
 };
 
-// Helper pour déterminer le niveau de confiance
+// Helper resolving the confidence level
 export const getConfidenceLevel = (confidence: number): 'low' | 'medium' | 'high' => {
   if (confidence >= CONFIDENCE_LEVELS.HIGH) {
     return 'high';

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Schema pour les événements drag & drop Tauri v2
+// Schema for Tauri v2 drag & drop events
 export const DragDropPayloadSchema = z.object({
   type: z.enum(['enter', 'over', 'drop', 'leave']),
   paths: z.array(z.string()).optional(),
@@ -16,6 +16,6 @@ export const DragDropEventSchema = z.object({
   payload: DragDropPayloadSchema,
 });
 
-// Types inférés - Convention: SchemaName + Type
+// Inferred types - convention: SchemaName + Type
 export type DragDropPayloadType = z.infer<typeof DragDropPayloadSchema>;
 export type DragDropEventType = z.infer<typeof DragDropEventSchema>;

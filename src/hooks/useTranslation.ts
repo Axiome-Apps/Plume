@@ -4,8 +4,8 @@ import type { TranslationKeyType } from '@/domain/i18n';
 type TranslationOptions = Record<string, string | number>;
 
 /**
- * Hook personnalisé pour les traductions avec type safety
- * Wrapper autour de react-i18next avec nos types domain
+ * Custom translation hook with type safety.
+ * Wraps react-i18next with our domain types.
  */
 export const useTranslation = () => {
   const { t, i18n } = useI18next();

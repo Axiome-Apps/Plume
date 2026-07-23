@@ -3,13 +3,13 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { validateTranslations } from './schema';
 
-// Import des traductions
+// Translation imports
 import frTranslations from '../../locales/fr.json';
 import enTranslations from '../../locales/en.json';
 
 // Configuration i18next
 export const initI18n = () => {
-  // Validation des traductions avec Zod (dev seulement)
+  // Zod validation of translations (dev only)
   if (import.meta.env.DEV) {
     try {
       validateTranslations(frTranslations);
@@ -25,12 +25,12 @@ export const initI18n = () => {
     .use(initReactI18next)
     .init({
       debug: false,
-      fallbackLng: 'fr', // Français par défaut (marché national)
+      fallbackLng: 'fr', // French by default (domestic market)
 
-      // Langues supportées
+      // Supported languages
       supportedLngs: ['fr', 'en'],
 
-      // Configuration détection
+      // Detection configuration
       detection: {
         order: ['localStorage', 'navigator', 'htmlTag'],
         caches: ['localStorage'],
@@ -48,13 +48,13 @@ export const initI18n = () => {
 
       // Configuration
       interpolation: {
-        escapeValue: false, // React échappe déjà
+        escapeValue: false, // React already escapes
       },
 
       // Namespace
       defaultNS: 'translation',
 
-      // Key separator (pour nested objects)
+      // Key separator (for nested objects)
       keySeparator: '.',
 
       // Pluralization
@@ -67,5 +67,5 @@ export const initI18n = () => {
   return i18n;
 };
 
-// Types exports pour utilisation
+// Type exports for consumers
 export type { TranslationKeysType, TranslationKeyType } from './schema';

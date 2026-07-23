@@ -28,7 +28,7 @@ import {
   getProgressEstimation,
 } from '@/lib/tauri';
 
-// Types pour la gestion d'état
+// State management types
 type CompressionState = 'idle' | 'processing' | 'completed' | 'error';
 type AppView = 'drop' | 'list' | 'success';
 
@@ -38,14 +38,14 @@ interface CompressionSettings {
 }
 
 interface ImageStore {
-  // État principal
+  // Main state
   images: ImageEntity[];
   compressionState: CompressionState;
   isProcessing: boolean;
   compressionSettings: CompressionSettings;
   progressManagers: Record<string, AdaptiveProgressManager>;
 
-  // Computed getters - Fonctions au lieu de propriétés
+  // Computed getters - functions rather than properties
   currentView: () => AppView;
   stats: () => {
     total: number;
@@ -57,29 +57,29 @@ interface ImageStore {
     averageSavings: number;
   };
 
-  // Actions pour les images
+  // Image actions
   addImages: (filePaths: string[]) => Promise<void>;
   removeImage: (imageId: string) => void;
   clearImages: () => void;
 
-  // Actions pour la compression
+  // Compression actions
   startCompression: () => Promise<void>;
   compressImage: (imageId: string) => Promise<void>;
-  // Actions pour les paramètres
+  // Settings actions
   setCompressionSettings: (settings: Partial<CompressionSettings>) => void;
   setOutputFormat: (format: OutputFormatType) => void;
   setCompressionLevel: (level: CompressionLevelType) => void;
   recalculateEstimations: () => Promise<void>;
 
-  // Actions pour le drag & drop
+  // Drag & drop actions
   handleExternalDrop: (filePaths: string[]) => Promise<void>;
 
-  // Actions internes
+  // Internal actions
   updateImageProgress: (imageId: string, progress: number) => void;
 }
 
 export const useImageStore = create<ImageStore>((set, get) => ({
-  // État initial
+  // Initial state
   images: [],
   compressionState: 'idle',
   isProcessing: false,
@@ -89,7 +89,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   },
   progressManagers: {},
 
-  // Computed getters - Utiliser des fonctions au lieu de getters
+  // Computed getters - use functions rather than getters
   currentView: (): AppView => {
     const state = get();
     if (state.images.length === 0) return 'drop';
@@ -124,7 +124,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     };
   },
 
-  // Actions pour les images
+  // Image actions
   addImages: async (filePaths: string[]) => {
     try {
       const { images } = get();
@@ -149,7 +149,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           // Non-blocking — file info is best-effort
         }
 
-        // Obtenir l'estimation de compression depuis le service
+        // Fetch the compression estimation from the service
         let estimatedCompression;
         try {
           const format = detectImageFormat(fileName);
@@ -168,7 +168,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             resolved.quality,
             resolved.lossy
           );
-          // Extraire les propriétés compatibles avec EstimationResultType
+          // Extract the properties compatible with EstimationResultType
           estimatedCompression = {
             percent: estimation.percent,
             ratio: estimation.ratio,
@@ -177,7 +177,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           };
         } catch {
           // Non-blocking — estimation fallback will be used
-          // Fallback avec valeurs par défaut
+          // Fallback with default values
           estimatedCompression = {
             percent: 65,
             ratio: 0.35,
@@ -219,7 +219,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
   clearImages: () => {
     const { progressManagers } = get();
-    // Arrêter tous les gestionnaires de progression avant de nettoyer
+    // Stop every progress manager before clearing
     Object.values(progressManagers).forEach(manager => manager.stop());
 
     set({
@@ -229,7 +229,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     });
   },
 
-  // Actions pour la compression
+  // Compression actions
   startCompression: async () => {
     const { images, isProcessing, compressionSettings } = get();
     if (isProcessing) return;
@@ -254,7 +254,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             image.format
           );
 
-          // Obtenir l'estimation de durée depuis la BDD (avec fallback heuristique)
+          // Fetch the duration estimation from the DB (with heuristic fallback)
           let estimatedDurationMs = 3000;
           try {
             const outputFmt =
@@ -269,10 +269,10 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             // Fallback to default estimation
           }
 
-          // Créer et démarrer le gestionnaire de progression adaptatif
+          // Create and start the adaptive progress manager
           const progressManager = new AdaptiveProgressManager(image.id, estimatedDurationMs);
 
-          // Stocker le gestionnaire pour pouvoir le contrôler plus tard
+          // Keep the manager around so it can be controlled later
           set(state => ({
             progressManagers: {
               ...state.progressManagers,
@@ -325,7 +325,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             image.id
           );
 
-          // Signaler la fin au gestionnaire adaptatif → déclenche animation 85→100
+          // Signal completion to the adaptive manager -> triggers the 85->100 animation
           const finalManager = get().progressManagers[image.id];
           if (finalManager) {
             finalManager.onCompressionCompleted();
@@ -341,7 +341,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
               toast.info(`${image.name} est déjà optimisé — fichier original conservé`);
             }
           } else {
-            // Signaler l'erreur au gestionnaire adaptatif
+            // Signal the error to the adaptive manager
             const errorManager = get().progressManagers[image.id];
             if (errorManager) {
               errorManager.error(response.error || 'Compression failed');
@@ -353,7 +353,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             toast.error(`${image.name} : ${translateError(response.error)}`);
           }
         } catch (error) {
-          // Signaler l'erreur au gestionnaire adaptatif
+          // Signal the error to the adaptive manager
           const catchErrorManager = get().progressManagers[image.id];
           if (catchErrorManager) {
             catchErrorManager.error(String(error));
@@ -378,11 +378,11 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
     if (!image || !image.isPending()) return;
 
-    // Appeler directement startCompression qui gérera les transitions de statut
+    // Call startCompression directly; it handles the status transitions
     await get().startCompression();
   },
 
-  // Actions pour les paramètres
+  // Settings actions
   setCompressionSettings: (newSettings: Partial<CompressionSettings>) => {
     set(state => ({
       compressionSettings: { ...state.compressionSettings, ...newSettings },
@@ -453,12 +453,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     set({ images: updatedImages });
   },
 
-  // Actions pour le drag & drop
+  // Drag & drop actions
   handleExternalDrop: async (filePaths: string[]) => {
     await get().addImages(filePaths);
   },
 
-  // Actions internes pour les transitions d'état
+  // Internal actions for state transitions
   updateImageProgress: (imageId: string, progress: number) => {
     set(state => ({
       images: state.images.map(img => (img.id === imageId ? img.updateProgress(progress) : img)),

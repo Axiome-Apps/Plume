@@ -1,7 +1,7 @@
 use crate::database::{DatabaseManager, migrations};
 use tauri::AppHandle;
 
-/// Initialise la base de données au démarrage de l'application
+/// Initializes the database at application startup
 #[tauri::command]
 pub async fn init_database(app: AppHandle) -> Result<String, String> {
     log::info!("Initializing database...");

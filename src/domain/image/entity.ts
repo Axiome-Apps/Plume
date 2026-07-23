@@ -1,7 +1,7 @@
 import { ImageType } from './schema';
 
 /**
- * Entité Image - Encapsule la logique métier liée aux images avec le schema unifié
+ * Image entity - encapsulates image-related business logic on top of the unified schema.
  */
 export class ImageEntity {
   constructor(private _data: ImageType) {}
@@ -76,7 +76,7 @@ export class ImageEntity {
     return this.data;
   }
 
-  // Méthodes de transition d'état - Retournent de nouvelles instances
+  // State transition methods - each returns a new instance
   withStatus(status: ImageType['status'], updates?: Partial<ImageType>): ImageEntity {
     return new ImageEntity({
       ...this._data,
@@ -127,7 +127,7 @@ export class ImageEntity {
     });
   }
 
-  // Méthodes utilitaires - Type guards
+  // Utility methods - type guards
   isPending(): boolean {
     return this._data.status === 'pending';
   }
@@ -175,7 +175,7 @@ export class ImageEntity {
     return this._data.compressedSize !== undefined && this._data.savings !== undefined;
   }
 
-  // Méthodes de format
+  // Format methods
   isPNG(): boolean {
     return this._data.format.toUpperCase() === 'PNG';
   }
@@ -200,7 +200,7 @@ export class ImageEntity {
     return this._data.format.toUpperCase();
   }
 
-  // Méthodes statiques pour collections
+  // Static methods for collections
   static hasFormat(images: ImageType[], format: 'PNG' | 'JPEG' | 'WEBP' | 'HEIC'): boolean {
     return images.some(img => ImageEntity.fromData(img).getFormatUpperCase() === format);
   }
@@ -221,7 +221,7 @@ export class ImageEntity {
     return ImageEntity.hasFormat(images, 'HEIC');
   }
 
-  // Méthodes de formatage
+  // Formatting methods
   static formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 B';
     const k = 1024;
