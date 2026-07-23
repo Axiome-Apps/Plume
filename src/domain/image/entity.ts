@@ -7,14 +7,6 @@ export class ImageEntity {
   constructor(private _data: ImageType) {}
 
   // Factory methods
-  static create(data: Omit<ImageType, 'id'>): ImageEntity {
-    const image: ImageType = {
-      ...data,
-      id: `${Date.now()}-${Math.random()}`,
-    };
-    return new ImageEntity(image);
-  }
-
   static fromData(data: ImageType): ImageEntity {
     return new ImageEntity(data);
   }
@@ -76,8 +68,13 @@ export class ImageEntity {
     return this.data;
   }
 
+  /** Replace the estimation, leaving every other field untouched. */
+  withEstimation(estimation: ImageType['estimatedCompression']): ImageEntity {
+    return new ImageEntity({ ...this._data, estimatedCompression: estimation });
+  }
+
   // State transition methods - each returns a new instance
-  withStatus(status: ImageType['status'], updates?: Partial<ImageType>): ImageEntity {
+  private withStatus(status: ImageType['status'], updates?: Partial<ImageType>): ImageEntity {
     return new ImageEntity({
       ...this._data,
       status,
@@ -114,7 +111,7 @@ export class ImageEntity {
       compressedSize,
       savings: Math.max(0, savings),
       outputPath,
-      progress: undefined, // Nettoyer les propriétés non pertinentes
+      progress: undefined, // Clear properties that no longer apply
     });
   }
 
@@ -140,111 +137,7 @@ export class ImageEntity {
     return this._data.status === 'completed';
   }
 
-  isError(): boolean {
-    return this._data.status === 'error';
-  }
-
-  hasEstimation(): boolean {
-    return this._data.estimatedCompression !== undefined;
-  }
-
-  getEstimatedCompression() {
-    return this._data.estimatedCompression;
-  }
-
-  getEstimatedSavings(): string {
-    if (this._data.estimatedCompression) {
-      return `${this._data.estimatedCompression.percent.toFixed(1)}%`;
-    }
-    return 'N/A';
-  }
-
-  getEstimatedConfidence(): string {
-    if (this._data.estimatedCompression) {
-      const confidence = this._data.estimatedCompression.confidence * 100;
-      return `${confidence.toFixed(1)}%`;
-    }
-    return 'N/A';
-  }
-
-  hasProgress(): boolean {
-    return this._data.progress !== undefined;
-  }
-
   hasCompressedData(): boolean {
     return this._data.compressedSize !== undefined && this._data.savings !== undefined;
-  }
-
-  // Format methods
-  isPNG(): boolean {
-    return this._data.format.toUpperCase() === 'PNG';
-  }
-
-  isJPEG(): boolean {
-    return this._data.format.toUpperCase() === 'JPEG';
-  }
-
-  isWebP(): boolean {
-    return this._data.format.toUpperCase() === 'WEBP';
-  }
-
-  isHEIC(): boolean {
-    return this._data.format.toUpperCase() === 'HEIC';
-  }
-
-  getFormatLowerCase(): string {
-    return this._data.format.toLowerCase();
-  }
-
-  getFormatUpperCase(): string {
-    return this._data.format.toUpperCase();
-  }
-
-  // Static methods for collections
-  static hasFormat(images: ImageType[], format: 'PNG' | 'JPEG' | 'WEBP' | 'HEIC'): boolean {
-    return images.some(img => ImageEntity.fromData(img).getFormatUpperCase() === format);
-  }
-
-  static hasPNG(images: ImageType[]): boolean {
-    return ImageEntity.hasFormat(images, 'PNG');
-  }
-
-  static hasWebP(images: ImageType[]): boolean {
-    return ImageEntity.hasFormat(images, 'WEBP');
-  }
-
-  static hasJPEG(images: ImageType[]): boolean {
-    return ImageEntity.hasFormat(images, 'JPEG');
-  }
-
-  static hasHEIC(images: ImageType[]): boolean {
-    return ImageEntity.hasFormat(images, 'HEIC');
-  }
-
-  // Formatting methods
-  static formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  }
-
-  getFormattedOriginalSize(): string {
-    return ImageEntity.formatFileSize(this._data.originalSize);
-  }
-
-  getFormattedCompressedSize(): string {
-    if (this._data.compressedSize) {
-      return ImageEntity.formatFileSize(this._data.compressedSize);
-    }
-    return 'N/A';
-  }
-
-  getFormattedSavings(): string {
-    if (this._data.savings !== undefined) {
-      return `${this._data.savings.toFixed(1)}%`;
-    }
-    return 'N/A';
   }
 }

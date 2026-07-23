@@ -47,15 +47,6 @@ interface ImageStore {
 
   // Computed getters - functions rather than properties
   currentView: () => AppView;
-  stats: () => {
-    total: number;
-    pending: number;
-    processing: number;
-    completed: number;
-    totalSize: number;
-    totalCompressedSize: number;
-    averageSavings: number;
-  };
 
   // Image actions
   addImages: (filePaths: string[]) => Promise<void>;
@@ -96,32 +87,6 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     if (state.compressionState === 'completed' && state.images.every(img => img.isCompleted()))
       return 'success';
     return 'list';
-  },
-
-  stats: () => {
-    const state = get();
-    const pending = state.images.filter(img => img.isPending()).length;
-    const processing = state.images.filter(img => img.isProcessing()).length;
-    const completed = state.images.filter(img => img.isCompleted()).length;
-    const totalSize = state.images.reduce((sum, img) => sum + img.originalSize, 0);
-    const totalCompressedSize = state.images
-      .filter(img => img.hasCompressedData())
-      .reduce((sum, img) => sum + (img.compressedSize || 0), 0);
-
-    return {
-      total: state.images.length,
-      pending,
-      processing,
-      completed,
-      totalSize,
-      totalCompressedSize,
-      averageSavings:
-        completed > 0
-          ? state.images
-              .filter(img => img.hasCompressedData())
-              .reduce((sum, img) => sum + (img.savings || 0), 0) / completed
-          : 0,
-    };
   },
 
   // Image actions
@@ -396,7 +361,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         ...state.compressionSettings,
         outputFormat: format,
         // PNG uses oxipng lossless — level has no real effect, lock to aggressive
-        ...(format === 'png' ? { compressionLevel: 'aggressive' as CompressionLevelType } : {}),
+        ...(format === 'png' ? { compressionLevel: 'aggressive' } : {}),
       },
     }));
     get().recalculateEstimations();
@@ -437,14 +402,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             resolved.quality,
             resolved.lossy
           );
-          const data = img.data;
-          data.estimatedCompression = {
+          return img.withEstimation({
             percent: estimation.percent,
             ratio: estimation.ratio,
             confidence: estimation.confidence,
             sample_count: estimation.sample_count,
-          };
-          return ImageEntity.fromData(data);
+          });
         } catch {
           return img;
         }

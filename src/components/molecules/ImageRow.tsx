@@ -3,6 +3,7 @@ import { ImageEntity } from '@/domain/image/entity';
 import { ImagePreview } from './ImagePreview';
 import { ImageActions } from './ImageActions';
 import { ProgressBar } from '../atoms';
+import { formatBytes } from '@/lib/format';
 
 interface ImageRowProps {
   image: ImageEntity;
@@ -10,8 +11,6 @@ interface ImageRowProps {
   onRemove?: () => void;
   onRevealInFolder?: () => void;
 }
-
-const formatBytes = ImageEntity.formatFileSize;
 
 const ImageRow: FC<ImageRowProps> = ({ image, onCompress, onRemove, onRevealInFolder }) => {
   const meta = `${image.format.toUpperCase()} · ${formatBytes(image.originalSize)}`;

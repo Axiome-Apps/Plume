@@ -1,34 +1,18 @@
 import { FC } from 'react';
 import { useImageStore } from '@/store/imageStore';
 import { useTranslation } from '@/hooks/useTranslation';
-import { ImageEntity } from '@/domain/image/entity';
-
-const formatBytes = ImageEntity.formatFileSize;
+import { summarizeBatch } from '@/domain/image/batch';
+import { formatBytes, splitBytes } from '@/lib/format';
 
 const BatchKpiCard: FC = () => {
   const { t } = useTranslation();
   const images = useImageStore(s => s.images);
 
-  const pending = images.filter(i => i.isPending() && i.estimatedCompression);
-  const completed = images.filter(i => i.isCompleted() && i.compressedSize !== undefined);
+  const { isRealized, totalOriginal, totalAfter, saved, percent, formats } = summarizeBatch(images);
+  const savedFigure = splitBytes(saved);
 
-  const isPostBatch = completed.length > 0 && pending.length === 0;
-
-  const totalOriginal = (isPostBatch ? completed : pending).reduce(
-    (sum, img) => sum + img.originalSize,
-    0
-  );
-  const totalAfter = isPostBatch
-    ? completed.reduce((sum, img) => sum + (img.compressedSize ?? 0), 0)
-    : pending.reduce(
-        (sum, img) => sum + img.originalSize * (1 - (img.estimatedCompression?.percent ?? 0) / 100),
-        0
-      );
-  const saved = Math.max(0, totalOriginal - totalAfter);
-  const pct = totalOriginal > 0 ? Math.round((saved / totalOriginal) * 100) : 0;
-
-  const eyebrow = isPostBatch ? t('batch.kpi.realized') : t('batch.kpi.estimated');
-  const formatList = unique(images.map(i => i.format.toUpperCase())).join(' · ');
+  const eyebrow = isRealized ? t('batch.kpi.realized') : t('batch.kpi.estimated');
+  const formatList = formats.join(' · ');
 
   return (
     <div className="relative overflow-hidden rounded-xl px-6 py-5 shadow-glow bg-[linear-gradient(135deg,var(--color-primary)_0%,var(--color-primary-deep)_100%)]">
@@ -37,17 +21,17 @@ const BatchKpiCard: FC = () => {
         <div className="eyebrow text-white">{eyebrow}</div>
         <div className="mt-2 flex items-baseline gap-3">
           <span className="font-sans text-white text-[38px] font-bold leading-none tracking-[-0.02em] tabular-nums">
-            {formatNumber(saved)}
+            {savedFigure.value}
           </span>
           <span className="text-white/75 text-base font-medium">
-            {t('batch.kpi.gained', { unit: unitOf(saved) })}
+            {t('batch.kpi.gained', { unit: savedFigure.unit })}
           </span>
         </div>
 
         <div className="mt-4 h-1.5 bg-white/20 rounded-full overflow-hidden">
           <div
             className="h-full bg-white rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${Math.min(pct, 100)}%` }}
+            style={{ width: `${Math.min(percent, 100)}%` }}
           />
         </div>
 
@@ -56,29 +40,13 @@ const BatchKpiCard: FC = () => {
             {formatBytes(totalOriginal)} {formatList && `· ${formatList}`}
           </span>
           <span className="mono text-white font-medium">
-            −{pct}% · ~{formatBytes(totalAfter)}
+            −{percent}% · ~{formatBytes(totalAfter)}
           </span>
         </div>
       </div>
     </div>
   );
 };
-
-function unique<T>(arr: T[]): T[] {
-  return Array.from(new Set(arr));
-}
-
-function formatNumber(bytes: number): string {
-  if (bytes < 1024) return `${bytes}`;
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1);
-  return (bytes / (1024 * 1024)).toFixed(1);
-}
-
-function unitOf(bytes: number): string {
-  if (bytes < 1024) return 'o';
-  if (bytes < 1024 * 1024) return 'Ko';
-  return 'Mo';
-}
 
 function Blob() {
   return (
