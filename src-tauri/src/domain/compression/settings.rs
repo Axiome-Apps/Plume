@@ -29,10 +29,10 @@ impl CompressionSettings {
     /// Returns WebP for best compression, or original format when preserving
     pub fn optimal_format_for_input(input_format: &str) -> OutputFormat {
         match input_format.to_lowercase().as_str() {
-            "png" => OutputFormat::WebP, // PNG -> WebP for better savings
+            "png" => OutputFormat::WebP,          // PNG -> WebP for better savings
             "jpg" | "jpeg" => OutputFormat::WebP, // JPEG -> WebP
-            "webp" => OutputFormat::WebP, // WebP -> WebP (re-compression)
-            _ => OutputFormat::WebP,     // WebP by default
+            "webp" => OutputFormat::WebP,         // WebP -> WebP (re-compression)
+            _ => OutputFormat::WebP,              // WebP by default
         }
     }
 

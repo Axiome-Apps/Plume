@@ -27,7 +27,6 @@ impl OutputFormat {
             _ => None,
         }
     }
-
 }
 
 impl std::fmt::Display for OutputFormat {
@@ -55,5 +54,4 @@ mod tests {
         assert_eq!(OutputFormat::from_string("webp"), Some(OutputFormat::WebP));
         assert_eq!(OutputFormat::from_string("unknown"), None);
     }
-
 }
