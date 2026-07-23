@@ -8,7 +8,7 @@ pub mod file;
 pub use compression::{
     CompressionError, CompressionLevel, CompressionOutput, CompressionResult, CompressionSettings,
     CompressionStat, EstimationQuery, EstimationResult, InputFormat, OutputFormat,
-    calculate_confidence, compress_file_to_file, create_stat, estimate_compression, get_size_range,
+    calculate_confidence, compress_file_to_file, estimate_compression, get_size_range,
     resolve_output_path,
 };
 

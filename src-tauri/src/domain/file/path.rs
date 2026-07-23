@@ -60,7 +60,6 @@ impl PathUtils {
             .map(|s| s.to_string())
             .ok_or_else(|| FileError::InvalidPath("Cannot extract file stem".to_string()))
     }
-
 }
 
 #[cfg(test)]

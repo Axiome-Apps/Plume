@@ -12,16 +12,6 @@ pub struct GetEstimationRequest {
     pub lossy_mode: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RecordStatRequest {
-    pub input_format: String,
-    pub output_format: String,
-    pub original_size: u64,
-    pub compressed_size: u64,
-    pub quality_setting: u8,
-    pub lossy_mode: bool,
-}
-
 #[tauri::command]
 pub async fn get_compression_estimation(
     request: GetEstimationRequest,
@@ -38,31 +28,6 @@ pub async fn get_compression_estimation(
     let db = DatabaseManager::new(&app)?;
     db.connect()?;
     db.get_compression_estimation(&query)
-}
-
-#[tauri::command]
-pub async fn record_compression_stat(
-    request: RecordStatRequest,
-    app: AppHandle,
-) -> Result<i64, String> {
-    let output_format_enum = match request.output_format.to_lowercase().as_str() {
-        "webp" => crate::domain::OutputFormat::WebP,
-        "png" => crate::domain::OutputFormat::Png,
-        "jpg" | "jpeg" => crate::domain::OutputFormat::Jpeg,
-        _ => crate::domain::OutputFormat::WebP,
-    };
-
-    let stat = crate::domain::create_stat(
-        request.input_format,
-        request.output_format,
-        request.original_size,
-        request.compressed_size,
-        &crate::domain::CompressionSettings::new(request.quality_setting, output_format_enum),
-    );
-
-    let db = DatabaseManager::new(&app)?;
-    db.connect()?;
-    db.save_compression_stat(&stat)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -128,11 +93,4 @@ pub async fn get_progress_estimation(
         confidence: 0.0,
         sample_count: 0,
     })
-}
-
-#[tauri::command]
-pub async fn reset_compression_stats(app: AppHandle) -> Result<(), String> {
-    let db = DatabaseManager::new(&app)?;
-    db.connect()?;
-    db.clear_compression_stats()
 }

@@ -315,15 +315,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             },
           });
 
-          const response = await tauriCompressImage(
-            {
-              file_path: image.path,
-              quality,
-              format: outputFormatForImage,
-              level: compressionSettings.compressionLevel,
-            },
-            image.id
-          );
+          const response = await tauriCompressImage({
+            file_path: image.path,
+            quality,
+            format: outputFormatForImage,
+            level: compressionSettings.compressionLevel,
+          });
 
           // Signal completion to the adaptive manager -> triggers the 85->100 animation
           const finalManager = get().progressManagers[image.id];

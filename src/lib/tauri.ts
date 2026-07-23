@@ -57,14 +57,8 @@ export async function revealInFolder(filePath: string): Promise<void> {
 
 // ====== COMPRESSION ======
 
-export async function compressImage(
-  request: CompressImageRequest,
-  imageId: string
-): Promise<CompressImageResponse> {
-  return invoke<CompressImageResponse>('compress_image', {
-    request,
-    imageId,
-  });
+export async function compressImage(request: CompressImageRequest): Promise<CompressImageResponse> {
+  return invoke<CompressImageResponse>('compress_image', { request });
 }
 
 // ====== STATS & ESTIMATION ======

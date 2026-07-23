@@ -4,7 +4,7 @@ pub mod domain;
 
 use commands::{
     compress_image, get_compression_estimation, get_file_information, get_progress_estimation,
-    init_database, record_compression_stat, reset_compression_stats, select_image_files,
+    init_database, select_image_files,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -19,8 +19,6 @@ pub fn run() {
             select_image_files,
             get_file_information,
             get_compression_estimation,
-            record_compression_stat,
-            reset_compression_stats,
             get_progress_estimation,
             init_database,
         ])

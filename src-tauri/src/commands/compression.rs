@@ -13,8 +13,9 @@ pub struct CompressImageRequest {
     pub level: Option<CompressionLevel>,
 }
 
+/// Outcome of a successful compression, mirrored by the frontend schema.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CompressionResult {
+pub struct CompressionSummary {
     pub original_size: u64,
     pub compressed_size: u64,
     pub savings_percent: f64,
@@ -24,22 +25,17 @@ pub struct CompressionResult {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompressImageResponse {
     pub success: bool,
-    pub image_id: String,
-    pub output_path: Option<String>,
-    pub result: Option<CompressionResult>,
+    pub result: Option<CompressionSummary>,
     pub error: Option<String>,
 }
 
 #[tauri::command]
 pub async fn compress_image(
     request: CompressImageRequest,
-    image_id: Option<String>,
     app_handle: AppHandle,
 ) -> Result<CompressImageResponse, String> {
     let start_time = std::time::Instant::now();
     let file_path = Path::new(&request.file_path);
-
-    let image_id = image_id.unwrap_or_else(|| format!("img_{}", start_time.elapsed().as_nanos()));
 
     // Validate image file
     let metadata = match validate_image_file(file_path) {
@@ -47,8 +43,6 @@ pub async fn compress_image(
         Err(e) => {
             return Ok(CompressImageResponse {
                 success: false,
-                image_id,
-                output_path: None,
                 result: None,
                 error: Some(format!("File validation failed: {}", e)),
             });
@@ -105,8 +99,6 @@ pub async fn compress_image(
     if let Err(e) = crate::domain::PathUtils::validate_safe_path(&output_path) {
         return Ok(CompressImageResponse {
             success: false,
-            image_id,
-            output_path: None,
             result: None,
             error: Some(format!("Invalid output path: {}", e)),
         });
@@ -163,9 +155,7 @@ pub async fn compress_image(
 
             Ok(CompressImageResponse {
                 success: true,
-                image_id,
-                output_path: Some(final_path.clone()),
-                result: Some(CompressionResult {
+                result: Some(CompressionSummary {
                     original_size: compression_output.original_size,
                     compressed_size: final_size,
                     savings_percent: savings,
@@ -176,8 +166,6 @@ pub async fn compress_image(
         }
         Err(e) => Ok(CompressImageResponse {
             success: false,
-            image_id,
-            output_path: None,
             result: None,
             error: Some(format!("Compression failed: {}", e)),
         }),

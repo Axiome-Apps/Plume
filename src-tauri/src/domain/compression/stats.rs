@@ -112,7 +112,7 @@ pub fn calculate_confidence(sample_count: u32, variance: f64) -> f64 {
     (base_confidence * variance_factor).min(1.0)
 }
 
-pub fn create_stat(
+fn create_stat(
     input_format: String,
     output_format: String,
     original_size: u64,

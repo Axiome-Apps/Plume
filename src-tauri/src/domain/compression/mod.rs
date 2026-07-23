@@ -21,6 +21,6 @@ pub use engine::{CompressionOutput, compress_file_to_file};
 
 // Statistics types and functions
 pub use stats::{
-    CompressionStat, EstimationQuery, EstimationResult, calculate_confidence, create_stat,
-    estimate_compression, get_size_range,
+    CompressionStat, EstimationQuery, EstimationResult, calculate_confidence, estimate_compression,
+    get_size_range,
 };
