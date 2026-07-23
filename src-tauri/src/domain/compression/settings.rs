@@ -21,24 +21,6 @@ impl CompressionSettings {
         }
     }
 
-    /// Sets the quality level (1-100)
-    pub fn with_quality(mut self, quality: u8) -> Self {
-        self.quality = quality.clamp(1, 100);
-        self
-    }
-
-    /// Sets metadata preservation
-    pub fn with_metadata_preservation(mut self, preserve: bool) -> Self {
-        self.preserve_metadata = preserve;
-        self
-    }
-
-    /// Sets alpha channel optimization
-    pub fn with_alpha_optimization(mut self, optimize: bool) -> Self {
-        self.optimize_alpha = optimize;
-        self
-    }
-
     /// Validates the settings
     pub fn is_valid(&self) -> bool {
         (1..=100).contains(&self.quality)
@@ -64,12 +46,6 @@ impl CompressionSettings {
             "heic" | "heif" => OutputFormat::WebP, // HEIC cannot be preserved, default to WebP
             _ => OutputFormat::WebP,
         }
-    }
-}
-
-impl Default for CompressionSettings {
-    fn default() -> Self {
-        Self::new(85, OutputFormat::WebP)
     }
 }
 

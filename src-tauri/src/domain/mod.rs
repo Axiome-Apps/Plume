@@ -7,11 +7,9 @@ pub mod shared;
 
 // Compression domain exports
 pub use compression::{
-    CompressionError, CompressionOutput, CompressionPredictionService, CompressionResult,
-    CompressionSettings, CompressionStat, EstimationQuery, EstimationResult, InputFormat,
-    OutputFormat, calculate_confidence, compress_batch_files, compress_file_to_file,
-    create_compression_stat, create_prediction_query, create_stat, estimate_compression,
-    get_size_range,
+    CompressionError, CompressionOutput, CompressionResult, CompressionSettings, CompressionStat,
+    EstimationQuery, EstimationResult, InputFormat, OutputFormat, calculate_confidence,
+    compress_file_to_file, create_stat, estimate_compression, get_size_range,
 };
 
 // File domain exports

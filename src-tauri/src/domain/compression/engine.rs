@@ -2,16 +2,9 @@ use crate::domain::compression::{
     error::{CompressionError, CompressionResult},
     formats::OutputFormat,
     settings::CompressionSettings,
-    stats::{CompressionStat, create_stat},
 };
 use image::DynamicImage;
 use std::path::Path;
-
-/// Decode a HEIC/HEIF file into a DynamicImage using libheif-rs (public for preview)
-pub fn decode_heic_public(input_data: &[u8]) -> CompressionResult<DynamicImage> {
-    let (img, _icc) = decode_heic(input_data)?;
-    Ok(img)
-}
 
 /// Decode a HEIC/HEIF file into a DynamicImage + optional ICC profile using libheif-rs
 fn decode_heic(input_data: &[u8]) -> CompressionResult<(DynamicImage, Option<Vec<u8>>)> {
@@ -181,32 +174,6 @@ pub fn compress_file_to_file<P: AsRef<Path>>(
         compressed_size,
         settings.format,
     ))
-}
-
-/// Compress multiple images in batch (file-to-file)
-pub fn compress_batch_files(
-    files: Vec<(std::path::PathBuf, std::path::PathBuf)>, // (input_path, output_path) pairs
-    settings: &CompressionSettings,
-) -> Vec<CompressionResult<CompressionOutput>> {
-    files
-        .into_iter()
-        .map(|(input_path, output_path)| compress_file_to_file(input_path, output_path, settings))
-        .collect()
-}
-
-/// Create a compression statistic from the operation result
-pub fn create_compression_stat(
-    input_format: &str,
-    output: &CompressionOutput,
-    settings: &CompressionSettings,
-) -> CompressionStat {
-    create_stat(
-        input_format.to_string(),
-        output.format.to_string().to_lowercase(),
-        output.original_size,
-        output.compressed_size,
-        settings,
-    )
 }
 
 // Private compression functions for each format (file-to-file)

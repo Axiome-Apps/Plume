@@ -6,50 +6,19 @@
 pub mod engine;
 pub mod error;
 pub mod formats;
-pub mod prediction;
 pub mod settings;
 pub mod stats;
+
 // Re-export core types and functions for easy access
 pub use error::{CompressionError, CompressionResult, StatsError, StatsResult};
 pub use formats::{InputFormat, OutputFormat};
 pub use settings::CompressionSettings;
 
 // Engine functions - core compression operations
-pub use engine::{
-    CompressionOutput, compress_batch_files, compress_file_to_file, create_compression_stat,
-};
+pub use engine::{CompressionOutput, compress_file_to_file};
 
 // Statistics types and functions
 pub use stats::{
     CompressionStat, EstimationQuery, EstimationResult, calculate_confidence, create_stat,
     estimate_compression, get_size_range,
 };
-
-// Prediction service for size estimation
-pub use prediction::{CompressionPredictionService, create_prediction_query};
-
-// Convenience functions for common operations
-
-/// Create default compression settings for web optimization
-pub fn web_optimized_settings() -> CompressionSettings {
-    CompressionSettings::new(85, OutputFormat::WebP).with_alpha_optimization(true)
-}
-
-/// Create settings for high quality compression
-pub fn high_quality_settings() -> CompressionSettings {
-    CompressionSettings::new(95, OutputFormat::WebP).with_metadata_preservation(true)
-}
-
-/// Create settings for maximum compression
-pub fn max_compression_settings() -> CompressionSettings {
-    CompressionSettings::new(70, OutputFormat::WebP).with_alpha_optimization(true)
-}
-
-/// Quick file-to-file compression with default settings
-pub fn quick_compress_file<P: AsRef<std::path::Path>>(
-    input_path: P,
-    output_path: P,
-) -> CompressionResult<CompressionOutput> {
-    let settings = web_optimized_settings();
-    compress_file_to_file(input_path, output_path, &settings)
-}
