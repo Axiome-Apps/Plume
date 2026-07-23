@@ -35,24 +35,24 @@ src/
 │   └── icons/       SVG icon set + types.ts
 ├── domain/          business slices (see below)
 ├── hooks/           useDragDropGlobal, useTranslation
-├── lib/tauri.ts     single IPC boundary
+├── lib/             tauri.ts (single IPC boundary), format.ts (byte formatting)
 ├── store/           imageStore (Zustand)
 └── locales/         fr / en
 ```
 
 ### `src/domain/` slices
 
-| Slice              | Contents                  | Role                                                                                 |
-| ------------------ | ------------------------- | ------------------------------------------------------------------------------------ |
-| `compression/`     | `schema.ts`               | output formats, levels (light / balanced / aggressive)                               |
-| `image/`           | `schema.ts`, `entity.ts`  | queued image, state, result                                                          |
-| `drag-drop/`       | `schema.ts`, `entity.ts`  | drop events, supported-extension filtering                                           |
-| `progress/`        | `adaptiveProgress.ts`     | `AdaptiveProgressManager` (→ [ADR-0002](../adr/ADR-0002-frontend-only-progress.md))  |
-| `size-prediction/` | `schema.ts`, `service.ts` | estimation + static fallback (→ [ADR-0005](../adr/ADR-0005-db-backed-estimation.md)) |
-| `i18n/`            | `config.ts`, `schema.ts`  | FR/EN internationalization                                                           |
+| Slice              | Contents                                 | Role                                                                                 |
+| ------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| `compression/`     | `schema.ts`                              | output formats, levels (light / balanced / aggressive)                               |
+| `image/`           | `schema.ts`, `entity.ts`, `batch.ts`     | queued image, state, result, batch aggregation                                       |
+| `drag-drop/`       | `schema.ts`, `entity.ts`                 | drop events, supported-extension filtering                                           |
+| `progress/`        | `adaptiveProgress.ts`                    | `AdaptiveProgressManager` (→ [ADR-0002](../adr/ADR-0002-frontend-only-progress.md))  |
+| `size-prediction/` | `schema.ts`, `service.ts`                | estimation + static fallback (→ [ADR-0005](../adr/ADR-0005-db-backed-estimation.md)) |
+| `i18n/`            | `config.ts`, `schema.ts`, `translate.ts` | FR/EN internationalization; `translate()` serves code outside React                  |
 
-Validation: **Zod** within each slice, types via `z.infer`. Single parsing boundary — no
-revalidation internally.
+Validation: **Zod** within each slice, types via `z.infer`. Every IPC response is parsed once in
+`lib/tauri.ts` and trusted from there on — no revalidation internally.
 
 ### State
 
@@ -65,6 +65,11 @@ current view (`drop | list | success`).
 The only module that imports `@tauri-apps/api/core`. It exposes: `initDatabase`, `selectImageFiles`,
 `getFileInformation`, `revealInFolder`, `compressImage`, `getProgressEstimation`,
 `getCompressionEstimation`.
+
+Each response is validated against a Zod schema owned by the matching domain slice
+(`CompressImageResponseSchema`, `FileInfoSchema`, `ProgressEstimationSchema`,
+`EstimationResultSchema`, `SelectedFilesSchema`). Fields backed by a Rust `Option` are `nullish`,
+since serde serializes `None` as `null`.
 
 Tauri 2 converts camelCase ↔ snake_case automatically: do **not** rename parameters by hand.
 
@@ -79,17 +84,19 @@ src-tauri/src/
 ├── commands/              IPC layer: compression, file, stats, database
 ├── database/              connection.rs, migrations.rs (SQLite)
 └── domain/
-    ├── compression/       engine, formats, settings, prediction, stats, error
-    ├── file/              metadata, operations, path, error
-    └── shared/            config, error, utils
+    ├── compression/       engine, formats, naming, settings, stats, error
+    └── file/              metadata, path, error
 ```
 
-Style: **pure functions + data**, modules by responsibility, per-domain typed errors (`thiserror`).
-No `super::` — imports go through `crate::`.
+Style: **pure functions + data**, modules by responsibility, per-domain typed errors. Production
+imports go through `crate::`, never `super::`.
 
-`AppState` (in `shared/mod.rs`) carries the application configuration only. There is no event bus:
-the backend emits no domain events, in line with
-[ADR-0002](../adr/ADR-0002-frontend-only-progress.md).
+The backend holds **no application state**: there is no `AppState`, no configuration object and no
+event bus. Commands are self-contained and open their own database handle. The absence of domain
+events follows [ADR-0002](../adr/ADR-0002-frontend-only-progress.md).
+
+Every path that reaches the disk is checked by `PathUtils::validate_safe_path` — input paths through
+`get_file_info`, output paths explicitly in `compress_image` before the engine writes.
 
 ### Exposed commands
 
@@ -98,13 +105,13 @@ Declared in `lib.rs`:
 | Command                      | Role                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------- |
 | `compress_image`             | validates, compresses, writes the file, records the stat                  |
-| `select_image_files`         | native file picker                                                        |
-| `get_file_information`       | file size                                                                 |
+| `select_image_files`         | native file picker (title supplied by the frontend, translated there)     |
+| `get_file_information`       | path, name, size, extension, is_image                                     |
 | `get_compression_estimation` | estimated size savings (`percent`, `ratio`, `confidence`, `sample_count`) |
 | `get_progress_estimation`    | estimated duration (feeds the progress bar)                               |
-| `record_compression_stat`    | records a stat                                                            |
-| `reset_compression_stats`    | purges the history                                                        |
 | `init_database`              | creates tables / indexes at startup                                       |
+
+Stats are recorded by `compress_image` itself, so no command exposes stat writing.
 
 `compress_image` returns a `CompressImageResponse` that is **always `Ok`** at the Tauri level:
 business failures are carried by `success: false` + `error`, not by an IPC `Err`.
@@ -126,7 +133,9 @@ Detail and rationale → [ADR-0001](../adr/ADR-0001-compression-pipeline.md).
 image → estimation (DB) → Rust engine → recorded stat → result to the frontend
 ```
 
-Output naming `{name}_{level}.{ext}` → [ADR-0003](../adr/ADR-0003-output-naming.md). If the
+Output naming `{name}_{level}.{ext}` lives in `domain/compression/naming.rs` as the pure function
+`resolve_output_path`; the level is a `CompressionLevel` enum, so an unknown value fails the request
+rather than silently producing a misnamed file → [ADR-0003](../adr/ADR-0003-output-naming.md). If the
 compressed file would be larger than the original, Plume keeps the original ("already optimized").
 
 ---
@@ -180,8 +189,9 @@ backwards. **The backend emits no progress events.**
 - Lightweight CI on PRs (lint + clippy + tests), full 4-platform build on release tags.
 - Release in one command: `pnpm bump <patch|minor|major|X.Y.Z>`.
   → [ADR-0006](../adr/ADR-0006-versioning-release.md) · [runbook](../release/release-runbook.md).
-- Tests: Vitest on the frontend, `cargo test` on the Rust side. The design layer (markup, classes)
-  is not tested — only logic is.
+- Tests: `cargo test` on the Rust side. The frontend has no suite yet, though Vitest and the Tauri
+  mocks are configured. The design layer (markup, classes) is deliberately not tested — only logic
+  is.
 
 ---
 

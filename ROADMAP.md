@@ -27,7 +27,8 @@ The current version lives in `package.json` — the single source of truth, prop
 - [ ] Output folder selection — choose where compressed files are written
 - [ ] Collision-safe output naming (never overwrite an existing file → `photo (1).webp`). Scaffolding
       once existed (`generate_output_path` / `make_unique_filename`) but was never wired up and has
-      been removed; revisit together with output folder selection
+      been removed; revisit together with output folder selection. `resolve_output_path` in
+      `domain/compression/naming.rs` is where it belongs, and already takes an optional destination
 - [ ] Batch progress indicator — global "X of Y done"
 
 ## Performance
@@ -47,9 +48,17 @@ The current version lives in `package.json` — the single source of truth, prop
 
 - [ ] Recalibrate progress timing edge cases — JPEG compression and very small PNGs are
       mis-estimated; revise the static fallback timings against real measurements
+- [ ] Feed `pixel_count` into duration lookups. `compress_image` records it, but
+      `get_progress_estimation` passes `None` (`commands/stats.rs`), so the DB still matches on
+      size range alone — the accuracy ADR-0005 justifies is not yet effective
+- [ ] Reconcile the two fallback estimates: `size-prediction/service.ts` keys off format pairs,
+      `commands/stats.rs` off file size. Two answers to the same question
 
 ### Testing
 
+- [ ] Start a frontend suite — Vitest and the Tauri mocks are configured but nothing uses them.
+      Worth covering first: `resolveCompressionParams`, `summarizeBatch`, `ImageEntity` state
+      transitions, `AdaptiveProgressManager`, `lib/format.ts`
 - [ ] Unit tests for domain entities and compression services
 - [ ] Test coverage configuration
 

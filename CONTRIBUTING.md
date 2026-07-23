@@ -146,9 +146,14 @@ Closes #123
 
 ### Frontend Testing
 
-- **Unit tests**: Test individual components and utilities
-- **Integration tests**: Test component interactions
-- **E2E tests**: Test complete user workflows
+There is no frontend suite yet. Vitest and the Tauri mocks are configured
+(`vitest.config.ts`, `src/test/setup.ts`), so `pnpm test` runs — it simply has
+nothing to execute. Starting one is tracked in [ROADMAP.md](./ROADMAP.md);
+contributions are welcome.
+
+When you add tests, cover logic rather than markup: domain helpers, entity state
+transitions and services. The design layer (classes, layout) is deliberately not
+tested.
 
 ```bash
 # Run all tests
@@ -182,11 +187,10 @@ cargo test -- --nocapture
 
 ### Test Guidelines
 
-- Write tests for new features
-- Update tests for bug fixes
-- Aim for good coverage (>80%)
+- Write tests for new logic, and update them for bug fixes
 - Use descriptive test names
 - Test edge cases and error conditions
+- No coverage threshold is enforced — cover what carries behaviour, not markup
 
 ## 📚 Documentation
 
@@ -223,14 +227,14 @@ plume/
 │   │   ├── size-prediction/     # Estimation + static fallback
 │   │   └── i18n/                # FR/EN configuration
 │   ├── hooks/                   # Custom React hooks
-│   ├── lib/tauri.ts             # Single IPC entry point
+│   ├── lib/                     # tauri.ts (single IPC entry point), format.ts
 │   ├── store/                   # Zustand state
 │   └── locales/                 # Translation files
 ├── src-tauri/                   # Backend source
 │   ├── src/
 │   │   ├── commands/            # Tauri command handlers
 │   │   ├── database/            # SQLite connection & migrations
-│   │   └── domain/              # compression / file / shared
+│   │   └── domain/              # compression / file
 │   └── Cargo.toml
 └── docs/               # ADRs, internal reference, release runbook
 ```

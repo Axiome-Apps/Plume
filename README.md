@@ -1,9 +1,9 @@
 # Plume - Smart Image Compression
 
 [![Tauri](https://img.shields.io/badge/Tauri-2.0-blue.svg)](https://tauri.app/)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-1.70+-orange.svg)](https://www.rust-lang.org/)
+[![Rust](https://img.shields.io/badge/Rust-1.94-orange.svg)](https://www.rust-lang.org/)
 
 A modern, fast, and intelligent image compression desktop application built with Tauri, React, and Rust. Compress your images without compromising quality using cutting-edge algorithms.
 
@@ -73,7 +73,7 @@ chmod +x ./Plume*.AppImage
 #### Prerequisites
 
 - **Node.js** 18+ ([Download](https://nodejs.org/))
-- **Rust** 1.70+ ([Install](https://rustup.rs/))
+- **Rust** 1.94+ ([Install](https://rustup.rs/)) — pinned by `rust-toolchain.toml`
 - **pnpm** ([Install](https://pnpm.io/installation))
 - **nasm** (required for MozJPEG: `brew install nasm` / `sudo apt install nasm` / `choco install nasm`)
 
@@ -138,11 +138,8 @@ src-tauri/src/
 ## 🧪 Testing
 
 ```bash
-# Rust tests
+# Rust tests — the whole suite lives here for now
 cargo test --manifest-path src-tauri/Cargo.toml
-
-# Frontend tests
-pnpm test
 
 # Type check
 pnpm type-check
@@ -150,6 +147,10 @@ pnpm type-check
 # Lint
 pnpm lint
 ```
+
+The frontend has no test suite yet; Vitest is configured and `pnpm test` runs
+clean because there is nothing to run. Adding one is tracked in
+[ROADMAP.md](./ROADMAP.md).
 
 ## 🚀 Performance
 

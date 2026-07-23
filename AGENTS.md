@@ -17,9 +17,13 @@ This file is only a short operating manual that points there.
 this file. Rationale: contributors may not read French, and models are better calibrated on English
 instructions.
 
-**UI is French by default** (error messages included), with FR/EN i18n under `src/locales/`. This is
-a product decision, not a documentation one — do not "translate" UI strings into the codebase
-language.
+**UI is French by default**, with FR/EN i18n under `src/locales/`. This is a product decision, not a
+documentation one — do not "translate" UI strings into the codebase language.
+
+Every string a user can read lives in `src/locales/{fr,en}.json` — toasts, error messages, units and
+dialog titles included. Components reach it through the `useTranslation` hook; stores and services,
+being outside React, use `translate()` from `@/domain/i18n`. The Rust side carries no interface text:
+when the backend needs one (a native dialog title), the frontend passes it in.
 
 ## Code Conventions
 
@@ -27,8 +31,8 @@ language.
 
 **General**: Never `any` • Never `as` for renaming • `@` imports from src/
 
-**Rust**: Never `as` imports • Explicit names • `crate::` imports • No `super::` • Separate
-logic/infra/commands
+**Rust**: Never `as` imports • Explicit names • `crate::` imports in production code (`use super::*`
+stays the norm inside `#[cfg(test)] mod tests`) • Separate logic/infra/commands
 
 **Logging**: `log::debug!`/`log::info!`/`log::warn!` on the Rust side (never `println!`) • No
 `console.log` in production on the frontend (only `console.error` inside catch blocks)

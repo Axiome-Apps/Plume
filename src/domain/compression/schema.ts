@@ -103,7 +103,7 @@ export function resolveCompressionParams(
           lossy: true,
         };
       }
-      // PNG or other — oxipng, level has no real effect in v0.3.0
+      // PNG or other — oxipng is always lossless, so the level has no effect
       return {
         quality: 100,
         format: 'auto',
