@@ -124,6 +124,19 @@ pub async fn compress_image(
         }
     };
 
+    // The output path is built here (or supplied by the frontend) and written by the
+    // engine through std::fs, so it never goes through get_file_info. Validate it
+    // explicitly before anything touches the disk.
+    if let Err(e) = crate::domain::PathUtils::validate_safe_path(&output_path) {
+        return Ok(CompressImageResponse {
+            success: false,
+            image_id,
+            output_path: None,
+            result: None,
+            error: Some(format!("Invalid output path: {}", e)),
+        });
+    }
+
     // Get pixel count for duration estimation accuracy
     let pixel_count = image::image_dimensions(file_path)
         .map(|(w, h)| w as u64 * h as u64)

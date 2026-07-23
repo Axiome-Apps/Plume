@@ -52,29 +52,6 @@ impl PathUtils {
         Ok(())
     }
 
-    /// Get the parent directory of a path
-    pub fn get_parent_dir<P: AsRef<Path>>(path: P) -> FileResult<PathBuf> {
-        path.as_ref()
-            .parent()
-            .map(|p| p.to_path_buf())
-            .ok_or_else(|| FileError::InvalidPath("No parent directory".to_string()))
-    }
-
-    /// Ensure directory exists, creating it if necessary
-    pub fn ensure_dir_exists<P: AsRef<Path>>(path: P) -> FileResult<()> {
-        let path_ref = path.as_ref();
-
-        if !path_ref.exists() {
-            std::fs::create_dir_all(path_ref)?;
-        } else if !path_ref.is_dir() {
-            return Err(FileError::InvalidPath(
-                "Path exists but is not a directory".to_string(),
-            ));
-        }
-
-        Ok(())
-    }
-
     /// Get file name without extension
     pub fn get_file_stem<P: AsRef<Path>>(path: P) -> FileResult<String> {
         path.as_ref()
@@ -82,16 +59,6 @@ impl PathUtils {
             .and_then(|s| s.to_str())
             .map(|s| s.to_string())
             .ok_or_else(|| FileError::InvalidPath("Cannot extract file stem".to_string()))
-    }
-
-    /// Join paths safely
-    pub fn safe_join<P: AsRef<Path>, Q: AsRef<Path>>(base: P, relative: Q) -> FileResult<PathBuf> {
-        let relative_path = relative.as_ref();
-
-        // Validate the relative path
-        Self::validate_safe_path(relative_path)?;
-
-        Ok(base.as_ref().join(relative_path))
     }
 
     /// Change file extension
@@ -166,5 +133,4 @@ mod tests {
             "no_extension"
         );
     }
-
 }
