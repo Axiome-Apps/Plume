@@ -72,7 +72,7 @@ jobs:
         run: pnpm type-check
 
       - name: Frontend tests
-        run: pnpm test --passWithNoTests
+        run: pnpm test
 
       - name: Clippy (strict)
         run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings

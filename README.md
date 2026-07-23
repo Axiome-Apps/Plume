@@ -138,7 +138,10 @@ src-tauri/src/
 ## 🧪 Testing
 
 ```bash
-# Rust tests — the whole suite lives here for now
+# Frontend tests (Vitest)
+pnpm test
+
+# Rust tests
 cargo test --manifest-path src-tauri/Cargo.toml
 
 # Type check
@@ -148,9 +151,10 @@ pnpm type-check
 pnpm lint
 ```
 
-The frontend has no test suite yet; Vitest is configured and `pnpm test` runs
-clean because there is nothing to run. Adding one is tracked in
-[ROADMAP.md](./ROADMAP.md).
+The frontend suite covers logic only — byte formatting, compression parameter
+resolution, batch aggregation, image state transitions and the progress
+manager. Components are not tested: the design layer is verified by looking at
+the app, not by asserting on class names.
 
 ## 🚀 Performance
 

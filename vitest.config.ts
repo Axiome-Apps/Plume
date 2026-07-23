@@ -21,13 +21,17 @@ export default defineConfig({
         'src/test/**',
         'src/**/__tests__/**',
       ],
+      // A ratchet, not a target: these sit just under what the suite currently
+      // reaches, so deleting a test trips the gate. Raise them when coverage
+      // grows. The figures stay low overall because components and the store
+      // are untested by design — the numbers that matter are per-module.
+      // (The previous values were nested under a `global` key, which Vitest
+      // reads as a file glob, so nothing was ever enforced.)
       thresholds: {
-        global: {
-          branches: 6,
-          functions: 21,
-          lines: 18,
-          statements: 17,
-        },
+        branches: 70,
+        functions: 60,
+        lines: 13,
+        statements: 13,
       },
     },
   },

@@ -189,9 +189,10 @@ backwards. **The backend emits no progress events.**
 - Lightweight CI on PRs (lint + clippy + tests), full 4-platform build on release tags.
 - Release in one command: `pnpm bump <patch|minor|major|X.Y.Z>`.
   → [ADR-0006](../adr/ADR-0006-versioning-release.md) · [runbook](../release/release-runbook.md).
-- Tests: `cargo test` on the Rust side. The frontend has no suite yet, though Vitest and the Tauri
-  mocks are configured. The design layer (markup, classes) is deliberately not tested — only logic
-  is.
+- Tests: `cargo test` on the Rust side, `pnpm test` (Vitest) on the frontend, where the suites sit
+  in `src/**/__tests__/` next to the module they cover. The design layer (markup, classes) is
+  deliberately not tested — only logic is, which is why `src/components/` has no suite and the
+  global coverage figure stays low on purpose.
 
 ---
 

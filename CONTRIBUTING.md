@@ -146,14 +146,13 @@ Closes #123
 
 ### Frontend Testing
 
-There is no frontend suite yet. Vitest and the Tauri mocks are configured
-(`vitest.config.ts`, `src/test/setup.ts`), so `pnpm test` runs — it simply has
-nothing to execute. Starting one is tracked in [ROADMAP.md](./ROADMAP.md);
-contributions are welcome.
+Vitest runs the suites under `src/**/__tests__/`. Cover logic rather than
+markup: domain helpers, entity state transitions and services. The design layer
+(classes, layout) is deliberately not tested.
 
-When you add tests, cover logic rather than markup: domain helpers, entity state
-transitions and services. The design layer (classes, layout) is deliberately not
-tested.
+Coverage thresholds act as a ratchet — they sit just under what the suite
+currently reaches, so removing a test fails the build. Raise them as coverage
+grows rather than treating them as a target.
 
 ```bash
 # Run all tests
@@ -190,7 +189,7 @@ cargo test -- --nocapture
 - Write tests for new logic, and update them for bug fixes
 - Use descriptive test names
 - Test edge cases and error conditions
-- No coverage threshold is enforced — cover what carries behaviour, not markup
+- Cover what carries behaviour, not markup
 
 ## 📚 Documentation
 

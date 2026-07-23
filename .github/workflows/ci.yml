@@ -1,8 +1,8 @@
 name: CI
 
-# Tier BASIQUE côté JS/TS, sur chaque push/PR : garde de version, lint, type-check. En secondes.
-# Le Rust (fmt + clippy) vit dans rust.yml, filtré sur `src-tauri/**` → un commit docs/front ne
-# paie jamais la compilation native. Les tests + builds sont dans release.yml (gate au bump).
+# Tier BASIQUE côté JS/TS, sur chaque push/PR : garde de version, lint, type-check, tests front.
+# En secondes. Le Rust (fmt + clippy) vit dans rust.yml, filtré sur `src-tauri/**` → un commit
+# docs/front ne paie jamais la compilation native. Les tests Rust + builds sont dans release.yml.
 
 on:
   push:
@@ -43,3 +43,8 @@ jobs:
 
       - name: Type check
         run: pnpm type-check
+
+      # Vitest compiles nothing native, so the frontend suite runs in about a second and
+      # belongs in the basic tier — unlike the Rust tests, which stay in the release gate.
+      - name: Frontend tests
+        run: pnpm test

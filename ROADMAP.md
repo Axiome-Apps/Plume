@@ -33,7 +33,8 @@ The current version lives in `package.json` — the single source of truth, prop
 - [ ] Count in-flight images in the batch KPI. `summarizeBatch` splits on pending vs completed, so
       an image being compressed belongs to neither and its size drops out of the totals until it
       finishes — the figure dips mid-run. Long-standing behaviour, preserved as-is during the
-      refactor rather than changed silently
+      refactor rather than changed silently, and now pinned by a test in
+      `src/domain/image/__tests__/batch.test.ts` that must be updated alongside the fix
 
 ## Performance
 
@@ -60,11 +61,11 @@ The current version lives in `package.json` — the single source of truth, prop
 
 ### Testing
 
-- [ ] Start a frontend suite — Vitest and the Tauri mocks are configured but nothing uses them.
-      Worth covering first: `resolveCompressionParams`, `summarizeBatch`, `ImageEntity` state
-      transitions, `AdaptiveProgressManager`, `lib/format.ts`
-- [ ] Unit tests for domain entities and compression services
-- [ ] Test coverage configuration
+- [ ] Cover `imageStore` and `lib/tauri.ts` — the two modules where the refactor changed behaviour
+      (error mapping, Zod parsing at the IPC boundary) and the only ones left with no test. Both
+      need the Tauri mocks in `src/test/setup.ts`, which are configured but still unused
+- [ ] Cover `size-prediction/service.ts` — its fallback table is the second answer to the question
+      `commands/stats.rs` also answers, so a test would pin down what it is supposed to return
 
 ### Documentation
 
