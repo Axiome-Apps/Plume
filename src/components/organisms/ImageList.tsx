@@ -26,7 +26,7 @@ const ImageList: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-5 items-start">
-      {/* Colonne gauche : lot en cours */}
+      {/* Left column: current batch */}
       <div className="flex flex-col gap-4 min-w-0">
         <div className="flex items-center gap-2">
           <span className="eyebrow text-fg-3">{t('batch.eyebrow')}</span>
@@ -69,7 +69,7 @@ const ImageList: React.FC = () => {
         <CompressionSuccess />
       </div>
 
-      {/* Colonne droite : réglages */}
+      {/* Right column: settings */}
       <div className="min-w-0 lg:sticky lg:top-6">
         <SettingsPanel />
       </div>

@@ -95,6 +95,7 @@ export const TranslationKeysSchema = z.object({
   }),
   dialog: z.object({
     selectImages: z.string(),
+    imagesFilter: z.string(),
   }),
   errors: z.object({
     unknown: z.string(),
@@ -104,6 +105,7 @@ export const TranslationKeysSchema = z.object({
     readFailed: z.string(),
     writeFailed: z.string(),
     noSpace: z.string(),
+    invalidPath: z.string(),
     compressionFailed: z.string(),
   }),
   toasts: z.object({

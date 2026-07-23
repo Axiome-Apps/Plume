@@ -28,8 +28,12 @@ The current version lives in `package.json` — the single source of truth, prop
 - [ ] Collision-safe output naming (never overwrite an existing file → `photo (1).webp`). Scaffolding
       once existed (`generate_output_path` / `make_unique_filename`) but was never wired up and has
       been removed; revisit together with output folder selection. `resolve_output_path` in
-      `domain/compression/naming.rs` is where it belongs, and already takes an optional destination
+      `domain/compression/naming.rs` is the single place that decides where a file lands
 - [ ] Batch progress indicator — global "X of Y done"
+- [ ] Count in-flight images in the batch KPI. `summarizeBatch` splits on pending vs completed, so
+      an image being compressed belongs to neither and its size drops out of the totals until it
+      finishes — the figure dips mid-run. Long-standing behaviour, preserved as-is during the
+      refactor rather than changed silently
 
 ## Performance
 

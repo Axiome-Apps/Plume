@@ -11,8 +11,8 @@ pub mod settings;
 pub mod stats;
 
 // Re-export core types and functions for easy access
-pub use error::{CompressionError, CompressionResult, StatsError, StatsResult};
-pub use formats::{InputFormat, OutputFormat};
+pub use error::{CompressionError, CompressionResult, StatsError};
+pub use formats::OutputFormat;
 pub use naming::{CompressionLevel, resolve_output_path};
 pub use settings::CompressionSettings;
 

@@ -30,6 +30,7 @@ function errorMessage(error: string | null | undefined): string {
     if (error.includes('Failed to read')) return 'errors.readFailed';
     if (error.includes('Failed to write')) return 'errors.writeFailed';
     if (error.includes('No space left')) return 'errors.noSpace';
+    if (error.includes('Invalid output path')) return 'errors.invalidPath';
     return 'errors.compressionFailed';
   })();
 

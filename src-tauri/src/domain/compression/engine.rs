@@ -224,7 +224,7 @@ fn compress_to_png_file(
 ) -> CompressionResult<()> {
     match input_format.to_lowercase().as_str() {
         "png" => {
-            // Pour PNG -> PNG, utilise oxipng directement (preserves existing ICC chunks)
+            // PNG -> PNG goes straight through oxipng, which preserves existing ICC chunks
             let options = oxipng::Options::from_preset(3);
             let input_data = std::fs::read(input_path).map_err(|e| {
                 CompressionError::IoError(format!("Failed to read PNG file: {}", e))
@@ -323,7 +323,7 @@ fn encode_png_with_icc(
             height,
             image::ExtendedColorType::Rgba8,
         )
-        .map_err(|e| CompressionError::ProcessingError(format!("Erreur encodage PNG: {}", e)))?;
+        .map_err(|e| CompressionError::ProcessingError(format!("PNG encoding failed: {}", e)))?;
 
     Ok(())
 }

@@ -31,29 +31,16 @@ const FALLBACK_STEM: &str = "compressed";
 
 /// Resolve where a compressed file should be written.
 ///
-/// Without an explicit destination the output sits next to the input, named
-/// `{stem}_{level}.{extension}` (ADR-0003): the same parameters overwrite the
-/// previous result, different parameters produce a new file.
-///
-/// An explicit destination is honoured as-is when it names a file, or receives
-/// `{stem}.{extension}` when it names an existing directory.
-pub fn resolve_output_path(
-    input: &Path,
-    destination: Option<&Path>,
-    level: CompressionLevel,
-    extension: &str,
-) -> PathBuf {
+/// The output sits next to the input, named `{stem}_{level}.{extension}`
+/// (ADR-0003): the same parameters overwrite the previous result, different
+/// parameters produce a new file. Choosing another destination is a separate
+/// feature, tracked in the roadmap.
+pub fn resolve_output_path(input: &Path, level: CompressionLevel, extension: &str) -> PathBuf {
     let stem = PathUtils::get_file_stem(input).unwrap_or_else(|_| FALLBACK_STEM.to_string());
 
-    match destination {
-        Some(path) if path.is_dir() => path.join(format!("{}.{}", stem, extension)),
-        Some(path) => path.to_path_buf(),
-        None => {
-            let mut output = input.to_path_buf();
-            output.set_file_name(format!("{}_{}.{}", stem, level.suffix(), extension));
-            output
-        }
-    }
+    let mut output = input.to_path_buf();
+    output.set_file_name(format!("{}_{}.{}", stem, level.suffix(), extension));
+    output
 }
 
 #[cfg(test)]
@@ -65,15 +52,15 @@ mod tests {
         let input = Path::new("/home/user/Pictures/photo.png");
 
         assert_eq!(
-            resolve_output_path(input, None, CompressionLevel::Balanced, "webp"),
+            resolve_output_path(input, CompressionLevel::Balanced, "webp"),
             PathBuf::from("/home/user/Pictures/photo_balanced.webp")
         );
         assert_eq!(
-            resolve_output_path(input, None, CompressionLevel::Light, "webp"),
+            resolve_output_path(input, CompressionLevel::Light, "webp"),
             PathBuf::from("/home/user/Pictures/photo_light.webp")
         );
         assert_eq!(
-            resolve_output_path(input, None, CompressionLevel::Aggressive, "jpg"),
+            resolve_output_path(input, CompressionLevel::Aggressive, "jpg"),
             PathBuf::from("/home/user/Pictures/photo_aggressive.jpg")
         );
     }
@@ -81,21 +68,10 @@ mod tests {
     #[test]
     fn test_same_parameters_resolve_to_the_same_path() {
         let input = Path::new("/tmp/photo.png");
-        let first = resolve_output_path(input, None, CompressionLevel::Balanced, "webp");
-        let second = resolve_output_path(input, None, CompressionLevel::Balanced, "webp");
+        let first = resolve_output_path(input, CompressionLevel::Balanced, "webp");
+        let second = resolve_output_path(input, CompressionLevel::Balanced, "webp");
 
         assert_eq!(first, second);
-    }
-
-    #[test]
-    fn test_explicit_file_destination_is_honoured() {
-        let input = Path::new("/tmp/photo.png");
-        let destination = Path::new("/tmp/custom-name.webp");
-
-        assert_eq!(
-            resolve_output_path(input, Some(destination), CompressionLevel::Light, "webp"),
-            PathBuf::from("/tmp/custom-name.webp")
-        );
     }
 
     #[test]

@@ -9,7 +9,6 @@ pub struct CompressImageRequest {
     pub file_path: String,
     pub quality: Option<u8>,
     pub format: Option<String>,
-    pub output_path: Option<String>,
     pub level: Option<CompressionLevel>,
 }
 
@@ -80,17 +79,10 @@ pub async fn compress_image(
         .unwrap_or(crate::domain::compression::settings::DEFAULT_QUALITY);
     let settings = crate::domain::CompressionSettings::new(quality, output_format);
 
-    let output_extension = match output_format {
-        OutputFormat::WebP => "webp",
-        OutputFormat::Png => "png",
-        OutputFormat::Jpeg => "jpg",
-    };
-
     let output_path = crate::domain::resolve_output_path(
         file_path,
-        request.output_path.as_deref().map(Path::new),
         request.level.unwrap_or(CompressionLevel::Balanced),
-        output_extension,
+        output_format.extension(),
     );
 
     // The output path is built here (or supplied by the frontend) and written by the
@@ -121,7 +113,7 @@ pub async fn compress_image(
                 .unwrap_or_else(|| "unknown".to_string());
             let stat = crate::domain::compression::stats::create_stat_with_time(
                 input_format,
-                output_extension.to_string(),
+                output_format.extension().to_string(),
                 compression_output.original_size,
                 compression_output.compressed_size,
                 processing_time,

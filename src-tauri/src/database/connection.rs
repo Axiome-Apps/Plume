@@ -105,9 +105,14 @@ impl DatabaseManager {
             match row {
                 Some((Some(avg_reduction), count, variance)) if count > 0 => {
                     let confidence = calculate_confidence(count, variance.unwrap_or(0.0));
+                    // Recorded stats keep the true reduction, which is unbounded below when a
+                    // file grew (a 10 B input becoming 100 B records -900). Averaging those
+                    // verbatim would emit an estimate the frontend schema rejects, so clamp to
+                    // the same range as the static fallback in stats::estimate_compression.
+                    let percent = avg_reduction.clamp(0.0, 99.0);
                     Ok(EstimationResult {
-                        percent: avg_reduction,
-                        ratio: (100.0 - avg_reduction) / 100.0,
+                        percent,
+                        ratio: (100.0 - percent) / 100.0,
                         confidence,
                         sample_count: count,
                     })
@@ -164,14 +169,6 @@ impl DatabaseManager {
                     row.get(0)
                 })?;
             Ok(count)
-        })
-    }
-
-    /// Clear all compression stats
-    pub fn clear_compression_stats(&self) -> Result<(), String> {
-        self.with_connection(|conn| {
-            conn.execute("DELETE FROM compression_stats", [])?;
-            Ok(())
         })
     }
 

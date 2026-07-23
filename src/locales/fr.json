@@ -88,7 +88,8 @@
     "TB": "To"
   },
   "dialog": {
-    "selectImages": "Sélectionner des images"
+    "selectImages": "Sélectionner des images",
+    "imagesFilter": "Images"
   },
   "errors": {
     "unknown": "Erreur inconnue",
@@ -98,7 +99,8 @@
     "readFailed": "Impossible de lire le fichier",
     "writeFailed": "Impossible d'écrire le fichier compressé",
     "noSpace": "Espace disque insuffisant",
-    "compressionFailed": "Erreur de compression"
+    "compressionFailed": "Erreur de compression",
+    "invalidPath": "Chemin de destination invalide"
   },
   "toasts": {
     "imagesAdded_one": "{{count}} image ajoutée",

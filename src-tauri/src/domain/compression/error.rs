@@ -74,9 +74,6 @@ impl std::error::Error for StatsError {}
 /// Result type for compression operations
 pub type CompressionResult<T> = Result<T, CompressionError>;
 
-/// Result type for statistics operations
-pub type StatsResult<T> = Result<T, StatsError>;
-
 #[cfg(test)]
 mod tests {
     use super::*;

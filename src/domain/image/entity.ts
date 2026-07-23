@@ -136,8 +136,4 @@ export class ImageEntity {
   isCompleted(): boolean {
     return this._data.status === 'completed';
   }
-
-  hasCompressedData(): boolean {
-    return this._data.compressedSize !== undefined && this._data.savings !== undefined;
-  }
 }

@@ -32,8 +32,6 @@ interface CompressImageRequest {
   level?: CompressionLevelType;
 }
 
-export type { CompressImageResponseType as CompressImageResponse, FileInfoType };
-
 // ====== DATABASE ======
 
 export async function initDatabase(): Promise<void> {
@@ -44,7 +42,10 @@ export async function initDatabase(): Promise<void> {
 
 export async function selectImageFiles(): Promise<string[]> {
   return SelectedFilesSchema.parse(
-    await invoke('select_image_files', { title: translate('dialog.selectImages') })
+    await invoke('select_image_files', {
+      title: translate('dialog.selectImages'),
+      filterLabel: translate('dialog.imagesFilter'),
+    })
   );
 }
 
