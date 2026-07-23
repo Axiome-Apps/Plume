@@ -3,6 +3,7 @@ name = "plume"
 version = "0.6.0"
 description = "Smart Image Compression Desktop App"
 authors = ["MrCasquette"]
+license = "GPL-3.0-or-later"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
