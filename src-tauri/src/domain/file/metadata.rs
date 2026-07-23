@@ -113,7 +113,26 @@ fn get_mime_type(extension: &str) -> String {
 
 /// Format file size in human-readable format
 pub fn format_file_size(size: u64) -> String {
-    crate::domain::shared::utils::size::format_bytes(size)
+    const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB", "PB"];
+    const THRESHOLD: f64 = 1024.0;
+
+    if size == 0 {
+        return "0 B".to_string();
+    }
+
+    let mut scaled = size as f64;
+    let mut unit_index = 0;
+
+    while scaled >= THRESHOLD && unit_index < UNITS.len() - 1 {
+        scaled /= THRESHOLD;
+        unit_index += 1;
+    }
+
+    if unit_index == 0 {
+        format!("{} {}", size, UNITS[0])
+    } else {
+        format!("{:.1} {}", scaled, UNITS[unit_index])
+    }
 }
 
 /// Get file extension from path

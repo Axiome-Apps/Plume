@@ -1,8 +1,8 @@
 use crate::database::DatabaseManager;
-use crate::domain::{AppState, OutputFormat, validate_image_file};
+use crate::domain::{OutputFormat, validate_image_file};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use tauri::{AppHandle, State};
+use tauri::AppHandle;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompressImageRequest {
@@ -35,7 +35,6 @@ pub async fn compress_image(
     request: CompressImageRequest,
     image_id: Option<String>,
     app_handle: AppHandle,
-    _state: State<'_, AppState>,
 ) -> Result<CompressImageResponse, String> {
     let start_time = std::time::Instant::now();
     let file_path = Path::new(&request.file_path);
@@ -82,7 +81,9 @@ pub async fn compress_image(
         }
     };
 
-    let quality = request.quality.unwrap_or(80);
+    let quality = request
+        .quality
+        .unwrap_or(crate::domain::compression::settings::DEFAULT_QUALITY);
     let settings = crate::domain::CompressionSettings::new(quality, output_format);
 
     let output_extension = match output_format {

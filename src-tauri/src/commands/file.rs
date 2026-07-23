@@ -1,14 +1,11 @@
-use crate::domain::{AppState, get_file_info};
+use crate::domain::get_file_info;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use tauri::{AppHandle, State};
+use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
-pub async fn select_image_files(
-    app_handle: AppHandle,
-    _state: State<'_, AppState>,
-) -> Result<Vec<String>, String> {
+pub async fn select_image_files(app_handle: AppHandle) -> Result<Vec<String>, String> {
     let files = app_handle
         .dialog()
         .file()
@@ -39,10 +36,7 @@ pub struct FileInfo {
 }
 
 #[tauri::command]
-pub async fn get_file_information(
-    file_path: String,
-    _state: State<'_, AppState>,
-) -> Result<FileInfo, String> {
+pub async fn get_file_information(file_path: String) -> Result<FileInfo, String> {
     let path = Path::new(&file_path);
     let metadata = get_file_info(path).map_err(|e| format!("Failed to get file info: {}", e))?;
 

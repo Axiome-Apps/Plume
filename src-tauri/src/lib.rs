@@ -7,18 +7,13 @@ use commands::{
     init_database, record_compression_stat, reset_compression_stats, select_image_files,
 };
 
-use crate::domain::initialize;
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     env_logger::init();
 
-    let app_state = initialize().expect("Failed to initialize application");
-
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             compress_image,
             select_image_files,

@@ -1,13 +1,14 @@
 use crate::domain::compression::formats::OutputFormat;
 use serde::{Deserialize, Serialize};
 
+/// Quality applied when the frontend does not specify one.
+pub const DEFAULT_QUALITY: u8 = 80;
+
 /// Configuration settings for image compression operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompressionSettings {
     pub quality: u8,
     pub format: OutputFormat,
-    pub preserve_metadata: bool,
-    pub optimize_alpha: bool,
 }
 
 impl CompressionSettings {
@@ -16,8 +17,6 @@ impl CompressionSettings {
         Self {
             quality: quality.clamp(1, 100),
             format,
-            preserve_metadata: false,
-            optimize_alpha: true,
         }
     }
 

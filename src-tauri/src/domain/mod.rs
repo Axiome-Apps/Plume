@@ -1,7 +1,6 @@
 // Domain modules with functional architecture
 pub mod compression;
 pub mod file;
-pub mod shared;
 
 // Re-export core types from each domain for easy access
 
@@ -18,6 +17,3 @@ pub use file::{
     format_file_size, get_file_extension, get_file_info, get_temp_file_path,
     is_supported_image_file, read_file, read_image_file, validate_image_file, write_file,
 };
-
-// Shared domain exports
-pub use shared::{AppState, DomainError, DomainResult, format_bytes, initialize};
