@@ -1,6 +1,5 @@
 import {
   EstimationQuerySchema,
-  EstimationResultSchema,
   EnhancedCompressionEstimationType,
   EnhancedCompressionEstimationSchema,
 } from './schema';
@@ -23,9 +22,9 @@ export class CompressionEstimationService {
     });
 
     try {
+      // Already parsed at the IPC boundary (lib/tauri.ts) — no revalidation here.
       const result = await getCompressionEstimation(query);
-      const validatedResult = EstimationResultSchema.parse(result);
-      return this.enhanceEstimation(validatedResult, inputFormat, outputFormat);
+      return this.enhanceEstimation(result, inputFormat, outputFormat);
     } catch {
       return this.getFallbackEstimation(inputFormat, outputFormat, lossyMode);
     }

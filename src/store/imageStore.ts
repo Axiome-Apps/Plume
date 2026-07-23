@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 
-function translateError(error: string | undefined): string {
+function translateError(error: string | null | undefined): string {
   if (!error) return 'Erreur inconnue';
   if (error.includes('Permission denied')) return 'Accès refusé — le dossier est en lecture seule';
   if (error.includes('File validation failed')) return 'Fichier invalide ou corrompu';
@@ -14,7 +14,7 @@ function translateError(error: string | undefined): string {
 }
 import { ImageEntity } from '@/domain/image/entity';
 import { ImageType } from '@/domain/image/schema';
-import { detectImageFormat } from '@/domain/constants';
+import { detectImageFormat, imageFormatFromExtension } from '@/domain/constants';
 import { AdaptiveProgressManager } from '@/domain/progress/adaptiveProgress';
 import { sizePredictionService } from '@/domain/size-prediction';
 import {
@@ -139,12 +139,17 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
       for (const filePath of uniqueFilePaths) {
         const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-        const fileName = filePath.split('/').pop() || filePath.split('\\\\').pop() || 'unknown';
 
+        // The backend already resolved the name, extension and size — take them
+        // from there rather than parsing the path string again.
+        let fileName = filePath.split('/').pop() || filePath.split('\\').pop() || 'unknown';
         let fileSize = 0;
+        let format = detectImageFormat(fileName);
         try {
           const fileInfo = await getFileInformation(filePath);
+          fileName = fileInfo.name;
           fileSize = fileInfo.size;
+          format = imageFormatFromExtension(fileInfo.extension);
         } catch {
           // Non-blocking — file info is best-effort
         }
@@ -152,7 +157,6 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         // Fetch the compression estimation from the service
         let estimatedCompression;
         try {
-          const format = detectImageFormat(fileName);
           const { compressionSettings: currentSettings } = get();
           const resolved = resolveCompressionParams(
             currentSettings.outputFormat,
@@ -191,7 +195,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           name: fileName,
           path: filePath,
           originalSize: fileSize,
-          format: detectImageFormat(fileName),
+          format,
           preview: `asset://localhost/${filePath}`,
           status: 'pending',
           estimatedCompression,

@@ -1,12 +1,31 @@
 import { z } from 'zod';
 import { type ImageFormatDisplay } from '@/domain/constants';
 
-// UI Presets — Format de sortie et niveau de compression
+// UI presets — output format and compression level
 export const OutputFormatSchema = z.enum(['keep', 'webp', 'jpeg', 'png']);
 export const CompressionLevelSchema = z.enum(['light', 'balanced', 'aggressive']);
 
 export type OutputFormatType = z.infer<typeof OutputFormatSchema>;
 export type CompressionLevelType = z.infer<typeof CompressionLevelSchema>;
+
+// IPC contract — mirrors CompressionSummary / CompressImageResponse in
+// src-tauri/src/commands/compression.rs
+export const CompressionSummarySchema = z.object({
+  original_size: z.number().nonnegative(),
+  compressed_size: z.number().nonnegative(),
+  savings_percent: z.number(),
+  output_path: z.string(),
+});
+
+// serde serializes Option::None as null, so these are nullish rather than optional.
+export const CompressImageResponseSchema = z.object({
+  success: z.boolean(),
+  result: CompressionSummarySchema.nullish(),
+  error: z.string().nullish(),
+});
+
+export type CompressionSummaryType = z.infer<typeof CompressionSummarySchema>;
+export type CompressImageResponseType = z.infer<typeof CompressImageResponseSchema>;
 
 interface ResolvedCompressionParams {
   quality: number;

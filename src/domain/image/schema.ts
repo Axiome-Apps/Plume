@@ -21,6 +21,19 @@ export const ImageSchema = z.object({
   outputPath: z.string().optional(),
 });
 
+// IPC contract — mirrors FileInfo in src-tauri/src/commands/file.rs.
+// extension is Option<String> on the Rust side, hence nullish.
+export const FileInfoSchema = z.object({
+  path: z.string(),
+  name: z.string(),
+  size: z.number().nonnegative(),
+  extension: z.string().nullish(),
+  is_image: z.boolean(),
+});
+
+export const SelectedFilesSchema = z.array(z.string());
+
 // Main types - convention: SchemaName + Type
 export type ImageType = z.infer<typeof ImageSchema>;
 export type ImageStatus = ImageType['status'];
+export type FileInfoType = z.infer<typeof FileInfoSchema>;

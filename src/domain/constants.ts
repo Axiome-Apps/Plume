@@ -11,20 +11,23 @@ export const SUPPORTED_FORMATS_DISPLAY = IMAGE_FORMATS.map(format => format.toUp
   ', '
 );
 
+const EXTENSION_TO_FORMAT: Record<string, ImageFormatDisplay> = {
+  png: 'PNG',
+  jpg: 'JPEG',
+  jpeg: 'JPEG',
+  webp: 'WEBP',
+  heic: 'HEIC',
+  heif: 'HEIC',
+};
+
+const FALLBACK_FORMAT: ImageFormatDisplay = 'JPEG';
+
+/** Resolve the display format from a bare extension, as reported by the backend. */
+export function imageFormatFromExtension(extension: string | null | undefined): ImageFormatDisplay {
+  return EXTENSION_TO_FORMAT[extension?.toLowerCase() ?? ''] ?? FALLBACK_FORMAT;
+}
+
+/** Resolve the display format from a file name, when no backend metadata is available. */
 export function detectImageFormat(fileName: string): ImageFormatDisplay {
-  const ext = fileName.toLowerCase().split('.').pop();
-  switch (ext) {
-    case 'png':
-      return 'PNG';
-    case 'jpg':
-    case 'jpeg':
-      return 'JPEG';
-    case 'webp':
-      return 'WEBP';
-    case 'heic':
-    case 'heif':
-      return 'HEIC';
-    default:
-      return 'JPEG';
-  }
+  return imageFormatFromExtension(fileName.toLowerCase().split('.').pop());
 }

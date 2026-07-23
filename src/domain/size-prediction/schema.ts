@@ -36,6 +36,16 @@ export const EstimationResultSchema = z.object({
   sample_count: z.number().min(0),
 });
 
+// IPC contract — mirrors ProgressEstimationResult in
+// src-tauri/src/commands/stats.rs
+export const ProgressEstimationSchema = z.object({
+  estimated_duration_ms: z.number().nonnegative(),
+  confidence: z.number().min(0).max(1),
+  sample_count: z.number().min(0),
+});
+
+export type ProgressEstimationType = z.infer<typeof ProgressEstimationSchema>;
+
 // Estimation display schema (enriched version)
 export const EstimationDisplaySchema = EstimationResultSchema.extend({
   confidence_level: z.enum(['low', 'medium', 'high']),
