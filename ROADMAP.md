@@ -1,66 +1,52 @@
-# Plume - Product Roadmap
+# Plume — Roadmap
 
-**Smart Image Compression Desktop App**
+Themed backlog. **No version numbers and no ordering**: what ships in a given release is decided at
+release time, not pre-committed here. Items are meant to be small enough to pick up individually.
 
----
-
-## Current State — v0.5.0
-
-### What's done
-
-- Multi-format compression: PNG, JPEG, WebP input/output + HEIC/HEIF import
-- MozJPEG encoder with ICC profile preservation across all formats
-- Drag & drop + file picker with batch processing
-- OKLCH design system with Nunito font, FR/EN i18n
-- SQLite-backed compression estimation (size + duration, pixel-count aware)
-- Adaptive progress bar synchronized with real compression completion
-- Smart output naming by compression level (`photo_balanced.webp`)
-- "Already optimized" detection — keeps original when compressed file would be larger
-- Reveal in Finder button on completed images
-- Lightweight CI (lint + clippy + tests), full build on release tags
-- Homebrew cask distribution (`brew install --cask axiome-apps/tap/plume`)
+The current version lives in `package.json` — the single source of truth, propagated by `pnpm bump`
+(see [ADR-0006](./docs/adr/ADR-0006-versioning-release.md)). It is deliberately not repeated here.
 
 ---
 
-## v0.5.1 — Bug Fixes
+## Bugs
 
-- [ ] Fix "Reveal in Finder" not working on macOS (tauri-plugin-opener / outputPath issue)
-- [ ] Fix non-functional "open" buttons (folder icon) — wire up or remove
-- [ ] Lock quality slider when output format is PNG (oxipng is always lossless)
+- [ ] "Reveal in Finder" does nothing on macOS (`tauri-plugin-opener` / `outputPath` issue)
+- [ ] "Open" buttons (folder icon) are not wired up — connect them or remove them
+- [ ] Quality slider stays active when the output format is PNG, although oxipng is always lossless
+- [ ] `compressImage(imageId)` compresses every pending image instead of the targeted one
 
-## v0.6.0 — Compression Profiles
+## Compression profiles
 
-- [ ] Named presets replacing light/balanced/aggressive (e.g., Web, Archive, Print)
+- [ ] Named presets replacing light / balanced / aggressive (e.g. Web, Archive, Print)
 - [ ] Profile-aware output naming (`photo_web.webp`, `photo_archive.png`)
-- [ ] Persistent settings (last used profile saved across sessions)
+- [ ] Persist the last used profile across sessions
 
-## v0.7.0 — Output & Workflow
+## Input & output
 
-- [ ] Add entire folder as input (recursive scan, filtered by supported image extensions)
-- [ ] Output folder selection (choose where compressed files go)
-- [ ] Collision-safe output naming (never overwrite existing files → `photo (1).webp`) — scaffolding existed (`generate_output_path`/`make_unique_filename`) but was unused and removed; revisit alongside output folder selection
-- [ ] Parallel compression (multi-image batch with concurrency limit)
-- [ ] Batch progress indicator (global "X of Y done")
+- [ ] Accept an entire folder as input (recursive scan, filtered by supported extensions)
+- [ ] Output folder selection — choose where compressed files are written
+- [ ] Collision-safe output naming (never overwrite an existing file → `photo (1).webp`). Scaffolding
+      once existed (`generate_output_path` / `make_unique_filename`) but was never wired up and has
+      been removed; revisit together with output folder selection
+- [ ] Batch progress indicator — global "X of Y done"
 
-## v1.0 — Format Expansion
+## Performance
 
-- [ ] AVIF format support (next-gen web format)
-- [ ] JPEG XL evaluation
+- [ ] Parallel compression for multi-image batches, with a concurrency limit
+
+## Formats
+
+- [ ] AVIF support
+- [ ] Evaluate JPEG XL
 
 ---
 
-## Technical Debt
-
-### Dead code
-
-- [x] Remove dead EventBus infrastructure (`domain/shared/events.rs` + `AppState.event_bus` wiring)
-- [x] Remove `domain/compression/progress.rs` — vestigial since progress went frontend-only (ADR-0002)
-- [x] Remove unused frontend components — `Badge`, `Switch`, `FileInfo`, `Spinner` and 6 unreferenced icons
+## Technical debt
 
 ### Correctness
 
-- [ ] Fix `compressImage(imageId)` — currently compresses all pending images instead of targeted one
-- [ ] Revise progress timing edge cases — JPEG compression and very small PNGs are mis-estimated; recalibrate the static fallback timings against real data
+- [ ] Recalibrate progress timing edge cases — JPEG compression and very small PNGs are
+      mis-estimated; revise the static fallback timings against real measurements
 
 ### Testing
 
@@ -69,9 +55,6 @@
 
 ### Documentation
 
-- [ ] Validate ADR-0001, 0003, 0004 "options envisagées" — reconstructed from code, confirm/complete the rationale and rejected alternatives (`docs/adr/`). ADR-0002 and 0005 are confirmed.
-
----
-
-**Last Updated**: July 2026
-**Current Version**: v0.5.0
+- [ ] Confirm the "options considered" in ADR-0001, 0003 and 0004 — these were reconstructed from
+      the code, so the rationale and the rejected alternatives still need the original author's
+      confirmation. ADR-0002 and ADR-0005 are already confirmed.

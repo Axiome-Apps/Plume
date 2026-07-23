@@ -162,19 +162,7 @@ pnpm lint
 
 ## 📋 Roadmap
 
-See [ROADMAP.md](./ROADMAP.md) for detailed development plans.
-
-### Upcoming Features
-
-- [x] HEIC/HEIF support for iPhone photos
-- [x] MozJPEG encoder for better JPEG compression
-- [x] Smart format selection UI (WebP/Original/HEIC flows)
-- [x] OKLCH design system with Nunito font
-- [x] DB-backed compression estimation (size + duration)
-- [ ] AVIF format support
-- [ ] Output folder selection
-- [ ] Parallel compression (multi-image batch)
-- [ ] Compression profiles (Web, Archive, etc.)
+Planned work lives in [ROADMAP.md](./ROADMAP.md) — a themed backlog, with no version commitments.
 
 ## 🤝 Contributing
 
