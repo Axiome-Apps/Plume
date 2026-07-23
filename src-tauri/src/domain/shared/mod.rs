@@ -5,27 +5,11 @@
 
 pub mod config;
 pub mod error;
-pub mod events;
 pub mod utils;
 
 // Re-export core types and functions for easy access
 pub use config::{AppConfig, CompressionConfig, ConfigManager, PerformanceConfig, SecurityConfig};
 pub use error::{DomainError, DomainResult, ErrorRecovery, get_recovery_strategy};
-pub use events::{
-    ConsoleEventListener,
-    DomainEvent,
-    EventBus,
-    EventListener,
-    EventPayload,
-    EventSeverity,
-    EventType,
-    compression_completed_event,
-    compression_failed_event,
-    error_event,
-    // Convenience event creators
-    file_processed_event,
-    info_event,
-};
 
 // Re-export commonly used utilities with shorter paths
 pub use utils::hash::{content_equal, content_id, simple_hash};
@@ -86,7 +70,6 @@ use std::sync::{Arc, RwLock};
 /// Shared application state
 pub struct AppState {
     pub config: Arc<RwLock<AppConfig>>,
-    pub event_bus: Arc<RwLock<EventBus>>,
 }
 
 impl AppState {
@@ -94,7 +77,6 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             config: Arc::new(RwLock::new(AppConfig::default())),
-            event_bus: Arc::new(RwLock::new(EventBus::new())),
         }
     }
 
@@ -102,7 +84,6 @@ impl AppState {
     pub fn with_config(config: AppConfig) -> Self {
         Self {
             config: Arc::new(RwLock::new(config)),
-            event_bus: Arc::new(RwLock::new(EventBus::new())),
         }
     }
 
@@ -120,18 +101,6 @@ impl AppState {
         updater(&mut config)?;
         config.validate()?;
         Ok(())
-    }
-
-    /// Publish event to event bus
-    pub fn publish_event(&self, event: DomainEvent) -> DomainResult<()> {
-        let mut event_bus = self.event_bus.write().unwrap();
-        event_bus.publish(event)
-    }
-
-    /// Get recent events
-    pub fn get_recent_events(&self, limit: usize) -> Vec<DomainEvent> {
-        let event_bus = self.event_bus.read().unwrap();
-        event_bus.get_recent_events(limit).to_vec()
     }
 }
 
@@ -164,13 +133,6 @@ mod integration_tests {
         let config = state.get_config();
         assert_eq!(config.max_file_size, 2048);
         drop(config);
-
-        // Test event publishing
-        let event = info_event("test".to_string(), "message".to_string());
-        assert!(state.publish_event(event).is_ok());
-
-        let recent_events = state.get_recent_events(10);
-        assert_eq!(recent_events.len(), 1);
     }
 
     #[test]

@@ -1,12 +1,6 @@
 export { UploadIcon } from './UploadIcon';
 export { FolderIcon } from './FolderIcon';
 export { TrashIcon } from './TrashIcon';
-export { CheckIcon } from './CheckIcon';
-export { XIcon } from './XIcon';
-export { AlertTriangleIcon } from './AlertTriangleIcon';
-export { InfoIcon } from './InfoIcon';
-export { ImageIcon } from './ImageIcon';
-export { FeatherIcon } from './FeatherIcon';
 export { InfoFilledIcon } from './InfoFilledIcon';
 export { ErrorFilledIcon } from './ErrorFilledIcon';
 export { SuccessFilledIcon } from './SuccessFilledIcon';
