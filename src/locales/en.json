@@ -91,16 +91,21 @@
     "selectImages": "Select images",
     "imagesFilter": "Images"
   },
+  "a11y": {
+    "selectLanguage": "Select language"
+  },
   "errors": {
-    "unknown": "Unknown error",
-    "permissionDenied": "Access denied — the folder is read-only",
-    "invalidFile": "Invalid or corrupted file",
-    "unsupportedFormat": "Unsupported file format",
-    "readFailed": "Could not read the file",
-    "writeFailed": "Could not write the compressed file",
-    "noSpace": "Not enough disk space",
-    "compressionFailed": "Compression error",
-    "invalidPath": "Invalid destination path"
+    "validation": "Invalid or corrupted file",
+    "notFound": "File not found",
+    "io": "Could not read or write the file",
+    "security": "Blocked for security reasons",
+    "unsupported": "Unsupported file format",
+    "internal": "Compression error"
+  },
+  "crash": {
+    "title": "Something went wrong",
+    "message": "The app hit an unexpected error. Reloading usually fixes it.",
+    "reload": "Reload"
   },
   "toasts": {
     "imagesAdded_one": "{{count}} image added",

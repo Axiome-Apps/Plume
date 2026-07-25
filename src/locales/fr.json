@@ -91,16 +91,21 @@
     "selectImages": "Sélectionner des images",
     "imagesFilter": "Images"
   },
+  "a11y": {
+    "selectLanguage": "Choisir la langue"
+  },
   "errors": {
-    "unknown": "Erreur inconnue",
-    "permissionDenied": "Accès refusé — le dossier est en lecture seule",
-    "invalidFile": "Fichier invalide ou corrompu",
-    "unsupportedFormat": "Format de fichier non supporté",
-    "readFailed": "Impossible de lire le fichier",
-    "writeFailed": "Impossible d'écrire le fichier compressé",
-    "noSpace": "Espace disque insuffisant",
-    "compressionFailed": "Erreur de compression",
-    "invalidPath": "Chemin de destination invalide"
+    "validation": "Fichier invalide ou corrompu",
+    "notFound": "Fichier introuvable",
+    "io": "Impossible de lire ou d'écrire le fichier",
+    "security": "Bloqué pour raison de sécurité",
+    "unsupported": "Format de fichier non supporté",
+    "internal": "Erreur de compression"
+  },
+  "crash": {
+    "title": "Une erreur est survenue",
+    "message": "L'application a rencontré une erreur inattendue. Recharger règle généralement le problème.",
+    "reload": "Recharger"
   },
   "toasts": {
     "imagesAdded_one": "{{count}} image ajoutée",
