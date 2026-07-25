@@ -1,76 +1,29 @@
-import { DragDropEventSchema, DragDropEventType, DragDropPayloadType } from './schema';
+import { DragDropEventSchema, type DragDropEventType } from './schema';
+
+const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'] as const;
 
 /**
- * DragDropEvent entity - encapsulates drag & drop event business logic.
+ * Drag & drop event as pure data + helpers (declaration merging). The raw event
+ * is parsed at the IPC boundary through `DragDropEvent.fromRaw`.
  */
-export class DragDropEventEntity {
-  constructor(private _data: DragDropEventType) {}
+export type DragDropEvent = DragDropEventType;
 
-  // Factory method with validation
-  static fromRawEvent(rawEvent: unknown): DragDropEventEntity {
-    const validatedEvent = DragDropEventSchema.parse(rawEvent);
-    return new DragDropEventEntity(validatedEvent);
-  }
+export const DragDropEvent = {
+  fromRaw: (raw: unknown): DragDropEvent => DragDropEventSchema.parse(raw),
 
-  // Getters
-  get payload(): DragDropPayloadType {
-    return this._data.payload;
-  }
+  paths: (event: DragDropEvent): string[] | undefined => event.payload.paths,
 
-  get type(): DragDropPayloadType['type'] {
-    return this._data.payload.type;
-  }
+  isDrop: (event: DragDropEvent): boolean => event.payload.type === 'drop',
 
-  get paths(): string[] | undefined {
-    return this._data.payload.paths;
-  }
+  validImagePaths: (
+    event: DragDropEvent,
+    supported: readonly string[] = SUPPORTED_EXTENSIONS
+  ): string[] =>
+    (event.payload.paths ?? []).filter(path =>
+      supported.some(ext => path.toLowerCase().endsWith(ext.toLowerCase()))
+    ),
 
-  get position(): { x: number; y: number } | undefined {
-    return this._data.payload.position;
-  }
-
-  // Type guards
-  isDrop(): boolean {
-    return this.type === 'drop';
-  }
-
-  isEnter(): boolean {
-    return this.type === 'enter';
-  }
-
-  isOver(): boolean {
-    return this.type === 'over';
-  }
-
-  isLeave(): boolean {
-    return this.type === 'leave';
-  }
-
-  // Utility methods
-  hasFiles(): boolean {
-    return this.paths !== undefined && this.paths.length > 0;
-  }
-
-  getValidImagePaths(
-    supportedExtensions: string[] = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']
-  ): string[] {
-    if (!this.hasFiles()) return [];
-
-    return this.paths!.filter(path =>
-      supportedExtensions.some(ext => path.toLowerCase().endsWith(ext.toLowerCase()))
-    );
-  }
-
-  // Main method handling drops
-  processDropEvent(): string[] | null {
-    if (!this.isDrop()) return null;
-    if (!this.hasFiles()) return [];
-
-    return this.getValidImagePaths();
-  }
-
-  // Serialization
-  toJSON(): DragDropEventType {
-    return { ...this._data };
-  }
-}
+  /** Valid image paths on a `drop` event, or `null` when the event is not a drop. */
+  processDrop: (event: DragDropEvent): string[] | null =>
+    DragDropEvent.isDrop(event) ? DragDropEvent.validImagePaths(event) : null,
+} as const;

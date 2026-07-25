@@ -1,28 +1,22 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 
-import { ImageEntity } from '@/domain/image/entity';
-import { ImageType } from '@/domain/image/schema';
+import { Image } from '@/domain/image/entity';
 import { detectImageFormat, imageFormatFromExtension } from '@/domain/constants';
 import { AdaptiveProgressManager } from '@/domain/progress/adaptiveProgress';
-import { sizePredictionService } from '@/domain/size-prediction';
+import * as SizePrediction from '@/domain/size-prediction/service';
 import {
   type OutputFormatType,
   type CompressionLevelType,
   resolveCompressionParams,
 } from '@/domain/compression/schema';
-import { compressionErrorKey } from '@/domain/compression/errors';
+import { CommandError, commandErrorMessage } from '@/domain/errors/commandError';
 import {
   compressImage as tauriCompressImage,
   getFileInformation,
   getProgressEstimation,
 } from '@/lib/tauri';
-import { translate } from '@/domain/i18n';
-
-/** Map a backend error string to the message shown to the user. */
-function errorMessage(error: string | null | undefined): string {
-  return translate(compressionErrorKey(error));
-}
+import { translate } from '@/domain/i18n/translate';
 
 // State management types
 type CompressionState = 'idle' | 'processing' | 'completed' | 'error';
@@ -35,7 +29,7 @@ interface CompressionSettings {
 
 interface ImageStore {
   // Main state
-  images: ImageEntity[];
+  images: Image[];
   compressionState: CompressionState;
   isProcessing: boolean;
   compressionSettings: CompressionSettings;
@@ -80,7 +74,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   currentView: (): AppView => {
     const state = get();
     if (state.images.length === 0) return 'drop';
-    if (state.compressionState === 'completed' && state.images.every(img => img.isCompleted()))
+    if (state.compressionState === 'completed' && state.images.every(img => Image.isCompleted(img)))
       return 'success';
     return 'list';
   },
@@ -96,7 +90,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         return;
       }
 
-      const newImages: ImageEntity[] = [];
+      const newImages: Image[] = [];
 
       for (const filePath of uniqueFilePaths) {
         const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -111,8 +105,9 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           fileName = fileInfo.name;
           fileSize = fileInfo.size;
           format = imageFormatFromExtension(fileInfo.extension);
-        } catch {
-          // Non-blocking — file info is best-effort
+        } catch (error) {
+          // Non-blocking — file info is best-effort; fall back to the path.
+          console.error('addImages: file info unavailable, using path fallback:', error);
         }
 
         // Fetch the compression estimation from the service
@@ -126,7 +121,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           );
           const estimationOutputFormat =
             resolved.format === 'auto' ? format.toLowerCase() : resolved.format;
-          const estimation = await sizePredictionService.getEstimation(
+          const estimation = await SizePrediction.getEstimation(
             format,
             estimationOutputFormat,
             fileSize,
@@ -140,9 +135,9 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             confidence: estimation.confidence,
             sample_count: estimation.sample_count,
           };
-        } catch {
-          // Non-blocking — estimation fallback will be used
-          // Fallback with default values
+        } catch (error) {
+          // Non-blocking — estimation service failed, use default values.
+          console.error('addImages: estimation failed, using fallback:', error);
           estimatedCompression = {
             percent: 65,
             ratio: 0.35,
@@ -151,7 +146,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           };
         }
 
-        const imageData: ImageType = {
+        const imageData: Image = {
           id: tempId,
           name: fileName,
           path: filePath,
@@ -161,7 +156,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           status: 'pending',
           estimatedCompression,
         };
-        newImages.push(ImageEntity.fromData(imageData));
+        newImages.push(imageData);
       }
 
       set(state => ({
@@ -197,7 +192,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     const { images, isProcessing, compressionSettings } = get();
     if (isProcessing) return;
 
-    const pendingImages = images.filter(img => img.isPending());
+    const pendingImages = images.filter(img => Image.isPending(img));
     if (pendingImages.length === 0) return;
 
     set({ isProcessing: true, compressionState: 'processing' });
@@ -207,7 +202,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         try {
           // Mark the image as being processed
           set(state => ({
-            images: state.images.map(img => (img.id === image.id ? img.toProcessing(0) : img)),
+            images: state.images.map(img => (img.id === image.id ? Image.toProcessing(img, 0) : img)),
           }));
 
           // Resolve compression params for this image
@@ -228,8 +223,9 @@ export const useImageStore = create<ImageStore>((set, get) => ({
               image.originalSize
             );
             estimatedDurationMs = estimation.estimated_duration_ms;
-          } catch {
-            // Fallback to default estimation
+          } catch (error) {
+            // Non-blocking — progress estimation failed, keep the default.
+            console.error('startCompression: progress estimation failed, using default:', error);
           }
 
           // Create and start the adaptive progress manager
@@ -256,7 +252,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
                 set(state => ({
                   images: state.images.map(img =>
                     img.id === imageId
-                      ? img.toCompleted(pendingResult!.compressedSize, pendingResult!.outputPath)
+                      ? Image.toCompleted(img, pendingResult!.compressedSize, pendingResult!.outputPath)
                       : img
                   ),
                 }));
@@ -278,7 +274,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             },
           });
 
-          const response = await tauriCompressImage({
+          const summary = await tauriCompressImage({
             file_path: image.path,
             quality,
             format: outputFormatForImage,
@@ -291,46 +287,28 @@ export const useImageStore = create<ImageStore>((set, get) => ({
             finalManager.onCompressionCompleted();
           }
 
-          if (response.success && response.result) {
-            pendingResult = {
-              compressedSize: response.result.compressed_size,
-              outputPath: response.result.output_path,
-            };
+          pendingResult = {
+            compressedSize: summary.compressed_size,
+            outputPath: summary.output_path,
+          };
 
-            if (response.result.savings_percent === 0) {
-              toast.info(translate('toasts.alreadyOptimized', { name: image.name }));
-            }
-          } else {
-            // Signal the error to the adaptive manager
-            const errorManager = get().progressManagers[image.id];
-            if (errorManager) {
-              errorManager.error(response.error || 'Compression failed');
-            }
-
-            set(state => ({
-              images: state.images.map(img => (img.id === image.id ? img.toError() : img)),
-            }));
-            toast.error(
-              translate('toasts.compressionError', {
-                name: image.name,
-                reason: errorMessage(response.error),
-              })
-            );
+          if (summary.savings_percent === 0) {
+            toast.info(translate('toasts.alreadyOptimized', { name: image.name }));
           }
         } catch (error) {
-          // Signal the error to the adaptive manager
+          // A compression failure surfaces as a thrown CommandError.
           const catchErrorManager = get().progressManagers[image.id];
           if (catchErrorManager) {
-            catchErrorManager.error(String(error));
+            catchErrorManager.error(error instanceof CommandError ? error.message : String(error));
           }
 
           set(state => ({
-            images: state.images.map(img => (img.id === image.id ? img.toError() : img)),
+            images: state.images.map(img => (img.id === image.id ? Image.toError(img) : img)),
           }));
           toast.error(
             translate('toasts.compressionError', {
               name: image.name,
-              reason: errorMessage(String(error)),
+              reason: commandErrorMessage(error),
             })
           );
         }
@@ -346,7 +324,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     const { images } = get();
     const image = images.find(img => img.id === imageId);
 
-    if (!image || !image.isPending()) return;
+    if (!image || !Image.isPending(image)) return;
 
     // Call startCompression directly; it handles the status transitions
     await get().startCompression();
@@ -368,7 +346,9 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         ...(format === 'png' ? { compressionLevel: 'aggressive' } : {}),
       },
     }));
-    get().recalculateEstimations();
+    void get()
+      .recalculateEstimations()
+      .catch(error => console.error('recalculateEstimations failed:', error));
   },
 
   setCompressionLevel: (level: CompressionLevelType) => {
@@ -378,18 +358,21 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         compressionLevel: level,
       },
     }));
-    get().recalculateEstimations();
+    void get()
+      .recalculateEstimations()
+      .catch(error => console.error('recalculateEstimations failed:', error));
   },
 
   recalculateEstimations: async () => {
     const { images, compressionSettings } = get();
-    const pendingImages = images.filter(img => img.isPending());
+    const pendingImages = images.filter(img => Image.isPending(img));
     if (pendingImages.length === 0) return;
 
-    const updatedImages = await Promise.all(
-      images.map(async img => {
-        if (!img.isPending()) return img;
-
+    // Compute against the snapshot but key the results by image id, so the write
+    // can target the *current* state rather than an overwrite of a stale array.
+    const estimationsById = new Map<string, Image['estimatedCompression']>();
+    await Promise.all(
+      pendingImages.map(async img => {
         const resolved = resolveCompressionParams(
           compressionSettings.outputFormat,
           compressionSettings.compressionLevel,
@@ -399,26 +382,36 @@ export const useImageStore = create<ImageStore>((set, get) => ({
           resolved.format === 'auto' ? img.format.toLowerCase() : resolved.format;
 
         try {
-          const estimation = await sizePredictionService.getEstimation(
+          const estimation = await SizePrediction.getEstimation(
             img.format,
             estimationOutputFormat,
             img.originalSize,
             resolved.quality,
             resolved.lossy
           );
-          return img.withEstimation({
+          estimationsById.set(img.id, {
             percent: estimation.percent,
             ratio: estimation.ratio,
             confidence: estimation.confidence,
             sample_count: estimation.sample_count,
           });
-        } catch {
-          return img;
+        } catch (error) {
+          // Best-effort refresh: keep the previous estimation if the service fails.
+          console.error('recalculateEstimations: keeping the previous estimate:', error);
         }
       })
     );
 
-    set({ images: updatedImages });
+    // Merge into the current state (not the pre-await snapshot): only images that
+    // still exist and are still pending are refreshed, so a concurrent addImages /
+    // startCompression / removeImage is never clobbered by a stale write.
+    set(state => ({
+      images: state.images.map(img =>
+        Image.isPending(img) && estimationsById.has(img.id)
+          ? Image.withEstimation(img, estimationsById.get(img.id))
+          : img
+      ),
+    }));
   },
 
   // Drag & drop actions
@@ -429,7 +422,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   // Internal actions for state transitions
   updateImageProgress: (imageId: string, progress: number) => {
     set(state => ({
-      images: state.images.map(img => (img.id === imageId ? img.updateProgress(progress) : img)),
+      images: state.images.map(img => (img.id === imageId ? Image.updateProgress(img, progress) : img)),
     }));
   },
 }));

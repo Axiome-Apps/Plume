@@ -8,8 +8,9 @@ export const CompressionLevelSchema = z.enum(['light', 'balanced', 'aggressive']
 export type OutputFormatType = z.infer<typeof OutputFormatSchema>;
 export type CompressionLevelType = z.infer<typeof CompressionLevelSchema>;
 
-// IPC contract — mirrors CompressionSummary / CompressImageResponse in
-// src-tauri/src/commands/compression.rs
+// IPC contract — mirrors CompressionSummary in
+// src-tauri/src/domain/compression/pipeline.rs (the success payload of
+// compress_image; failures surface as a thrown CommandError, not a payload).
 export const CompressionSummarySchema = z.object({
   original_size: z.number().nonnegative(),
   compressed_size: z.number().nonnegative(),
@@ -17,15 +18,7 @@ export const CompressionSummarySchema = z.object({
   output_path: z.string(),
 });
 
-// serde serializes Option::None as null, so these are nullish rather than optional.
-export const CompressImageResponseSchema = z.object({
-  success: z.boolean(),
-  result: CompressionSummarySchema.nullish(),
-  error: z.string().nullish(),
-});
-
 export type CompressionSummaryType = z.infer<typeof CompressionSummarySchema>;
-export type CompressImageResponseType = z.infer<typeof CompressImageResponseSchema>;
 
 interface ResolvedCompressionParams {
   quality: number;

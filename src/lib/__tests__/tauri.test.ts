@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { invoke } from '@tauri-apps/api/core';
 import { revealItemInDir } from '@tauri-apps/plugin-opener';
+import { CommandError } from '@/domain/errors/commandError';
 import {
   compressImage,
   getCompressionEstimation,
@@ -13,7 +14,7 @@ import {
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('@tauri-apps/plugin-opener', () => ({ revealItemInDir: vi.fn() }));
-vi.mock('@/domain/i18n', () => ({ translate: (key: string) => `translated:${key}` }));
+vi.mock('@/domain/i18n/translate', () => ({ translate: (key: string) => `translated:${key}` }));
 
 const invokeMock = vi.mocked(invoke);
 
@@ -101,37 +102,30 @@ describe('getFileInformation', () => {
 
 describe('compressImage', () => {
   const request = { file_path: '/tmp/photo.png', quality: 80, format: 'webp' as const };
+  const summary = {
+    original_size: 2048,
+    compressed_size: 512,
+    savings_percent: 75,
+    output_path: '/tmp/photo_balanced.webp',
+  };
 
-  it('parses a successful compression', async () => {
-    backendReturns({
-      success: true,
-      result: {
-        original_size: 2048,
-        compressed_size: 512,
-        savings_percent: 75,
-        output_path: '/tmp/photo_balanced.webp',
-      },
-      error: null,
-    });
+  it('parses the success summary', async () => {
+    backendReturns(summary);
 
-    const response = await compressImage(request);
-
-    expect(response.success).toBe(true);
-    expect(response.result?.compressed_size).toBe(512);
+    await expect(compressImage(request)).resolves.toEqual(summary);
   });
 
-  it('parses a failure, where result is null and error carries the reason', async () => {
-    backendReturns({ success: false, result: null, error: 'Permission denied' });
+  // A business failure now rejects the command; the boundary turns the
+  // serialized payload into a typed CommandError the store can branch on.
+  it('throws a typed CommandError when the command rejects', async () => {
+    invokeMock.mockRejectedValue({ kind: 'security', message: 'blocked' });
 
-    const response = await compressImage(request);
-
-    expect(response.success).toBe(false);
-    expect(response.result).toBeNull();
-    expect(response.error).toBe('Permission denied');
+    await expect(compressImage(request)).rejects.toBeInstanceOf(CommandError);
+    await expect(compressImage(request)).rejects.toMatchObject({ kind: 'security' });
   });
 
   it('sends the request nested under a request key, in snake_case', async () => {
-    backendReturns({ success: true, result: null, error: null });
+    backendReturns(summary);
 
     await compressImage(request);
 
@@ -139,24 +133,13 @@ describe('compressImage', () => {
   });
 
   it('accepts a negative savings percentage, since a file can grow', async () => {
-    backendReturns({
-      success: true,
-      result: {
-        original_size: 100,
-        compressed_size: 300,
-        savings_percent: -200,
-        output_path: '/tmp/out.webp',
-      },
-      error: null,
-    });
+    backendReturns({ ...summary, original_size: 100, compressed_size: 300, savings_percent: -200 });
 
-    await expect(compressImage(request)).resolves.toMatchObject({
-      result: { savings_percent: -200 },
-    });
+    await expect(compressImage(request)).resolves.toMatchObject({ savings_percent: -200 });
   });
 
-  it('rejects a response whose success flag is missing', async () => {
-    backendReturns({ result: null, error: null });
+  it('rejects a summary missing a field', async () => {
+    backendReturns({ compressed_size: 512 });
 
     await expect(compressImage(request)).rejects.toThrow();
   });
@@ -232,7 +215,7 @@ describe('thin passthroughs', () => {
     backendReturns(undefined);
 
     await expect(initDatabase()).resolves.toBeUndefined();
-    expect(invokeMock).toHaveBeenCalledWith('init_database');
+    expect(invokeMock).toHaveBeenCalledWith('init_database', undefined);
   });
 
   it('revealInFolder delegates to the opener plugin rather than a command', async () => {

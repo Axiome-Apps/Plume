@@ -1,4 +1,4 @@
-import { ImageEntity } from './entity';
+import { Image } from './entity';
 
 /**
  * Aggregate figures for the current batch.
@@ -32,13 +32,13 @@ interface Contribution {
  * yet. Neither can be turned into a size, and guessing one would report a
  * saving that will never happen.
  */
-function contributionOf(image: ImageEntity): Contribution | null {
-  if (image.isCompleted() && image.compressedSize !== undefined) {
+function contributionOf(image: Image): Contribution | null {
+  if (Image.isCompleted(image) && image.compressedSize !== undefined) {
     return { original: image.originalSize, after: image.compressedSize, realized: true };
   }
 
   const estimation = image.estimatedCompression;
-  if (estimation && (image.isPending() || image.isProcessing())) {
+  if (estimation && (Image.isPending(image) || Image.isProcessing(image))) {
     return {
       original: image.originalSize,
       after: image.originalSize * (1 - estimation.percent / 100),
@@ -49,7 +49,7 @@ function contributionOf(image: ImageEntity): Contribution | null {
   return null;
 }
 
-export function summarizeBatch(images: ImageEntity[]): BatchSummary {
+export function summarizeBatch(images: Image[]): BatchSummary {
   const counted = images
     .map(contributionOf)
     .filter((contribution): contribution is Contribution => contribution !== null);
@@ -62,7 +62,7 @@ export function summarizeBatch(images: ImageEntity[]): BatchSummary {
 
   const isRealized = counted.length > 0 && counted.every(contribution => contribution.realized);
 
-  const formats = Array.from(new Set(images.map(image => image.format.toUpperCase())));
+  const formats = Array.from(new Set(images.map(image => image.format)));
 
   return { isRealized, totalOriginal, totalAfter, saved, percent, formats };
 }

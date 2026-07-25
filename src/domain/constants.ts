@@ -2,10 +2,15 @@
  * Shared domain constants - single source of truth for formats.
  */
 
-export type ImageFormat = 'png' | 'jpeg' | 'webp' | 'heic';
-export type ImageFormatDisplay = 'PNG' | 'JPEG' | 'WEBP' | 'HEIC';
+import { z } from 'zod';
 
-export const IMAGE_FORMATS: ImageFormat[] = ['png', 'jpeg', 'webp', 'heic'];
+// Zod is the SSOT for the format enum: the union type and the value list both
+// derive from this schema, so they can never drift apart.
+export const ImageFormatSchema = z.enum(['png', 'jpeg', 'webp', 'heic']);
+export type ImageFormat = z.infer<typeof ImageFormatSchema>;
+export const IMAGE_FORMATS = ImageFormatSchema.options;
+
+export type ImageFormatDisplay = 'PNG' | 'JPEG' | 'WEBP' | 'HEIC';
 
 export const SUPPORTED_FORMATS_DISPLAY = IMAGE_FORMATS.map(format => format.toUpperCase()).join(
   ', '

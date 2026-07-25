@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { EstimationResultSchema } from '@/domain/size-prediction/schema';
-import { IMAGE_FORMATS, imageFormatFromExtension } from '@/domain/constants';
+import { ImageFormatSchema, imageFormatFromExtension } from '@/domain/constants';
 
 // Main image schema
 export const ImageSchema = z.object({
@@ -8,7 +8,7 @@ export const ImageSchema = z.object({
   id: z.string(),
   name: z.string(),
   originalSize: z.number().positive(),
-  format: z.enum(IMAGE_FORMATS).transform(imageFormatFromExtension),
+  format: ImageFormatSchema.transform(imageFormatFromExtension),
   preview: z.string(),
   path: z.string(),
   status: z.enum(['pending', 'processing', 'completed', 'error']),

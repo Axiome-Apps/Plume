@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { ImageEntity } from '../entity';
+import { Image } from '../entity';
 import type { ImageType } from '../schema';
 
-function makeImage(overrides: Partial<ImageType> = {}): ImageEntity {
-  return ImageEntity.fromData({
+function makeImage(overrides: Partial<ImageType> = {}): Image {
+  return {
     id: 'img-1',
     name: 'photo.png',
     originalSize: 1000,
@@ -12,61 +12,45 @@ function makeImage(overrides: Partial<ImageType> = {}): ImageEntity {
     path: '/tmp/photo.png',
     status: 'pending',
     ...overrides,
-  });
+  };
 }
 
-describe('ImageEntity', () => {
-  describe('data access', () => {
-    it('hands out a copy, so a caller cannot mutate the entity', () => {
-      const image = makeImage();
-      const snapshot = image.data;
-
-      snapshot.name = 'mutated.png';
-
-      expect(image.name).toBe('photo.png');
-    });
-
-    it('serializes to the same shape it was built from', () => {
-      const image = makeImage();
-      expect(image.toJSON()).toEqual(image.data);
-    });
-  });
-
+describe('Image', () => {
   describe('toProcessing', () => {
     it('moves a pending image to processing with a zero progress by default', () => {
-      const processing = makeImage().toProcessing();
+      const processing = Image.toProcessing(makeImage());
 
       expect(processing.status).toBe('processing');
       expect(processing.progress).toBe(0);
     });
 
-    it('leaves the source instance untouched', () => {
+    it('leaves the source value untouched', () => {
       const pending = makeImage();
-      pending.toProcessing();
+      Image.toProcessing(pending);
 
       expect(pending.status).toBe('pending');
     });
 
     it('refuses any status other than pending', () => {
-      expect(() => makeImage({ status: 'processing' }).toProcessing()).toThrow(
+      expect(() => Image.toProcessing(makeImage({ status: 'processing' }))).toThrow(
         'Cannot transition from processing to processing'
       );
-      expect(() => makeImage({ status: 'completed' }).toProcessing()).toThrow();
-      expect(() => makeImage({ status: 'error' }).toProcessing()).toThrow();
+      expect(() => Image.toProcessing(makeImage({ status: 'completed' }))).toThrow();
+      expect(() => Image.toProcessing(makeImage({ status: 'error' }))).toThrow();
     });
   });
 
   describe('updateProgress', () => {
     it('clamps the value into 0..100', () => {
-      const processing = makeImage().toProcessing();
+      const processing = Image.toProcessing(makeImage());
 
-      expect(processing.updateProgress(-10).progress).toBe(0);
-      expect(processing.updateProgress(150).progress).toBe(100);
-      expect(processing.updateProgress(42).progress).toBe(42);
+      expect(Image.updateProgress(processing, -10).progress).toBe(0);
+      expect(Image.updateProgress(processing, 150).progress).toBe(100);
+      expect(Image.updateProgress(processing, 42).progress).toBe(42);
     });
 
     it('refuses an image that is not being processed', () => {
-      expect(() => makeImage().updateProgress(50)).toThrow(
+      expect(() => Image.updateProgress(makeImage(), 50)).toThrow(
         'Cannot update progress on pending image'
       );
     });
@@ -74,7 +58,10 @@ describe('ImageEntity', () => {
 
   describe('toCompleted', () => {
     it('derives the savings percentage from the original size', () => {
-      const completed = makeImage({ originalSize: 1000 }).toProcessing().toCompleted(250);
+      const completed = Image.toCompleted(
+        Image.toProcessing(makeImage({ originalSize: 1000 })),
+        250
+      );
 
       expect(completed.status).toBe('completed');
       expect(completed.compressedSize).toBe(250);
@@ -82,20 +69,27 @@ describe('ImageEntity', () => {
     });
 
     it('reports zero savings rather than a negative one when the file grew', () => {
-      const completed = makeImage({ originalSize: 1000 }).toProcessing().toCompleted(1500);
+      const completed = Image.toCompleted(
+        Image.toProcessing(makeImage({ originalSize: 1000 })),
+        1500
+      );
 
       expect(completed.savings).toBe(0);
     });
 
     it('clears the progress and records the output path', () => {
-      const completed = makeImage().toProcessing().toCompleted(500, '/tmp/photo_balanced.webp');
+      const completed = Image.toCompleted(
+        Image.toProcessing(makeImage()),
+        500,
+        '/tmp/photo_balanced.webp'
+      );
 
       expect(completed.progress).toBeUndefined();
       expect(completed.outputPath).toBe('/tmp/photo_balanced.webp');
     });
 
     it('refuses an image that was never put in processing', () => {
-      expect(() => makeImage().toCompleted(500)).toThrow(
+      expect(() => Image.toCompleted(makeImage(), 500)).toThrow(
         'Cannot transition from pending to completed'
       );
     });
@@ -103,7 +97,9 @@ describe('ImageEntity', () => {
 
   describe('toError', () => {
     it('wipes every result field, from any status', () => {
-      const failed = makeImage().toProcessing().toCompleted(500, '/tmp/out.webp').toError();
+      const failed = Image.toError(
+        Image.toCompleted(Image.toProcessing(makeImage()), 500, '/tmp/out.webp')
+      );
 
       expect(failed.status).toBe('error');
       expect(failed.progress).toBeUndefined();
@@ -118,7 +114,7 @@ describe('ImageEntity', () => {
       const estimation = { percent: 40, ratio: 0.6, confidence: 0.8, sample_count: 12 };
       const image = makeImage({ status: 'processing', progress: 30 });
 
-      const estimated = image.withEstimation(estimation);
+      const estimated = Image.withEstimation(image, estimation);
 
       expect(estimated.estimatedCompression).toEqual(estimation);
       expect(estimated.status).toBe('processing');
@@ -130,23 +126,25 @@ describe('ImageEntity', () => {
   describe('status guards', () => {
     it('reports exactly one status at a time', () => {
       const pending = makeImage();
-      expect([pending.isPending(), pending.isProcessing(), pending.isCompleted()]).toEqual([
-        true,
-        false,
-        false,
-      ]);
+      expect([
+        Image.isPending(pending),
+        Image.isProcessing(pending),
+        Image.isCompleted(pending),
+      ]).toEqual([true, false, false]);
 
-      const processing = pending.toProcessing();
-      expect([processing.isPending(), processing.isProcessing(), processing.isCompleted()]).toEqual(
-        [false, true, false]
-      );
+      const processing = Image.toProcessing(pending);
+      expect([
+        Image.isPending(processing),
+        Image.isProcessing(processing),
+        Image.isCompleted(processing),
+      ]).toEqual([false, true, false]);
 
-      const completed = processing.toCompleted(100);
-      expect([completed.isPending(), completed.isProcessing(), completed.isCompleted()]).toEqual([
-        false,
-        false,
-        true,
-      ]);
+      const completed = Image.toCompleted(processing, 100);
+      expect([
+        Image.isPending(completed),
+        Image.isProcessing(completed),
+        Image.isCompleted(completed),
+      ]).toEqual([false, false, true]);
     });
   });
 });

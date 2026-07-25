@@ -6,7 +6,9 @@ const COMPLETION_ANIMATION_MS = 350;
 
 function lastProgressOf(onProgress: ReturnType<typeof vi.fn>): number {
   const calls = onProgress.mock.calls;
-  return calls[calls.length - 1][1];
+  const lastCall = calls[calls.length - 1];
+  if (!lastCall) throw new Error('onProgress was never called');
+  return lastCall[1];
 }
 
 describe('AdaptiveProgressManager', () => {

@@ -4,8 +4,8 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import { validateTranslations } from './schema';
 
 // Translation imports
-import frTranslations from '../../locales/fr.json';
-import enTranslations from '../../locales/en.json';
+import frTranslations from '@/locales/fr.json';
+import enTranslations from '@/locales/en.json';
 
 // Configuration i18next
 export const initI18n = () => {

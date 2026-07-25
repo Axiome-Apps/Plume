@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useImageStore } from '../imageStore';
-import { ImageEntity } from '@/domain/image/entity';
 import { AdaptiveProgressManager } from '@/domain/progress/adaptiveProgress';
 import type { ImageType } from '@/domain/image/schema';
 import { getFileInformation } from '@/lib/tauri';
-import { sizePredictionService } from '@/domain/size-prediction';
+import * as SizePrediction from '@/domain/size-prediction/service';
 import { toast } from 'sonner';
 
 vi.mock('@/lib/tauri', () => ({
@@ -13,13 +12,13 @@ vi.mock('@/lib/tauri', () => ({
   getProgressEstimation: vi.fn(),
 }));
 
-vi.mock('@/domain/size-prediction', () => ({
-  sizePredictionService: { getEstimation: vi.fn() },
+vi.mock('@/domain/size-prediction/service', () => ({
+  getEstimation: vi.fn(),
 }));
 
 // Echo the interpolation options back so a test can assert what the store
 // passed — the plural count in particular drives the _one / _other suffixes.
-vi.mock('@/domain/i18n', () => ({
+vi.mock('@/domain/i18n/translate', () => ({
   translate: (key: string, options?: Record<string, unknown>) =>
     options ? `${key}:${JSON.stringify(options)}` : key,
 }));
@@ -29,12 +28,20 @@ vi.mock('sonner', () => ({
 }));
 
 const getFileInformationMock = vi.mocked(getFileInformation);
-const getEstimationMock = vi.mocked(sizePredictionService.getEstimation);
+const getEstimationMock = vi.mocked(SizePrediction.getEstimation);
 
 const FALLBACK_ESTIMATION = { percent: 65, ratio: 0.35, confidence: 0.5, sample_count: 0 };
 
-function makeImage(overrides: Partial<ImageType> = {}): ImageEntity {
-  return ImageEntity.fromData({
+// noUncheckedIndexedAccess: fetch an image by position, failing loudly if the
+// store holds none there, so assertions read without optional chaining.
+function requireImage(index = 0): ImageType {
+  const image = useImageStore.getState().images[index];
+  if (!image) throw new Error(`expected an image at index ${index}`);
+  return image;
+}
+
+function makeImage(overrides: Partial<ImageType> = {}): ImageType {
+  return {
     id: 'img-1',
     name: 'photo.png',
     originalSize: 1000,
@@ -43,7 +50,7 @@ function makeImage(overrides: Partial<ImageType> = {}): ImageEntity {
     path: '/tmp/photo.png',
     status: 'pending',
     ...overrides,
-  });
+  };
 }
 
 /** The store is a module singleton, so every test starts from a known state. */
@@ -120,7 +127,7 @@ describe('addImages', () => {
 
     await useImageStore.getState().addImages(['/tmp/holiday.HEIC']);
 
-    const [image] = useImageStore.getState().images;
+    const image = requireImage();
     expect(image.name).toBe('holiday.HEIC');
     expect(image.originalSize).toBe(4096);
     expect(image.format).toBe('HEIC');
@@ -132,7 +139,7 @@ describe('addImages', () => {
 
     await useImageStore.getState().addImages(['/tmp/photo.png']);
 
-    const [image] = useImageStore.getState().images;
+    const image = requireImage();
     expect(image.name).toBe('photo.png');
     expect(image.format).toBe('PNG');
     expect(image.originalSize).toBe(0);
@@ -173,7 +180,7 @@ describe('addImages', () => {
 
     await useImageStore.getState().addImages(['/tmp/holiday.HEIC']);
 
-    expect(useImageStore.getState().images[0].estimatedCompression).toEqual({
+    expect(requireImage().estimatedCompression).toEqual({
       percent: 50,
       ratio: 0.5,
       confidence: 0.9,
@@ -188,7 +195,7 @@ describe('addImages', () => {
     await useImageStore.getState().addImages(['/tmp/holiday.HEIC']);
 
     expect(useImageStore.getState().images).toHaveLength(1);
-    expect(useImageStore.getState().images[0].estimatedCompression).toEqual(FALLBACK_ESTIMATION);
+    expect(requireImage().estimatedCompression).toEqual(FALLBACK_ESTIMATION);
   });
 
   it('gives every image its own id', async () => {
@@ -284,7 +291,8 @@ describe('recalculateEstimations', () => {
 
     await useImageStore.getState().recalculateEstimations();
 
-    const [waiting, done] = useImageStore.getState().images;
+    const waiting = requireImage(0);
+    const done = requireImage(1);
     expect(waiting.estimatedCompression).toMatchObject({ percent: 30 });
     expect(done.estimatedCompression).toBeUndefined();
     expect(getEstimationMock).toHaveBeenCalledOnce();
@@ -308,7 +316,7 @@ describe('recalculateEstimations', () => {
 
     await useImageStore.getState().recalculateEstimations();
 
-    expect(useImageStore.getState().images[0].estimatedCompression).toEqual(FALLBACK_ESTIMATION);
+    expect(requireImage().estimatedCompression).toEqual(FALLBACK_ESTIMATION);
   });
 });
 
@@ -318,7 +326,7 @@ describe('startCompression guards', () => {
 
     await useImageStore.getState().startCompression();
 
-    expect(useImageStore.getState().images[0].status).toBe('pending');
+    expect(requireImage().status).toBe('pending');
     expect(useImageStore.getState().compressionState).toBe('idle');
   });
 

@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { summarizeBatch } from '../batch';
-import { ImageEntity } from '../entity';
+import { Image } from '../entity';
 import type { ImageType } from '../schema';
 
-function makeImage(overrides: Partial<ImageType> = {}): ImageEntity {
-  return ImageEntity.fromData({
+function makeImage(overrides: Partial<ImageType> = {}): Image {
+  return {
     id: 'img-1',
     name: 'photo.png',
     originalSize: 1000,
@@ -13,7 +13,7 @@ function makeImage(overrides: Partial<ImageType> = {}): ImageEntity {
     path: '/tmp/photo.png',
     status: 'pending',
     ...overrides,
-  });
+  };
 }
 
 function estimation(percent: number) {
@@ -123,10 +123,10 @@ describe('summarizeBatch', () => {
       });
 
       const beforeStart = summarizeBatch([done, waiting]).totalOriginal;
-      const inFlight = summarizeBatch([done, waiting.toProcessing()]).totalOriginal;
+      const inFlight = summarizeBatch([done, Image.toProcessing(waiting)]).totalOriginal;
       const finished = summarizeBatch([
         done,
-        waiting.toProcessing().toCompleted(2000),
+        Image.toCompleted(Image.toProcessing(waiting), 2000),
       ]).totalOriginal;
 
       expect([beforeStart, inFlight, finished]).toEqual([6000, 6000, 6000]);

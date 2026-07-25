@@ -97,16 +97,21 @@ export const TranslationKeysSchema = z.object({
     selectImages: z.string(),
     imagesFilter: z.string(),
   }),
+  a11y: z.object({
+    selectLanguage: z.string(),
+  }),
   errors: z.object({
-    unknown: z.string(),
-    permissionDenied: z.string(),
-    invalidFile: z.string(),
-    unsupportedFormat: z.string(),
-    readFailed: z.string(),
-    writeFailed: z.string(),
-    noSpace: z.string(),
-    invalidPath: z.string(),
-    compressionFailed: z.string(),
+    validation: z.string(),
+    notFound: z.string(),
+    io: z.string(),
+    security: z.string(),
+    unsupported: z.string(),
+    internal: z.string(),
+  }),
+  crash: z.object({
+    title: z.string(),
+    message: z.string(),
+    reload: z.string(),
   }),
   toasts: z.object({
     imagesAdded_one: z.string(),
@@ -148,7 +153,9 @@ export type TranslationKeyType =
   | `success.${keyof TranslationKeysType['success']}`
   | `units.${keyof TranslationKeysType['units']}`
   | `dialog.${keyof TranslationKeysType['dialog']}`
+  | `a11y.${keyof TranslationKeysType['a11y']}`
   | `errors.${keyof TranslationKeysType['errors']}`
+  | `crash.${keyof TranslationKeysType['crash']}`
   | `toasts.${keyof TranslationKeysType['toasts']}`
   | 'toasts.imagesAdded'
   | 'toasts.unsupportedIgnored'

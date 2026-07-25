@@ -25,7 +25,8 @@ export function splitBytes(bytes: number): FormattedBytes {
   const scaled = bytes / Math.pow(STEP, exponent);
 
   // Drop a trailing .0 so 1024 reads as "1 KB" rather than "1.0 KB".
-  return { value: String(parseFloat(scaled.toFixed(1))), unit: UNITS[exponent] };
+  // `exponent` is clamped to [0, UNITS.length - 1], so the unit is always present.
+  return { value: String(parseFloat(scaled.toFixed(1))), unit: UNITS[exponent] ?? 'B' };
 }
 
 export function formatBytes(bytes: number): string {

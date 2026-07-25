@@ -1,5 +1,5 @@
 import { useTranslation as useI18next } from 'react-i18next';
-import type { TranslationKeyType } from '@/domain/i18n';
+import type { TranslationKeyType } from '@/domain/i18n/schema';
 
 type TranslationOptions = Record<string, string | number>;
 
@@ -23,4 +23,4 @@ export const useTranslation = () => {
   };
 };
 
-export type { TranslationKeyType } from '@/domain/i18n';
+export type { TranslationKeyType } from '@/domain/i18n/schema';
