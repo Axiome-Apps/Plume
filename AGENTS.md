@@ -47,8 +47,11 @@ Composition over inheritance
 
 ### Domain Architecture
 
-**TypeScript DDD**: `/domain/{feature}/` → schema.ts • entity.ts • service.ts • index.ts • `toJSON()`
-on entities
+**TypeScript domain**: `/domain/{feature}/` sliced by concept → `schema.ts` (Zod SSOT, `Type` via
+`z.infer`) • pure data as a `type` + a `const` helpers object (declaration merging — **no wrapper
+class**) • free functions / namespace at import for stateless logic • a `class` **only** for an actor
+(state held over time or injected deps) • **no exported singleton** • **no `index.ts` barrel** —
+import from the concrete file via `@/` (`@/domain/image/entity`, `@/components/atoms/Button`)
 
 **Rust modules**: `/domain/{feature}/` → mod.rs • settings.rs • engine.rs • stats.rs • error.rs •
 Struct + free fn
@@ -70,7 +73,8 @@ Decision + rationale → [ADR-0004](./docs/adr/ADR-0004-tauri-ipc-boundary.md)
 
 ## Architectural Patterns
 
-**TypeScript DDD**: Structure by feature • Entities + `toJSON()` • Services for use cases • Zod +
+**TypeScript domain**: Slice by concept • Three citizen forms — pure data (`type` + helpers + Zod),
+free function, actor (`class` only with state/deps) • no wrapper class, no exported singleton • Zod +
 inference
 
 **Rust functional**: Pure functions + data • Modules by responsibility • Traits for extensibility

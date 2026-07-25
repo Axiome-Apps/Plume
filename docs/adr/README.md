@@ -30,6 +30,9 @@ Status: accepted | proposed | superseded by ADR-00YY   ·   Date
 | [0004](./ADR-0004-tauri-ipc-boundary.md)     | Tauri IPC boundary (single entry point `src/lib/tauri.ts`)     | accepted | —                                                   |
 | [0005](./ADR-0005-db-backed-estimation.md)   | SQLite-backed estimation (`pixel_count` + timing)              | accepted | —                                                   |
 | [0006](./ADR-0006-versioning-release.md)     | Versioning & release: 4-file SSOT, two-tier CI, automated cask | accepted | [release-runbook.md](../release/release-runbook.md) |
+| [0007](./ADR-0007-least-privilege-security.md) | Least-privilege Tauri surface (CSP, asset scope, capability, FS allow-list) | accepted | —                                     |
+| [0008](./ADR-0008-error-model.md)            | Error model: typed `CommandError` at the IPC boundary          | accepted | [conventions.md](../conventions.md)                 |
+| [0009](./ADR-0009-parallel-compression.md)   | Parallel compression: frontend-fired, backend-bounded (Semaphore) | proposed | [conventions.md](../conventions.md)              |
 
 ADRs 0001–0005 document decisions **already in force in the code**, formalized after the fact.
 

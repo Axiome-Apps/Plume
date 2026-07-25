@@ -27,15 +27,16 @@ src/
 ├── components/
 │   ├── atoms/       Button, LanguageSelector, ProgressBar, SegmentedControl,
 │   │                StatusBadge, Tooltip
-│   ├── molecules/   BatchKpiCard, CompressionSuccess, ImageActions,
-│   │                ImagePreview, ImageRow, SettingsPanel
-│   ├── organisms/   DropZone, ImageList, PlumeHeader
+│   ├── molecules/   ImageActions, ImagePreview, ImageRow
+│   ├── organisms/   BatchKpiCard, CompressionSuccess, DropZone, ErrorBoundary,
+│   │                ImageList, PlumeHeader, SettingsPanel
 │   ├── templates/   AppLayout
 │   ├── brand/       LogoPlume, Stroke
 │   └── icons/       SVG icon set + types.ts
 ├── domain/          business slices (see below)
 ├── hooks/           useDragDropGlobal, useTranslation
-├── lib/             tauri.ts (single IPC boundary), format.ts (byte formatting)
+├── lib/             tauri.ts (single IPC boundary), cn.ts (clsx + tailwind-merge),
+│                    format.ts (byte formatting)
 ├── store/           imageStore (Zustand)
 └── locales/         fr / en
 ```
@@ -88,15 +89,25 @@ src-tauri/src/
     └── file/              metadata, path, error
 ```
 
-Style: **pure functions + data**, modules by responsibility, per-domain typed errors. Production
-imports go through `crate::`, never `super::`.
+Style: **pure functions + data**, modules by responsibility, per-domain typed errors (`thiserror`).
+Production imports go through `crate::`, never `super::`. Every command returns
+`Result<T, CommandError>` — a typed `{ kind, message }` frontier error, never a raw string
+(→ [ADR-0008](../adr/ADR-0008-error-model.md)).
 
-The backend holds **no application state**: there is no `AppState`, no configuration object and no
-event bus. Commands are self-contained and open their own database handle. The absence of domain
-events follows [ADR-0002](../adr/ADR-0002-frontend-only-progress.md).
+The backend holds no domain state machine and no event bus. It manages **one** piece of
+infrastructure state: a single `DatabaseManager`, created in `setup` and shared through Tauri managed
+state (`State<'_, DatabaseManager>`). Its internal `Mutex` serializes SQLite access **from this
+instance**, so in-process commands never collide and it is opened once rather than per command (it
+does not protect against another process touching the file). The absence of domain events follows
+[ADR-0002](../adr/ADR-0002-frontend-only-progress.md); the concurrency rationale lives in
+[conventions.md](../conventions.md).
 
-Every path that reaches the disk is checked by `PathUtils::validate_safe_path` — input paths through
-`get_file_info`, output paths explicitly in `compress_image` before the engine writes.
+Every path that reaches the disk is checked by `validate_safe_path` (free function in
+`domain/file/path.rs`) — input paths through `get_file_info`, output paths explicitly in
+`run_compression` before the engine writes. The allowed directory roots are the single source of
+truth `allowed_roots()` in the same module; the asset-protocol scope in `tauri.conf.json` mirrors
+that list. Least-privilege security surface (CSP, asset scope, capability, allow-list) →
+[ADR-0007](../adr/ADR-0007-least-privilege-security.md).
 
 ### Exposed commands
 
@@ -113,8 +124,13 @@ Declared in `lib.rs`:
 
 Stats are recorded by `compress_image` itself, so no command exposes stat writing.
 
-`compress_image` returns a `CompressImageResponse` that is **always `Ok`** at the Tauri level:
-business failures are carried by `success: false` + `error`, not by an IPC `Err`.
+`compress_image` returns a `CompressionSummary` on success and **rejects with a typed `CommandError`**
+on failure — like every command (→ [ADR-0008](../adr/ADR-0008-error-model.md)). Its orchestration
+lives in the domain free function `run_compression` (`domain/compression/pipeline.rs`); the command is
+a thin adapter that validates, delegates, records the stat best-effort, and returns. It is `async`
+only to run off the main/UI thread and wraps the CPU-bound `run_compression` in `spawn_blocking` so it
+never occupies an async-runtime worker (concurrency rationale →
+[conventions.md](../conventions.md)).
 
 ### Formats
 
@@ -183,7 +199,10 @@ backwards. **The backend emits no progress events.**
 
 ## Build, tests, release
 
-- Rust toolchain pinned by `rust-toolchain.toml` (rustfmt + clippy).
+- Rust toolchain pinned by `rust-toolchain.toml` (rustfmt + clippy); Node pinned by `.nvmrc`, with
+  `engines.node` as the advisory floor (→ [conventions.md](../conventions.md) §Versioning).
+- Both lockfiles committed (`pnpm-lock.yaml`, `src-tauri/Cargo.lock`); CI installs strictly
+  (`pnpm install --frozen-lockfile`, `cargo … --locked`) so the lock is never silently regenerated.
 - `profile.dev.package."*"` at `opt-level = 3`: without it the compression libraries are 10–50×
   slower in dev.
 - Lightweight CI on PRs (lint + clippy + tests), full 4-platform build on release tags.

@@ -27,9 +27,11 @@ A four-stage flow:
 1. **Estimation (DB)** — the frontend queries a SQLite-backed estimation (size + duration) to display
    a prediction **and** to feed the progress bar duration. It is a query, not part of
    `compress_image`. Details: [ADR-0005](./ADR-0005-db-backed-estimation.md).
-2. **Compression (Rust engine)** — `compress_image` validates the file, picks the output format
-   (explicit / `auto` / optimal for the input), then compresses through the native engine (MozJPEG,
-   oxipng, libwebp, libheif).
+2. **Compression (Rust engine)** — `compress_image` validates the file, then delegates to the domain
+   function `run_compression` (`domain/compression/pipeline.rs`), which picks the output format
+   (explicit / `auto` / optimal for the input) and compresses through the native engine (MozJPEG,
+   oxipng, libwebp, libheif). The command is a thin adapter; failures surface as a typed
+   `CommandError`, not a `success:false` payload (→ [ADR-0008](./ADR-0008-error-model.md)).
 3. **Recorded stat (DB)** — the backend writes a **real** stat to SQLite: formats, sizes,
    `processing_time_ms`, `pixel_count`, settings. **Backend-only** — the frontend does not duplicate
    it. This accumulation is what improves future estimations.

@@ -68,3 +68,18 @@ The current version lives in `package.json` — the single source of truth, prop
 - [ ] Confirm the "options considered" in ADR-0001, 0003 and 0004 — these were reconstructed from
       the code, so the rationale and the rejected alternatives still need the original author's
       confirmation. ADR-0002 and ADR-0005 are already confirmed.
+
+### Dependencies (major bumps — each its own tested commit, not folded into other work)
+
+Rust crates a major behind. `philosophy §11` makes "latest stable" the default (a security posture,
+not comfort), but a major carries breaking changes, so each is a deliberate, tested upgrade — never a
+blind bump.
+
+- [ ] `thiserror 1.0 → 2.x` — **low cost**. Plume uses only basic `#[error("…")]`; 2.0's breaking
+      changes are mostly MSRV + attribute edge cases. The safest of the three to take first.
+- [ ] `dirs 5.0 → 6.x` — **investigate before touching**. `dirs` resolves the app-data directory
+      where the SQLite stats DB lives; 6.0 changed some per-platform path behaviour. A changed path
+      would **orphan existing users' stats** — verify the resolved DB location is unchanged (or add a
+      migration) before bumping.
+- [ ] `rusqlite 0.30 → 0.32+` — **medium cost**. Bundled SQLite version bump plus a few signature
+      changes; gains upstream SQLite patches.
