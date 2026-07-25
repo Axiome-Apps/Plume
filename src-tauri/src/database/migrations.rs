@@ -1,6 +1,6 @@
-use rusqlite::{Connection, Result as SqlResult};
+use rusqlite::Connection;
 
-pub fn create_tables(conn: &Connection) -> SqlResult<()> {
+pub fn create_tables(conn: &Connection) -> rusqlite::Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS compression_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +35,7 @@ pub fn create_tables(conn: &Connection) -> SqlResult<()> {
     Ok(())
 }
 
-pub fn initialize_database(conn: &Connection) -> SqlResult<()> {
+pub fn initialize_database(conn: &Connection) -> rusqlite::Result<()> {
     create_tables(conn)?;
 
     let mut stmt = conn.prepare("SELECT COUNT(*) FROM compression_stats")?;
@@ -44,10 +44,7 @@ pub fn initialize_database(conn: &Connection) -> SqlResult<()> {
     if count == 0 {
         log::debug!("Database is empty, will be seeded with initial data");
     } else {
-        log::debug!(
-            "Database already contains {} compression stats records",
-            count
-        );
+        log::debug!("Database already contains {count} compression stats records");
     }
 
     Ok(())

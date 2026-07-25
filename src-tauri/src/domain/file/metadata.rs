@@ -1,5 +1,5 @@
 use crate::domain::file::error::{FileError, FileResult};
-use crate::domain::file::path::PathUtils;
+use crate::domain::file::path::validate_safe_path;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -10,7 +10,7 @@ pub fn file_exists<P: AsRef<Path>>(path: P) -> bool {
 
 /// Read the metadata of a file, rejecting unsafe paths
 pub fn get_file_info<P: AsRef<Path>>(path: P) -> FileResult<FileMetadata> {
-    PathUtils::validate_safe_path(&path)?;
+    validate_safe_path(&path)?;
 
     if !file_exists(&path) {
         return Err(FileError::NotFound(
@@ -46,17 +46,14 @@ impl FileMetadata {
         let extension = path_ref
             .extension()
             .and_then(|ext| ext.to_str())
-            .map(|s| s.to_lowercase());
+            .map(str::to_lowercase);
 
-        let is_image = extension
-            .as_ref()
-            .map(|ext| {
-                matches!(
-                    ext.as_str(),
-                    "jpg" | "jpeg" | "png" | "webp" | "gif" | "bmp" | "tiff" | "heic" | "heif"
-                )
-            })
-            .unwrap_or(false);
+        let is_image = extension.as_ref().is_some_and(|ext| {
+            matches!(
+                ext.as_str(),
+                "jpg" | "jpeg" | "png" | "webp" | "gif" | "bmp" | "tiff" | "heic" | "heif"
+            )
+        });
 
         Ok(FileMetadata {
             path: path_ref.to_string_lossy().to_string(),
@@ -70,16 +67,12 @@ impl FileMetadata {
     /// Check if file is a supported image format
     pub fn is_supported_image(&self) -> bool {
         self.is_image
-            && self
-                .extension
-                .as_ref()
-                .map(|ext| {
-                    matches!(
-                        ext.as_str(),
-                        "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"
-                    )
-                })
-                .unwrap_or(false)
+            && self.extension.as_ref().is_some_and(|ext| {
+                matches!(
+                    ext.as_str(),
+                    "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"
+                )
+            })
     }
 }
 

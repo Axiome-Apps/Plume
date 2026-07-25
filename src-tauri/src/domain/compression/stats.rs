@@ -1,3 +1,7 @@
+// Ratio math casts byte counts to f64; the precision loss is unreachable for
+// real file sizes. Scoped deviation — see docs/conventions.md (pedantic-cast).
+#![allow(clippy::cast_precision_loss)]
+
 use crate::domain::compression::formats::OutputFormat;
 use crate::domain::compression::settings::CompressionSettings;
 use serde::{Deserialize, Serialize};
@@ -45,7 +49,7 @@ pub fn get_size_range(size_bytes: u64) -> String {
 
 /// Determines if the compression is lossy based on the output format and settings.
 /// PNG output is always lossless. WebP at quality 100 is lossless.
-fn is_lossy(output_format: &OutputFormat, quality: u8) -> bool {
+fn is_lossy(output_format: OutputFormat, quality: u8) -> bool {
     match output_format {
         OutputFormat::Png => false,
         OutputFormat::WebP => quality < 100,
@@ -59,7 +63,7 @@ pub fn estimate_compression(
     _original_size: u64,
     settings: &CompressionSettings,
 ) -> EstimationResult {
-    let quality = settings.quality as f64;
+    let quality = f64::from(settings.quality);
 
     let (base_percent, confidence, sensitivity) = match (
         input_format.to_lowercase().as_str(),
@@ -133,7 +137,7 @@ fn create_stat(
         output_format,
         input_size_range: get_size_range(original_size),
         quality_setting: settings.quality,
-        lossy_mode: is_lossy(&settings.format, settings.quality),
+        lossy_mode: is_lossy(settings.format, settings.quality),
         size_reduction_percent,
         original_size,
         compressed_size,
@@ -165,6 +169,9 @@ pub fn create_stat_with_time(
 }
 
 #[cfg(test)]
+// Assertions compare against exact float literals produced by the same code path,
+// so bit-equality is the intended check.
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 
@@ -231,10 +238,10 @@ mod tests {
 
     #[test]
     fn test_lossy_mode() {
-        assert!(!is_lossy(&OutputFormat::Png, 80));
-        assert!(!is_lossy(&OutputFormat::Png, 60));
-        assert!(is_lossy(&OutputFormat::Jpeg, 80));
-        assert!(is_lossy(&OutputFormat::WebP, 80));
-        assert!(!is_lossy(&OutputFormat::WebP, 100));
+        assert!(!is_lossy(OutputFormat::Png, 80));
+        assert!(!is_lossy(OutputFormat::Png, 60));
+        assert!(is_lossy(OutputFormat::Jpeg, 80));
+        assert!(is_lossy(OutputFormat::WebP, 80));
+        assert!(!is_lossy(OutputFormat::WebP, 100));
     }
 }

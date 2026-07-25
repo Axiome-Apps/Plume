@@ -1,7 +1,10 @@
 pub mod compression;
 pub mod database;
+pub mod error;
 pub mod file;
 pub mod stats;
+
+pub use error::CommandError;
 
 pub use compression::compress_image;
 pub use database::init_database;

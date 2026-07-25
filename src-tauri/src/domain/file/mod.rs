@@ -10,7 +10,7 @@ pub mod path;
 // Re-export core types and functions for easy access
 pub use error::{FileError, FileResult};
 pub use metadata::{FileMetadata, file_exists, get_file_info};
-pub use path::PathUtils;
+pub use path::{get_file_stem, validate_safe_path};
 
 /// Largest input accepted for compression
 const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024;

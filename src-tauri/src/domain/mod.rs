@@ -11,4 +11,4 @@ pub use compression::{
 };
 
 // File domain exports
-pub use file::{PathUtils, get_file_info, validate_image_file};
+pub use file::{get_file_info, get_file_stem, validate_image_file, validate_safe_path};

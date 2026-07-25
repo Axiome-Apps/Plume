@@ -1,7 +1,17 @@
+// The progress-duration heuristic casts sizes and millisecond estimates between
+// f64 and u64; the values are approximate by design and bounded by wall-clock
+// time. Scoped deviation — see docs/conventions.md (pedantic-cast).
+#![allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
+
+use crate::commands::CommandError;
 use crate::database::DatabaseManager;
 use crate::domain::{EstimationQuery, EstimationResult};
 use serde::{Deserialize, Serialize};
-use tauri::AppHandle;
+use tauri::State;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetEstimationRequest {
@@ -15,8 +25,8 @@ pub struct GetEstimationRequest {
 #[tauri::command]
 pub async fn get_compression_estimation(
     request: GetEstimationRequest,
-    app: AppHandle,
-) -> Result<EstimationResult, String> {
+    db: State<'_, DatabaseManager>,
+) -> Result<EstimationResult, CommandError> {
     let query = EstimationQuery {
         input_format: request.input_format,
         output_format: request.output_format,
@@ -25,9 +35,8 @@ pub async fn get_compression_estimation(
         lossy_mode: request.lossy_mode,
     };
 
-    let db = DatabaseManager::new(&app)?;
-    db.connect()?;
     db.get_compression_estimation(&query)
+        .map_err(CommandError::internal)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -47,18 +56,18 @@ pub struct ProgressEstimationResult {
 #[tauri::command]
 pub async fn get_progress_estimation(
     request: ProgressEstimationRequest,
-    app: AppHandle,
-) -> Result<ProgressEstimationResult, String> {
-    let db = DatabaseManager::new(&app)?;
-    db.connect()?;
-
-    if let Some((avg_ms, count)) = db.get_time_estimation(
-        &request.input_format,
-        &request.output_format,
-        request.original_size,
-        None, // pixel_count not available from frontend yet — DB matches by size_range fallback
-    )? {
-        let confidence = (count as f64 / 20.0).min(1.0);
+    db: State<'_, DatabaseManager>,
+) -> Result<ProgressEstimationResult, CommandError> {
+    if let Some((avg_ms, count)) = db
+        .get_time_estimation(
+            &request.input_format,
+            &request.output_format,
+            request.original_size,
+            None, // pixel_count not available from frontend yet — DB matches by size_range fallback
+        )
+        .map_err(CommandError::internal)?
+    {
+        let confidence = (f64::from(count) / 20.0).min(1.0);
         return Ok(ProgressEstimationResult {
             estimated_duration_ms: avg_ms,
             confidence,

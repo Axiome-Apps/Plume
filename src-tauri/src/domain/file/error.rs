@@ -1,36 +1,21 @@
-use std::fmt;
+use thiserror::Error;
 
 /// Errors that can occur during file operations
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Error)]
 pub enum FileError {
-    /// File not found
+    #[error("File not found: {0}")]
     NotFound(String),
-    /// Permission denied
+    #[error("Permission denied: {0}")]
     PermissionDenied(String),
-    /// Invalid path
+    #[error("Invalid path: {0}")]
     InvalidPath(String),
-    /// IO operation failed
+    #[error("IO error: {0}")]
     IoError(String),
-    /// File format not supported
+    #[error("Unsupported format: {0}")]
     UnsupportedFormat(String),
-    /// Path traversal or security violation
+    #[error("Security violation: {0}")]
     SecurityViolation(String),
 }
-
-impl fmt::Display for FileError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            FileError::NotFound(path) => write!(f, "File not found: {}", path),
-            FileError::PermissionDenied(path) => write!(f, "Permission denied: {}", path),
-            FileError::InvalidPath(path) => write!(f, "Invalid path: {}", path),
-            FileError::IoError(msg) => write!(f, "IO error: {}", msg),
-            FileError::UnsupportedFormat(format) => write!(f, "Unsupported format: {}", format),
-            FileError::SecurityViolation(msg) => write!(f, "Security violation: {}", msg),
-        }
-    }
-}
-
-impl std::error::Error for FileError {}
 
 /// Result type for file operations
 pub type FileResult<T> = Result<T, FileError>;

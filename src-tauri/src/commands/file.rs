@@ -1,3 +1,4 @@
+use crate::commands::CommandError;
 use crate::domain::get_file_info;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -11,7 +12,7 @@ pub async fn select_image_files(
     app_handle: AppHandle,
     title: String,
     filter_label: String,
-) -> Result<Vec<String>, String> {
+) -> Result<Vec<String>, CommandError> {
     let files = app_handle
         .dialog()
         .file()
@@ -45,9 +46,9 @@ pub struct FileInfo {
 }
 
 #[tauri::command]
-pub async fn get_file_information(file_path: String) -> Result<FileInfo, String> {
+pub async fn get_file_information(file_path: String) -> Result<FileInfo, CommandError> {
     let path = Path::new(&file_path);
-    let metadata = get_file_info(path).map_err(|e| format!("Failed to get file info: {}", e))?;
+    let metadata = get_file_info(path)?;
 
     Ok(FileInfo {
         path: file_path,

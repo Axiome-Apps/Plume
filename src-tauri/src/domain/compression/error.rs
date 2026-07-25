@@ -1,75 +1,33 @@
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use thiserror::Error;
 
 /// Errors that can occur during compression operations
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Error)]
 pub enum CompressionError {
-    /// Invalid compression settings
+    #[error("Invalid compression settings: {0}")]
     InvalidSettings(String),
-    /// Unsupported image format
+    #[error("Unsupported image format: {0}")]
     UnsupportedFormat(String),
-    /// Image processing failed
-    ProcessingFailed(String),
-    /// Image processing error (more generic)
+    #[error("Image processing failed: {0}")]
     ProcessingError(String),
-    /// I/O error during compression
+    #[error("I/O error: {0}")]
     IoError(String),
-    /// Compression ratio too low
+    #[error("Compression ratio too low: {:.2}%", .0 * 100.0)]
     InsufficientCompression(f64),
 }
 
-impl fmt::Display for CompressionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            CompressionError::InvalidSettings(msg) => {
-                write!(f, "Invalid compression settings: {}", msg)
-            }
-            CompressionError::UnsupportedFormat(format) => {
-                write!(f, "Unsupported image format: {}", format)
-            }
-            CompressionError::ProcessingFailed(msg) => {
-                write!(f, "Image processing failed: {}", msg)
-            }
-            CompressionError::ProcessingError(msg) => {
-                write!(f, "Image processing error: {}", msg)
-            }
-            CompressionError::IoError(msg) => {
-                write!(f, "I/O error: {}", msg)
-            }
-            CompressionError::InsufficientCompression(ratio) => {
-                write!(f, "Compression ratio too low: {:.2}%", ratio * 100.0)
-            }
-        }
-    }
-}
-
-impl std::error::Error for CompressionError {}
-
 /// Errors that can occur during statistics operations
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Error)]
 pub enum StatsError {
-    /// Database connection failed
+    #[error("Database error: {0}")]
     DatabaseError(String),
-    /// Invalid query parameters
+    #[error("Invalid query: {0}")]
     InvalidQuery(String),
-    /// Statistics not available
+    #[error("Statistics not available")]
     NotAvailable,
-    /// Serialization error
+    #[error("Serialization error: {0}")]
     SerializationError(String),
 }
-
-impl fmt::Display for StatsError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            StatsError::DatabaseError(msg) => write!(f, "Database error: {}", msg),
-            StatsError::InvalidQuery(msg) => write!(f, "Invalid query: {}", msg),
-            StatsError::NotAvailable => write!(f, "Statistics not available"),
-            StatsError::SerializationError(msg) => write!(f, "Serialization error: {}", msg),
-        }
-    }
-}
-
-impl std::error::Error for StatsError {}
 
 /// Result type for compression operations
 pub type CompressionResult<T> = Result<T, CompressionError>;

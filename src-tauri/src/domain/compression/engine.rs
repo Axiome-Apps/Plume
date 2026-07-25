@@ -1,3 +1,15 @@
+// The numeric core casts byte counts and image dimensions between integer widths
+// and f64 (compression ratios, FFI buffer lengths for mozjpeg/libheif). Every
+// flagged path is bounded by the image's in-memory size, so the truncation and
+// precision the lints warn about are unreachable in practice; `try_from` here
+// would add error branches for impossible states. Scoped to this module — see
+// docs/conventions.md (pedantic-cast deviation).
+#![allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
+
 use crate::domain::compression::{
     error::{CompressionError, CompressionResult},
     formats::OutputFormat,
@@ -11,11 +23,11 @@ fn decode_heic(input_data: &[u8]) -> CompressionResult<(DynamicImage, Option<Vec
     let lib_heif = libheif_rs::LibHeif::new();
 
     let ctx = libheif_rs::HeifContext::read_from_bytes(input_data).map_err(|e| {
-        CompressionError::ProcessingError(format!("Failed to read HEIC context: {}", e))
+        CompressionError::ProcessingError(format!("Failed to read HEIC context: {e}"))
     })?;
 
     let handle = ctx.primary_image_handle().map_err(|e| {
-        CompressionError::ProcessingError(format!("Failed to get HEIC primary image: {}", e))
+        CompressionError::ProcessingError(format!("Failed to get HEIC primary image: {e}"))
     })?;
 
     // Extract ICC profile BEFORE decode (original, untransformed profile)
@@ -28,7 +40,7 @@ fn decode_heic(input_data: &[u8]) -> CompressionResult<(DynamicImage, Option<Vec
             None,
         )
         .map_err(|e| {
-            CompressionError::ProcessingError(format!("Failed to decode HEIC image: {}", e))
+            CompressionError::ProcessingError(format!("Failed to decode HEIC image: {e}"))
         })?;
 
     let width = handle.width();
@@ -72,25 +84,24 @@ fn decode_image_with_icc(
         "png" => {
             let img =
                 image::load_from_memory_with_format(input_data, ImageFormat::Png).map_err(|e| {
-                    CompressionError::ProcessingError(format!("Image decoding failed: {}", e))
+                    CompressionError::ProcessingError(format!("Image decoding failed: {e}"))
                 })?;
             Ok((img, None))
         }
         "jpg" | "jpeg" => {
             let img = image::load_from_memory_with_format(input_data, ImageFormat::Jpeg).map_err(
-                |e| CompressionError::ProcessingError(format!("Image decoding failed: {}", e)),
+                |e| CompressionError::ProcessingError(format!("Image decoding failed: {e}")),
             )?;
             Ok((img, None))
         }
         "webp" => {
             let img = image::load_from_memory_with_format(input_data, ImageFormat::WebP).map_err(
-                |e| CompressionError::ProcessingError(format!("Image decoding failed: {}", e)),
+                |e| CompressionError::ProcessingError(format!("Image decoding failed: {e}")),
             )?;
             Ok((img, None))
         }
         _ => Err(CompressionError::UnsupportedFormat(format!(
-            "Unsupported format: {}",
-            input_format
+            "Unsupported format: {input_format}"
         ))),
     }
 }
@@ -141,7 +152,7 @@ pub fn compress_file_to_file<P: AsRef<Path>>(
 
     // Get original file size
     let original_size = std::fs::metadata(input_path)
-        .map_err(|e| CompressionError::IoError(format!("Failed to get file metadata: {}", e)))?
+        .map_err(|e| CompressionError::IoError(format!("Failed to get file metadata: {e}")))?
         .len();
 
     // Determine input format from extension
@@ -153,19 +164,17 @@ pub fn compress_file_to_file<P: AsRef<Path>>(
     // Route to appropriate compression function based on target format
     match settings.format {
         OutputFormat::WebP => {
-            compress_to_webp_file(input_path, output_path, input_format, settings)?
+            compress_to_webp_file(input_path, output_path, input_format, settings)?;
         }
         OutputFormat::Png => compress_to_png_file(input_path, output_path, input_format, settings)?,
         OutputFormat::Jpeg => {
-            compress_to_jpeg_file(input_path, output_path, input_format, settings)?
+            compress_to_jpeg_file(input_path, output_path, input_format, settings)?;
         }
-    };
+    }
 
     // Get compressed file size
     let compressed_size = std::fs::metadata(output_path)
-        .map_err(|e| {
-            CompressionError::IoError(format!("Failed to get output file metadata: {}", e))
-        })?
+        .map_err(|e| CompressionError::IoError(format!("Failed to get output file metadata: {e}")))?
         .len();
 
     Ok(CompressionOutput::new(
@@ -185,7 +194,7 @@ fn compress_to_webp_file(
     settings: &CompressionSettings,
 ) -> CompressionResult<()> {
     let input_data = std::fs::read(input_path)
-        .map_err(|e| CompressionError::IoError(format!("Failed to read input file: {}", e)))?;
+        .map_err(|e| CompressionError::IoError(format!("Failed to read input file: {e}")))?;
 
     let (img, icc_profile) = decode_image_with_icc(&input_data, input_format)?;
 
@@ -211,7 +220,7 @@ fn compress_to_webp_file(
     };
 
     std::fs::write(output_path, &output_data)
-        .map_err(|e| CompressionError::IoError(format!("Failed to write output file: {}", e)))?;
+        .map_err(|e| CompressionError::IoError(format!("Failed to write output file: {e}")))?;
 
     Ok(())
 }
@@ -222,47 +231,42 @@ fn compress_to_png_file(
     input_format: &str,
     _settings: &CompressionSettings,
 ) -> CompressionResult<()> {
-    match input_format.to_lowercase().as_str() {
-        "png" => {
-            // PNG -> PNG goes straight through oxipng, which preserves existing ICC chunks
-            let options = oxipng::Options::from_preset(3);
-            let input_data = std::fs::read(input_path).map_err(|e| {
-                CompressionError::IoError(format!("Failed to read PNG file: {}", e))
-            })?;
-            match oxipng::optimize_from_memory(&input_data, &options) {
-                Ok(optimized_data) => {
-                    std::fs::write(output_path, optimized_data).map_err(|e| {
-                        CompressionError::IoError(format!("Failed to write optimized PNG: {}", e))
-                    })?;
-                }
-                Err(_) => {
-                    std::fs::copy(input_path, output_path).map_err(|e| {
-                        CompressionError::IoError(format!("Failed to copy PNG file: {}", e))
-                    })?;
-                }
+    if input_format.to_lowercase().as_str() == "png" {
+        // PNG -> PNG goes straight through oxipng, which preserves existing ICC chunks
+        let options = oxipng::Options::from_preset(3);
+        let input_data = std::fs::read(input_path)
+            .map_err(|e| CompressionError::IoError(format!("Failed to read PNG file: {e}")))?;
+        match oxipng::optimize_from_memory(&input_data, &options) {
+            Ok(optimized_data) => {
+                std::fs::write(output_path, optimized_data).map_err(|e| {
+                    CompressionError::IoError(format!("Failed to write optimized PNG: {e}"))
+                })?;
             }
-            Ok(())
-        }
-        _ => {
-            let input_data = std::fs::read(input_path).map_err(|e| {
-                CompressionError::IoError(format!("Failed to read input file: {}", e))
-            })?;
-
-            let (img, icc_profile) = decode_image_with_icc(&input_data, input_format)?;
-
-            // Encode PNG with ICC profile using PngEncoder
-            encode_png_with_icc(&img, output_path, icc_profile.as_deref())?;
-
-            // Optimize with oxipng (preserves iCCP chunks by default)
-            let options = oxipng::Options::from_preset(3);
-            if let Ok(png_data) = std::fs::read(output_path)
-                && let Ok(optimized_data) = oxipng::optimize_from_memory(&png_data, &options)
-            {
-                let _ = std::fs::write(output_path, optimized_data);
+            Err(_) => {
+                std::fs::copy(input_path, output_path).map_err(|e| {
+                    CompressionError::IoError(format!("Failed to copy PNG file: {e}"))
+                })?;
             }
-
-            Ok(())
         }
+        Ok(())
+    } else {
+        let input_data = std::fs::read(input_path)
+            .map_err(|e| CompressionError::IoError(format!("Failed to read input file: {e}")))?;
+
+        let (img, icc_profile) = decode_image_with_icc(&input_data, input_format)?;
+
+        // Encode PNG with ICC profile using PngEncoder
+        encode_png_with_icc(&img, output_path, icc_profile.as_deref())?;
+
+        // Optimize with oxipng (preserves iCCP chunks by default)
+        let options = oxipng::Options::from_preset(3);
+        if let Ok(png_data) = std::fs::read(output_path)
+            && let Ok(optimized_data) = oxipng::optimize_from_memory(&png_data, &options)
+        {
+            let _ = std::fs::write(output_path, optimized_data);
+        }
+
+        Ok(())
     }
 }
 
@@ -273,7 +277,7 @@ fn compress_to_jpeg_file(
     settings: &CompressionSettings,
 ) -> CompressionResult<()> {
     let input_data = std::fs::read(input_path)
-        .map_err(|e| CompressionError::IoError(format!("Failed to read input file: {}", e)))?;
+        .map_err(|e| CompressionError::IoError(format!("Failed to read input file: {e}")))?;
 
     let (img, icc_profile) = decode_image_with_icc(&input_data, input_format)?;
 
@@ -291,7 +295,7 @@ fn compress_to_jpeg_file(
     )?;
 
     std::fs::write(output_path, &jpeg_data)
-        .map_err(|e| CompressionError::IoError(format!("Failed to write JPEG file: {}", e)))?;
+        .map_err(|e| CompressionError::IoError(format!("Failed to write JPEG file: {e}")))?;
 
     Ok(())
 }
@@ -305,7 +309,7 @@ fn encode_png_with_icc(
     use image::ImageEncoder;
 
     let output_file = std::fs::File::create(output_path)
-        .map_err(|e| CompressionError::IoError(format!("Failed to create output file: {}", e)))?;
+        .map_err(|e| CompressionError::IoError(format!("Failed to create output file: {e}")))?;
     let writer = std::io::BufWriter::new(output_file);
 
     let mut encoder = image::codecs::png::PngEncoder::new(writer);
@@ -323,7 +327,7 @@ fn encode_png_with_icc(
             height,
             image::ExtendedColorType::Rgba8,
         )
-        .map_err(|e| CompressionError::ProcessingError(format!("PNG encoding failed: {}", e)))?;
+        .map_err(|e| CompressionError::ProcessingError(format!("PNG encoding failed: {e}")))?;
 
     Ok(())
 }
@@ -342,7 +346,7 @@ fn encode_jpeg_mozjpeg(
 
         cinfo.common.err = mozjpeg_sys::jpeg_std_error(&mut jerr);
         mozjpeg_sys::jpeg_CreateCompress(
-            &mut cinfo,
+            &raw mut cinfo,
             mozjpeg_sys::JPEG_LIB_VERSION,
             std::mem::size_of::<mozjpeg_sys::jpeg_compress_struct>(),
         );
@@ -350,7 +354,7 @@ fn encode_jpeg_mozjpeg(
         // Setup memory destination
         let mut buf_ptr: *mut u8 = std::ptr::null_mut();
         let mut buf_size: std::ffi::c_ulong = 0;
-        mozjpeg_sys::jpeg_mem_dest(&mut cinfo, &mut buf_ptr, &mut buf_size);
+        mozjpeg_sys::jpeg_mem_dest(&mut cinfo, &raw mut buf_ptr, &raw mut buf_size);
 
         cinfo.image_width = width;
         cinfo.image_height = height;
@@ -358,9 +362,9 @@ fn encode_jpeg_mozjpeg(
         cinfo.in_color_space = mozjpeg_sys::J_COLOR_SPACE::JCS_RGB;
 
         mozjpeg_sys::jpeg_set_defaults(&mut cinfo);
-        mozjpeg_sys::jpeg_set_quality(&mut cinfo, quality as i32, true as i32);
+        mozjpeg_sys::jpeg_set_quality(&mut cinfo, i32::from(quality), i32::from(true));
 
-        mozjpeg_sys::jpeg_start_compress(&mut cinfo, true as i32);
+        mozjpeg_sys::jpeg_start_compress(&mut cinfo, i32::from(true));
 
         // Write ICC profile after start_compress, before scanlines
         if let Some(icc) = icc_profile {
@@ -394,7 +398,7 @@ fn encode_jpeg_mozjpeg(
 
         // Free the buffer allocated by jpeg_mem_dest
         if !buf_ptr.is_null() {
-            libc_free(buf_ptr as *mut std::ffi::c_void);
+            libc_free(buf_ptr.cast::<std::ffi::c_void>());
         }
 
         Ok(result)
@@ -443,6 +447,9 @@ fn inject_icc_into_webp(webp_data: &[u8], icc_data: &[u8]) -> Vec<u8> {
 }
 
 /// Build a RIFF chunk: FourCC + LE32 size + data + optional padding byte
+// Callers pass `b"ICCP"`-style literals, which are naturally `&[u8; 4]`; taking
+// the FourCC by value would force a `*b"ICCP"` deref at every call site.
+#[allow(clippy::trivially_copy_pass_by_ref)]
 fn build_riff_chunk(fourcc: &[u8; 4], data: &[u8]) -> Vec<u8> {
     let mut chunk = Vec::with_capacity(8 + data.len() + 1);
     chunk.extend_from_slice(fourcc);
@@ -547,7 +554,7 @@ fn read_webp_dimensions(webp_data: &[u8], chunk_type: &[u8]) -> (u32, u32) {
         }
         let width = u16::from_le_bytes([webp_data[offset + 6], webp_data[offset + 7]]) & 0x3FFF;
         let height = u16::from_le_bytes([webp_data[offset + 8], webp_data[offset + 9]]) & 0x3FFF;
-        (width as u32, height as u32)
+        (u32::from(width), u32::from(height))
     } else if chunk_type == b"VP8L" {
         // VP8L lossless: signature byte (0x2F) then 32-bit LE with packed w/h
         let offset = chunk_data_offset;
@@ -574,7 +581,7 @@ fn encode_webp_advanced(
     encoder: &webp::Encoder,
     settings: &CompressionSettings,
 ) -> CompressionResult<webp::WebPMemory> {
-    let mut config = webp::WebPConfig::new().map_err(|_| {
+    let mut config = webp::WebPConfig::new().map_err(|()| {
         CompressionError::ProcessingError("Failed to create WebPConfig".to_string())
     })?;
 
@@ -586,7 +593,7 @@ fn encode_webp_advanced(
     } else {
         // Lossy mode with optimized settings
         config.lossless = 0;
-        config.quality = settings.quality as f32;
+        config.quality = f32::from(settings.quality);
         config.method = 4; // Good quality/speed tradeoff
         config.use_sharp_yuv = 1; // Precise RGB→YUV, fixes color desaturation
         config.alpha_quality = 100; // Don't degrade alpha channel
@@ -595,7 +602,7 @@ fn encode_webp_advanced(
 
     encoder
         .encode_advanced(&config)
-        .map_err(|e| CompressionError::ProcessingError(format!("WebP encoding failed: {:?}", e)))
+        .map_err(|e| CompressionError::ProcessingError(format!("WebP encoding failed: {e:?}")))
 }
 
 fn validate_settings(settings: &CompressionSettings) -> CompressionResult<()> {
@@ -609,6 +616,9 @@ fn validate_settings(settings: &CompressionSettings) -> CompressionResult<()> {
 }
 
 #[cfg(test)]
+// Assertions compare against exact float literals produced by the same code path,
+// so bit-equality is the intended check.
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 

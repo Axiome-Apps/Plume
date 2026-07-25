@@ -1,0 +1,7 @@
+# Production stays strict (unwrap/expect/panic denied in Cargo.toml [lints]),
+# but tests may unwrap/expect/panic freely — that is where a panic is the
+# intended failure signal. Mirrors the SSOT rule "unwrap()/expect() hors tests".
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-dbg-in-tests = true

@@ -1,4 +1,4 @@
-use crate::domain::file::PathUtils;
+use crate::domain::file::get_file_stem;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -36,7 +36,7 @@ const FALLBACK_STEM: &str = "compressed";
 /// parameters produce a new file. Choosing another destination is a separate
 /// feature, tracked in the roadmap.
 pub fn resolve_output_path(input: &Path, level: CompressionLevel, extension: &str) -> PathBuf {
-    let stem = PathUtils::get_file_stem(input).unwrap_or_else(|_| FALLBACK_STEM.to_string());
+    let stem = get_file_stem(input).unwrap_or_else(|_| FALLBACK_STEM.to_string());
 
     let mut output = input.to_path_buf();
     output.set_file_name(format!("{}_{}.{}", stem, level.suffix(), extension));

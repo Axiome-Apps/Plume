@@ -27,6 +27,9 @@ impl CompressionSettings {
 
     /// Determines the optimal output format for the given input format
     /// Returns WebP for best compression, or original format when preserving
+    // The arms currently all resolve to WebP; they are kept explicit to document
+    // the per-input decision surface should a format ever diverge.
+    #[allow(clippy::match_same_arms)]
     pub fn optimal_format_for_input(input_format: &str) -> OutputFormat {
         match input_format.to_lowercase().as_str() {
             "png" => OutputFormat::WebP,          // PNG -> WebP for better savings
@@ -37,6 +40,9 @@ impl CompressionSettings {
     }
 
     /// Returns the same format as input (for preserving original format)
+    // WebP, HEIC and the fallback all resolve to WebP; the arms stay explicit so
+    // the preserve-vs-transcode intent per input format is readable.
+    #[allow(clippy::match_same_arms)]
     pub fn preserve_input_format(input_format: &str) -> OutputFormat {
         match input_format.to_lowercase().as_str() {
             "png" => OutputFormat::Png,

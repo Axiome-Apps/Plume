@@ -1,8 +1,10 @@
+use crate::commands::CommandError;
 use crate::database::DatabaseManager;
-use crate::domain::{CompressionLevel, OutputFormat, validate_image_file};
+use crate::domain::compression::{CompressionSummary, run_compression};
+use crate::domain::{CompressionLevel, validate_image_file};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use tauri::AppHandle;
+use tauri::State;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompressImageRequest {
@@ -12,154 +14,43 @@ pub struct CompressImageRequest {
     pub level: Option<CompressionLevel>,
 }
 
-/// Outcome of a successful compression, mirrored by the frontend schema.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CompressionSummary {
-    pub original_size: u64,
-    pub compressed_size: u64,
-    pub savings_percent: f64,
-    pub output_path: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CompressImageResponse {
-    pub success: bool,
-    pub result: Option<CompressionSummary>,
-    pub error: Option<String>,
-}
-
+/// Thin adapter: validate the input, delegate the orchestration to
+/// `run_compression`, persist the stat best-effort, and return the summary.
+/// Business failures surface as `Err(CommandError)` — there is no `success:false`
+/// payload channel.
 #[tauri::command]
 pub async fn compress_image(
     request: CompressImageRequest,
-    app_handle: AppHandle,
-) -> Result<CompressImageResponse, String> {
-    let start_time = std::time::Instant::now();
-    let file_path = Path::new(&request.file_path);
+    db: State<'_, DatabaseManager>,
+) -> Result<CompressionSummary, CommandError> {
+    let metadata = validate_image_file(Path::new(&request.file_path))?;
 
-    // Validate image file
-    let metadata = match validate_image_file(file_path) {
-        Ok(meta) => meta,
-        Err(e) => {
-            return Ok(CompressImageResponse {
-                success: false,
-                result: None,
-                error: Some(format!("File validation failed: {}", e)),
-            });
-        }
-    };
+    // The command is `async` so Tauri runs it off the main/UI thread. But the
+    // work itself is CPU-bound (codec decode/encode + file I/O) with nothing to
+    // await, so it must not sit on an async-runtime worker (rust.md §8.1):
+    // `spawn_blocking` moves it to the dedicated blocking pool. When compression
+    // becomes parallel, a Semaphore (~num_cpus) will bound how many run at once.
+    let file_path = request.file_path.clone();
+    let format = request.format.clone();
+    let quality = request.quality;
+    let level = request.level.unwrap_or(CompressionLevel::Balanced);
+    let outcome = tauri::async_runtime::spawn_blocking(move || {
+        run_compression(
+            Path::new(&file_path),
+            &metadata,
+            format.as_deref(),
+            quality,
+            level,
+        )
+    })
+    .await
+    .map_err(|e| CommandError::internal(format!("compression task failed: {e}")))??;
 
-    // Determine compression settings
-    let output_format = match request.format.as_deref() {
-        Some("webp") => OutputFormat::WebP,
-        Some("png") => OutputFormat::Png,
-        Some("jpg") | Some("jpeg") => OutputFormat::Jpeg,
-        Some("auto") => {
-            let input_extension = metadata
-                .extension
-                .clone()
-                .unwrap_or_else(|| "webp".to_string());
-
-            match input_extension.as_str() {
-                "heic" | "heif" => OutputFormat::Jpeg,
-                _ => crate::domain::CompressionSettings::preserve_input_format(&input_extension),
-            }
-        }
-        _ => {
-            let input_extension = metadata
-                .extension
-                .clone()
-                .unwrap_or_else(|| "webp".to_string());
-
-            crate::domain::CompressionSettings::optimal_format_for_input(&input_extension)
-        }
-    };
-
-    let quality = request
-        .quality
-        .unwrap_or(crate::domain::compression::settings::DEFAULT_QUALITY);
-    let settings = crate::domain::CompressionSettings::new(quality, output_format);
-
-    let output_path = crate::domain::resolve_output_path(
-        file_path,
-        request.level.unwrap_or(CompressionLevel::Balanced),
-        output_format.extension(),
-    );
-
-    // The output path is built here (or supplied by the frontend) and written by the
-    // engine through std::fs, so it never goes through get_file_info. Validate it
-    // explicitly before anything touches the disk.
-    if let Err(e) = crate::domain::PathUtils::validate_safe_path(&output_path) {
-        return Ok(CompressImageResponse {
-            success: false,
-            result: None,
-            error: Some(format!("Invalid output path: {}", e)),
-        });
+    // Stats are backend-only and best-effort: a DB failure must not fail the
+    // compression the user just obtained.
+    if let Err(e) = db.save_compression_stat(&outcome.stat) {
+        log::warn!("Failed to save compression stat: {e}");
     }
 
-    // Get pixel count for duration estimation accuracy
-    let pixel_count = image::image_dimensions(file_path)
-        .map(|(w, h)| w as u64 * h as u64)
-        .ok();
-
-    // Compress
-    match crate::domain::compression::compress_file_to_file(file_path, &output_path, &settings) {
-        Ok(compression_output) => {
-            let processing_time = start_time.elapsed().as_millis() as u64;
-
-            // Record stats in DB (backend-only, frontend does not duplicate)
-            let input_format = metadata
-                .extension
-                .clone()
-                .unwrap_or_else(|| "unknown".to_string());
-            let stat = crate::domain::compression::stats::create_stat_with_time(
-                input_format,
-                output_format.extension().to_string(),
-                compression_output.original_size,
-                compression_output.compressed_size,
-                processing_time,
-                pixel_count,
-                &settings,
-            );
-
-            if let Err(e) = DatabaseManager::new(&app_handle).and_then(|db| {
-                db.connect()?;
-                db.save_compression_stat(&stat)
-            }) {
-                log::warn!("Failed to save compression stat: {}", e);
-            }
-
-            // If compressed file is larger, delete it and keep the original
-            let (final_size, final_path, savings) =
-                if compression_output.compressed_size >= compression_output.original_size {
-                    let _ = std::fs::remove_file(&compression_output.output_path);
-                    (
-                        compression_output.original_size,
-                        file_path.to_string_lossy().to_string(),
-                        0.0,
-                    )
-                } else {
-                    (
-                        compression_output.compressed_size,
-                        compression_output.output_path.to_string_lossy().to_string(),
-                        compression_output.savings_percent,
-                    )
-                };
-
-            Ok(CompressImageResponse {
-                success: true,
-                result: Some(CompressionSummary {
-                    original_size: compression_output.original_size,
-                    compressed_size: final_size,
-                    savings_percent: savings,
-                    output_path: final_path,
-                }),
-                error: None,
-            })
-        }
-        Err(e) => Ok(CompressImageResponse {
-            success: false,
-            result: None,
-            error: Some(format!("Compression failed: {}", e)),
-        }),
-    }
+    Ok(outcome.summary)
 }

@@ -1,4 +1,13 @@
-use rusqlite::{Connection, OptionalExtension, Result as SqlResult};
+// Quality bounds ([1,100] after clamping) and averaged durations/ratios are cast
+// between integer widths and f64; every flagged path is bounded (quality range,
+// wall-clock ms, file sizes). Scoped deviation — see docs/conventions.md.
+#![allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
+
+use rusqlite::{Connection, OptionalExtension};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
@@ -21,11 +30,11 @@ impl DatabaseManager {
         let app_data = app
             .path()
             .app_data_dir()
-            .map_err(|e| format!("Failed to get app data directory: {}", e))?;
+            .map_err(|e| format!("Failed to get app data directory: {e}"))?;
 
         // Create the directory if it does not exist
         std::fs::create_dir_all(&app_data)
-            .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+            .map_err(|e| format!("Failed to create app data directory: {e}"))?;
 
         // Full path to the database
         let db_path = app_data.join("compression_stats.db");
@@ -38,10 +47,13 @@ impl DatabaseManager {
 
     /// Opens the database connection
     pub fn connect(&self) -> Result<(), String> {
-        let conn = Connection::open(&self.db_path)
-            .map_err(|e| format!("Failed to open database: {}", e))?;
+        let conn =
+            Connection::open(&self.db_path).map_err(|e| format!("Failed to open database: {e}"))?;
 
-        let mut connection_guard = self.connection.lock().unwrap();
+        let mut connection_guard = self
+            .connection
+            .lock()
+            .map_err(|e| format!("Database lock poisoned: {e}"))?;
         *connection_guard = Some(conn);
 
         Ok(())
@@ -50,11 +62,14 @@ impl DatabaseManager {
     /// Runs a query using the connection
     pub fn with_connection<F, R>(&self, f: F) -> Result<R, String>
     where
-        F: FnOnce(&Connection) -> SqlResult<R>,
+        F: FnOnce(&Connection) -> rusqlite::Result<R>,
     {
-        let connection_guard = self.connection.lock().unwrap();
+        let connection_guard = self
+            .connection
+            .lock()
+            .map_err(|e| format!("Database lock poisoned: {e}"))?;
         match connection_guard.as_ref() {
-            Some(conn) => f(conn).map_err(|e| format!("Database query failed: {}", e)),
+            Some(conn) => f(conn).map_err(|e| format!("Database query failed: {e}")),
             None => Err("Database not connected".to_string()),
         }
     }
@@ -68,8 +83,8 @@ impl DatabaseManager {
     ) -> Result<EstimationResult, String> {
         self.with_connection(|conn| {
             let quality_range = 10i32;
-            let min_quality = (query.quality_setting as i32 - quality_range).max(1) as u8;
-            let max_quality = (query.quality_setting as i32 + quality_range).min(100) as u8;
+            let min_quality = (i32::from(query.quality_setting) - quality_range).max(1) as u8;
+            let max_quality = (i32::from(query.quality_setting) + quality_range).min(100) as u8;
 
             let mut stmt = conn.prepare(
                 "SELECT
@@ -175,13 +190,16 @@ impl DatabaseManager {
     /// Seeds the database with realistic baseline statistics if it is empty.
     /// Values are based on benchmarks on Apple Silicon / modern x86 hardware at quality=80.
     /// These are replaced over time by real user data as compressions accumulate.
+    // The length comes entirely from the inline baseline-stats table below, which
+    // reads better as one block than split across helpers.
+    #[allow(clippy::too_many_lines)]
     pub fn seed_stats_if_empty(&self) -> Result<usize, String> {
+        use crate::domain::compression::stats::{CompressionStat, get_size_range};
+
         let count = self.count_compression_stats()?;
         if count > 0 {
             return Ok(0);
         }
-
-        use crate::domain::compression::stats::{CompressionStat, get_size_range};
 
         // (input, output, original_bytes, compressed_bytes, quality, pixel_count, time_ms)
         let entries: &[(&str, &str, u64, u64, u8, u64, u64)] = &[
@@ -291,14 +309,11 @@ impl DatabaseManager {
             };
             match self.save_compression_stat(&stat) {
                 Ok(_) => inserted += 1,
-                Err(e) => log::warn!("Seed insert failed: {}", e),
+                Err(e) => log::warn!("Seed insert failed: {e}"),
             }
         }
 
-        log::info!(
-            "Database seeded with {} baseline compression stats",
-            inserted
-        );
+        log::info!("Database seeded with {inserted} baseline compression stats");
         Ok(inserted)
     }
 

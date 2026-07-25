@@ -1,27 +1,25 @@
+use crate::commands::CommandError;
 use crate::database::{DatabaseManager, migrations};
-use tauri::AppHandle;
+use tauri::State;
 
-/// Initializes the database at application startup
+/// Runs the schema migrations and baseline seed on the shared connection
+/// (already opened in `setup`). Called once by the frontend at startup.
 #[tauri::command]
-pub async fn init_database(app: AppHandle) -> Result<String, String> {
+pub async fn init_database(db: State<'_, DatabaseManager>) -> Result<String, CommandError> {
     log::info!("Initializing database...");
 
-    let db_manager = DatabaseManager::new(&app)?;
-    db_manager.connect()?;
-    db_manager.with_connection(migrations::initialize_database)?;
+    db.with_connection(migrations::initialize_database)
+        .map_err(CommandError::internal)?;
 
-    let seeded = db_manager.seed_stats_if_empty()?;
-    let stats_count = db_manager.count_compression_stats().unwrap_or(0);
+    let seeded = db.seed_stats_if_empty().map_err(CommandError::internal)?;
+    let stats_count = db.count_compression_stats().unwrap_or(0);
 
     let message = if seeded > 0 {
-        format!(
-            "Database initialized and seeded with {} baseline stats",
-            seeded
-        )
+        format!("Database initialized and seeded with {seeded} baseline stats")
     } else {
-        format!("Database initialized ({} compression stats)", stats_count)
+        format!("Database initialized ({stats_count} compression stats)")
     };
 
-    log::info!("{}", message);
+    log::info!("{message}");
     Ok(message)
 }
