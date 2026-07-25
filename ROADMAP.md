@@ -41,9 +41,6 @@ The current version lives in `package.json` — the single source of truth, prop
 
 - [ ] Recalibrate progress timing edge cases — JPEG compression and very small PNGs are
       mis-estimated; revise the static fallback timings against real measurements
-- [ ] Feed `pixel_count` into duration lookups. `compress_image` records it, but
-      `get_progress_estimation` passes `None` (`commands/stats.rs`), so the DB still matches on
-      size range alone — the accuracy ADR-0005 justifies is not yet effective
 - [ ] Reconcile the two fallback estimates: `size-prediction/service.ts` keys off format pairs,
       `commands/stats.rs` off file size. Two answers to the same question
 
