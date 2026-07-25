@@ -19,10 +19,15 @@
       }
     ],
     "security": {
-      "csp": null,
+      "csp": {
+        "default-src": "'self'",
+        "img-src": "'self' asset: http://asset.localhost data:",
+        "style-src": "'self' 'unsafe-inline'",
+        "connect-src": "'self' ipc: http://ipc.localhost"
+      },
       "assetProtocol": {
         "enable": true,
-        "scope": ["**"]
+        "scope": ["$HOME/**/*", "$TEMP/**/*", "/Volumes/**/*", "/media/**/*", "/mnt/**/*"]
       }
     }
   },
