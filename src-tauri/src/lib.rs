@@ -16,8 +16,8 @@ pub mod domain;
 use tauri::Manager;
 
 use commands::{
-    compress_image, get_compression_estimation, get_file_information, get_progress_estimation,
-    init_database, select_image_files,
+    CompressionLimiter, compress_image, get_compression_estimation, get_file_information,
+    get_progress_estimation, init_database, select_image_files,
 };
 use database::DatabaseManager;
 
@@ -35,6 +35,10 @@ pub fn run() {
             let db = DatabaseManager::new(app.handle())?;
             db.connect()?;
             app.manage(db);
+
+            // Shared permit pool bounding parallel compressions (see
+            // CompressionLimiter). One pool for the whole app.
+            app.manage(CompressionLimiter::new());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

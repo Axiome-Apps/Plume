@@ -46,6 +46,15 @@ function requireImage(index = 0): ImageType {
   return image;
 }
 
+/** A promise whose resolution we drive by hand, to interleave IPC calls. */
+function makeDeferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(r => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
+
 function makeImage(overrides: Partial<ImageType> = {}): ImageType {
   return {
     id: 'img-1',
@@ -344,6 +353,91 @@ describe('startCompression guards', () => {
     await useImageStore.getState().startCompression();
 
     expect(useImageStore.getState().compressionState).toBe('idle');
+    expect(useImageStore.getState().isProcessing).toBe(false);
+  });
+});
+
+describe('startCompression batch', () => {
+  const summary = {
+    original_size: 1000,
+    compressed_size: 400,
+    savings_percent: 60,
+    output_path: '/tmp/out.webp',
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    getProgressEstimationMock.mockReset();
+    getProgressEstimationMock.mockResolvedValue({
+      estimated_duration_ms: 500,
+      confidence: 0.9,
+      sample_count: 10,
+    });
+    tauriCompressImageMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('fires every pending image concurrently, not one after another', async () => {
+    // Each compression hangs until we resolve it by hand. Sequential code would
+    // await the first before calling the second; concurrent code calls all three
+    // before any resolves.
+    const deferreds = [
+      makeDeferred<typeof summary>(),
+      makeDeferred<typeof summary>(),
+      makeDeferred<typeof summary>(),
+    ];
+    let call = 0;
+    tauriCompressImageMock.mockImplementation(() => deferreds[call++]!.promise);
+
+    useImageStore.setState({
+      images: [
+        makeImage({ id: 'a', path: '/tmp/a.png' }),
+        makeImage({ id: 'b', path: '/tmp/b.png' }),
+        makeImage({ id: 'c', path: '/tmp/c.png' }),
+      ],
+    });
+
+    const run = useImageStore.getState().startCompression();
+    // Flush the estimation awaits so every image reaches its IPC call.
+    await vi.advanceTimersByTimeAsync(10);
+
+    expect(tauriCompressImageMock).toHaveBeenCalledTimes(3);
+
+    deferreds.forEach(d => d.resolve(summary));
+    await vi.advanceTimersByTimeAsync(1000);
+    await run;
+
+    expect(requireImage(0).status).toBe('completed');
+    expect(requireImage(1).status).toBe('completed');
+    expect(requireImage(2).status).toBe('completed');
+    expect(useImageStore.getState().compressionState).toBe('completed');
+    expect(useImageStore.getState().isProcessing).toBe(false);
+  });
+
+  it('completes the batch even when one image fails, leaving the others done', async () => {
+    tauriCompressImageMock
+      .mockResolvedValueOnce(summary)
+      .mockRejectedValueOnce(new Error('codec failure'))
+      .mockResolvedValueOnce(summary);
+
+    useImageStore.setState({
+      images: [
+        makeImage({ id: 'a', path: '/tmp/a.png' }),
+        makeImage({ id: 'b', path: '/tmp/b.png' }),
+        makeImage({ id: 'c', path: '/tmp/c.png' }),
+      ],
+    });
+
+    const run = useImageStore.getState().startCompression();
+    await vi.advanceTimersByTimeAsync(1000);
+    await run;
+
+    const statuses = useImageStore.getState().images.map(img => img.status);
+    expect(statuses).toContain('error');
+    expect(statuses.filter(s => s === 'completed')).toHaveLength(2);
     expect(useImageStore.getState().isProcessing).toBe(false);
   });
 });

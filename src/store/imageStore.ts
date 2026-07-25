@@ -329,9 +329,13 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     set({ isProcessing: true, compressionState: 'processing' });
 
     try {
-      for (const image of pendingImages) {
-        await runImageCompression(image, compressionSettings, set, get);
-      }
+      // Fire every image at once; the backend Semaphore (CompressionLimiter)
+      // bounds how many actually run in parallel. Each image keeps its own
+      // progress manager and completion signal, so rows complete independently.
+      // runImageCompression handles its own errors, so no run rejects the batch.
+      await Promise.all(
+        pendingImages.map(image => runImageCompression(image, compressionSettings, set, get))
+      );
 
       set({ compressionState: 'completed' });
     } finally {

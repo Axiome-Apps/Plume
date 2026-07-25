@@ -37,6 +37,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-dialog = "2"
 
+# Async concurrency — Semaphore bounding how many compressions run at once
+tokio = { version = "1", features = ["sync"] }
+
 # Image compression
 oxipng = "9.1"
 image = "0.25"
