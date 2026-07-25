@@ -55,6 +55,10 @@
       "gained": "{{unit}} gagnés"
     },
     "imagesCount": "Images · {{count}}",
+    "progress": {
+      "label": "Progression du lot",
+      "count": "{{done}} / {{total}}"
+    },
     "dropHintBefore": "Glisser des images ici · ou ",
     "dropHintAction": "parcourir"
   },

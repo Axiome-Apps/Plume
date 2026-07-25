@@ -4,6 +4,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { revealInFolder, selectImageFiles } from '@/lib/tauri';
 import ImageRow from '../molecules/ImageRow';
 import BatchKpiCard from './BatchKpiCard';
+import { BatchProgress } from './BatchProgress';
 import SettingsPanel from './SettingsPanel';
 import { CompressionSuccess } from './CompressionSuccess';
 import Stroke from '@/components/brand/Stroke';
@@ -34,6 +35,8 @@ const ImageList: React.FC = () => {
         </div>
 
         <BatchKpiCard />
+
+        <BatchProgress />
 
         <div className="bg-surface border border-line rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3 border-b border-line">

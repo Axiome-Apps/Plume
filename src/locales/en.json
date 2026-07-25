@@ -55,6 +55,10 @@
       "gained": "{{unit}} saved"
     },
     "imagesCount": "Images · {{count}}",
+    "progress": {
+      "label": "Batch progress",
+      "count": "{{done}} / {{total}}"
+    },
     "dropHintBefore": "Drop images here · or ",
     "dropHintAction": "browse"
   },

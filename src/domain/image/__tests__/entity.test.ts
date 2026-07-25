@@ -125,26 +125,24 @@ describe('Image', () => {
 
   describe('status guards', () => {
     it('reports exactly one status at a time', () => {
+      const guards = (img: ReturnType<typeof makeImage>) => [
+        Image.isPending(img),
+        Image.isProcessing(img),
+        Image.isCompleted(img),
+        Image.isError(img),
+      ];
+
       const pending = makeImage();
-      expect([
-        Image.isPending(pending),
-        Image.isProcessing(pending),
-        Image.isCompleted(pending),
-      ]).toEqual([true, false, false]);
+      expect(guards(pending)).toEqual([true, false, false, false]);
 
       const processing = Image.toProcessing(pending);
-      expect([
-        Image.isPending(processing),
-        Image.isProcessing(processing),
-        Image.isCompleted(processing),
-      ]).toEqual([false, true, false]);
+      expect(guards(processing)).toEqual([false, true, false, false]);
 
       const completed = Image.toCompleted(processing, 100);
-      expect([
-        Image.isPending(completed),
-        Image.isProcessing(completed),
-        Image.isCompleted(completed),
-      ]).toEqual([false, false, true]);
+      expect(guards(completed)).toEqual([false, false, true, false]);
+
+      const errored = Image.toError(Image.toProcessing(makeImage()));
+      expect(guards(errored)).toEqual([false, false, false, true]);
     });
   });
 });

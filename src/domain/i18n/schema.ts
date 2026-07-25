@@ -61,6 +61,10 @@ export const TranslationKeysSchema = z.object({
       gained: z.string(),
     }),
     imagesCount: z.string(),
+    progress: z.object({
+      label: z.string(),
+      count: z.string(),
+    }),
     dropHintBefore: z.string(),
     dropHintAction: z.string(),
   }),
@@ -143,8 +147,9 @@ export type TranslationKeyType =
   | `header.controls.level.${keyof TranslationKeysType['header']['controls']['level']}`
   | `common.${keyof TranslationKeysType['common']}`
   | `compression.${keyof TranslationKeysType['compression']}`
-  | `batch.${keyof Omit<TranslationKeysType['batch'], 'kpi'>}`
+  | `batch.${keyof Omit<TranslationKeysType['batch'], 'kpi' | 'progress'>}`
   | `batch.kpi.${keyof TranslationKeysType['batch']['kpi']}`
+  | `batch.progress.${keyof TranslationKeysType['batch']['progress']}`
   | 'batch.pendingTagline'
   | `settings.${keyof TranslationKeysType['settings']}`
   | 'settings.cta'

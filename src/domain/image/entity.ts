@@ -13,6 +13,7 @@ export const Image = {
   isPending: (img: Image): boolean => img.status === 'pending',
   isProcessing: (img: Image): boolean => img.status === 'processing',
   isCompleted: (img: Image): boolean => img.status === 'completed',
+  isError: (img: Image): boolean => img.status === 'error',
 
   /**
    * Size to show for the row: the real compressed size once known, otherwise the
