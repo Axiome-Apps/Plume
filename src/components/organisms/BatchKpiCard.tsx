@@ -28,7 +28,14 @@ const BatchKpiCard: FC = () => {
           </span>
         </div>
 
-        <div className="mt-4 h-1.5 bg-white/20 rounded-full overflow-hidden">
+        <div
+          role="progressbar"
+          aria-label={eyebrow}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.min(percent, 100)}
+          className="mt-4 h-1.5 bg-white/20 rounded-full overflow-hidden"
+        >
           <div
             className="h-full bg-white rounded-full transition-all duration-300 ease-out"
             style={{ width: `${Math.min(percent, 100)}%` }}

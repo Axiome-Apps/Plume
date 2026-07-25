@@ -1,5 +1,6 @@
 import { StatusBadge } from '@/components/atoms/StatusBadge';
-import type { ImageStatus } from '@/domain/image';
+import { cn } from '@/lib/cn';
+import type { ImageStatus } from '@/domain/image/schema';
 
 interface ImagePreviewProps {
   imageUrl?: string;
@@ -9,7 +10,7 @@ interface ImagePreviewProps {
 
 export function ImagePreview({ imageUrl, status, className }: ImagePreviewProps) {
   return (
-    <div className={`relative aspect-square shrink-0 ${className}`}>
+    <div className={cn('relative aspect-square shrink-0', className)}>
       <div className="w-full h-full bg-surface-2 rounded-md overflow-hidden">
         {imageUrl ? (
           <img src={imageUrl} alt="" className="w-full h-full object-cover" />

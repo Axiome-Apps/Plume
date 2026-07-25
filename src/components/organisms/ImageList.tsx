@@ -3,10 +3,10 @@ import { useImageStore } from '@/store/imageStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { revealInFolder, selectImageFiles } from '@/lib/tauri';
 import ImageRow from '../molecules/ImageRow';
-import BatchKpiCard from '../molecules/BatchKpiCard';
-import SettingsPanel from '../molecules/SettingsPanel';
-import { CompressionSuccess } from '../molecules';
-import { Stroke } from '../brand';
+import BatchKpiCard from './BatchKpiCard';
+import SettingsPanel from './SettingsPanel';
+import { CompressionSuccess } from './CompressionSuccess';
+import Stroke from '@/components/brand/Stroke';
 
 const ImageList: React.FC = () => {
   const { t } = useTranslation();

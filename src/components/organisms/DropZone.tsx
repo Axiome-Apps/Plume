@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 import Button from '../atoms/Button';
-import { UploadIcon } from '../icons';
-import { SUPPORTED_FORMATS_DISPLAY } from '../../domain/constants';
-import { selectImageFiles } from '../../lib/tauri';
+import { UploadIcon } from '@/components/icons/UploadIcon';
+import { SUPPORTED_FORMATS_DISPLAY } from '@/domain/constants';
+import { selectImageFiles } from '@/lib/tauri';
 import { useImageStore } from '@/store/imageStore';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -26,7 +26,7 @@ const DropZone: React.FC = () => {
       className="border border-dashed border-line-2 rounded-xl p-12 sm:p-16 text-center bg-surface
         transition-colors hover:border-primary-light"
     >
-      <UploadIcon size={40} className="text-primary-light mx-auto mb-5" />
+      <UploadIcon size={40} className="text-primary-light mx-auto mb-5" aria-hidden />
 
       <h3 className="heading text-fg mb-1">{t('compression.selectFiles')}</h3>
       <p className="caption text-fg-3 mb-6">
@@ -34,7 +34,7 @@ const DropZone: React.FC = () => {
       </p>
 
       <Button onClick={handleFilesSelected} size="lg">
-        <UploadIcon size={18} />
+        <UploadIcon size={18} aria-hidden />
         {t('common.browse')}
       </Button>
     </div>

@@ -1,9 +1,12 @@
 import { FC, useCallback } from 'react';
-import { Button, LanguageSelector } from '../atoms';
-import { LogoPlume, Stroke } from '../brand';
-import { UploadIcon } from '../icons';
+import Button from '@/components/atoms/Button';
+import { LanguageSelector } from '@/components/atoms/LanguageSelector';
+import LogoPlume from '@/components/brand/LogoPlume';
+import Stroke from '@/components/brand/Stroke';
+import { UploadIcon } from '@/components/icons/UploadIcon';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useImageStore } from '@/store/imageStore';
+import { Image } from '@/domain/image/entity';
 import { selectImageFiles } from '@/lib/tauri';
 
 const PlumeHeader: FC = () => {
@@ -11,7 +14,7 @@ const PlumeHeader: FC = () => {
   const images = useImageStore(s => s.images);
   const handleExternalDrop = useImageStore(s => s.handleExternalDrop);
 
-  const pending = images.filter(i => i.isPending()).length;
+  const pending = images.filter(i => Image.isPending(i)).length;
 
   const browse = useCallback(async () => {
     try {
@@ -43,7 +46,7 @@ const PlumeHeader: FC = () => {
       <div className="flex items-center gap-2 shrink-0">
         <LanguageSelector />
         <Button variant="ghost" onClick={browse}>
-          <UploadIcon size={16} />
+          <UploadIcon size={16} aria-hidden />
           {t('common.import')}
         </Button>
       </div>

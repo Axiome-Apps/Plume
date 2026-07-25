@@ -1,16 +1,19 @@
 import React from 'react';
 import { Toaster } from 'sonner';
 import PlumeHeader from '../organisms/PlumeHeader';
-import { SuccessFilledIcon, ErrorFilledIcon, InfoFilledIcon } from '../icons';
+import { SuccessFilledIcon } from '@/components/icons/SuccessFilledIcon';
+import { ErrorFilledIcon } from '@/components/icons/ErrorFilledIcon';
+import { InfoFilledIcon } from '@/components/icons/InfoFilledIcon';
+import { cn } from '@/lib/cn';
 
 interface AppLayoutProps {
   children: React.ReactNode;
   className?: string;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children, className = '' }) => {
+const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => {
   return (
-    <div className={`min-h-screen bg-bg text-fg ${className}`}>
+    <div className={cn('min-h-screen bg-bg text-fg', className)}>
       <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-6 sm:py-8">
         <PlumeHeader />
         <main>{children}</main>

@@ -1,26 +1,24 @@
 import { FC } from 'react';
-import { ImageEntity } from '@/domain/image/entity';
+import { Image } from '@/domain/image/entity';
 import { ImagePreview } from './ImagePreview';
 import { ImageActions } from './ImageActions';
-import { ProgressBar } from '../atoms';
+import { ProgressBar } from '@/components/atoms/ProgressBar';
 import { formatBytes } from '@/lib/format';
 
 interface ImageRowProps {
-  image: ImageEntity;
+  image: Image;
   onCompress?: () => void;
   onRemove?: () => void;
   onRevealInFolder?: () => void;
 }
 
 const ImageRow: FC<ImageRowProps> = ({ image, onCompress, onRemove, onRevealInFolder }) => {
-  const meta = `${image.format.toUpperCase()} · ${formatBytes(image.originalSize)}`;
+  const meta = `${image.format} · ${formatBytes(image.originalSize)}`;
   const savingsPct = image.estimatedCompression?.percent;
-  const finalSize =
-    image.compressedSize !== undefined
-      ? formatBytes(image.compressedSize)
-      : savingsPct !== undefined
-        ? `~${formatBytes(image.originalSize * (1 - savingsPct / 100))}`
-        : null;
+  const displaySize = Image.displaySize(image);
+  const finalSize = displaySize
+    ? `${displaySize.estimated ? '~' : ''}${formatBytes(displaySize.bytes)}`
+    : null;
   const completedSavings = image.savings;
 
   return (

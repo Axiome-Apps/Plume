@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import { cn } from '@/lib/cn';
 
 interface LogoPlumeProps {
   size?: number;
@@ -17,9 +18,8 @@ const LogoPlume: FC<LogoPlumeProps> = ({
       width={size}
       height={size}
       viewBox="0 0 64 64"
-      className={className}
+      className={cn('block', className)}
       aria-hidden="true"
-      style={{ display: 'block' }}
     >
       <path
         d="M 14 56 L 46 14"

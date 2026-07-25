@@ -68,6 +68,12 @@
   --radius-lg: 12px;
   --radius-xl: 14px;
   --radius-pill: 999px;
+  --radius-control: 10px;
+
+  /* Control typography — buttons and segmented control, named once. */
+  --text-control-sm: 12.5px;
+  --text-control-md: 13.5px;
+  --text-control-lg: 14px;
 
   /* Shadows */
   --shadow-glow:

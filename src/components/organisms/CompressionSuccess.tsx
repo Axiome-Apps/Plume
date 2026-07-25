@@ -1,8 +1,9 @@
 import { FC } from 'react';
 import Button from '../atoms/Button';
 import Stroke from '../brand/Stroke';
-import { TrashIcon } from '../icons';
+import { TrashIcon } from '@/components/icons/TrashIcon';
 import { useImageStore } from '@/store/imageStore';
+import { Image } from '@/domain/image/entity';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export const CompressionSuccess: FC = () => {
@@ -10,8 +11,8 @@ export const CompressionSuccess: FC = () => {
   const isProcessing = useImageStore(state => state.isProcessing);
   const clearImages = useImageStore(state => state.clearImages);
 
-  const pendingImages = images.filter(img => img.isPending());
-  const completedImages = images.filter(img => img.isCompleted());
+  const pendingImages = images.filter(img => Image.isPending(img));
+  const completedImages = images.filter(img => Image.isCompleted(img));
   const { t } = useTranslation();
   const shouldShow = pendingImages.length === 0 && !isProcessing && completedImages.length > 0;
   if (!shouldShow) return null;

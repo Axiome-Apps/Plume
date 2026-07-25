@@ -1,4 +1,5 @@
-import { FC, ReactNode, useCallback, useRef, useState } from 'react';
+import { FC, ReactNode, useCallback, useId, useRef, useState } from 'react';
+import { cn } from '@/lib/cn';
 
 interface TooltipProps {
   title: string;
@@ -14,7 +15,8 @@ interface TooltipStyle {
   maxWidth?: number;
 }
 
-export const Tooltip: FC<TooltipProps> = ({ title, children, className = '' }) => {
+export const Tooltip: FC<TooltipProps> = ({ title, children, className }) => {
+  const tooltipId = useId();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<TooltipStyle>({ left: '50%', transform: 'translateX(-50%)' });
   const [arrowOffset, setArrowOffset] = useState('50%');
@@ -52,14 +54,27 @@ export const Tooltip: FC<TooltipProps> = ({ title, children, className = '' }) =
   }, []);
 
   return (
-    <div className="relative group" onMouseEnter={recalculate}>
-      <div className="w-5 h-5 rounded-full bg-surface-2 flex items-center justify-center text-white text-xs font-bold cursor-help shrink-0">
+    <div className="relative group" onMouseEnter={recalculate} onFocusCapture={recalculate}>
+      <button
+        type="button"
+        aria-label={title}
+        aria-describedby={tooltipId}
+        onKeyDown={e => {
+          if (e.key === 'Escape') e.currentTarget.blur();
+        }}
+        className="w-5 h-5 rounded-full bg-surface-2 flex items-center justify-center text-white text-xs font-bold cursor-help shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-deep focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+      >
         ?
-      </div>
+      </button>
       <div
         ref={tooltipRef}
+        id={tooltipId}
+        role="tooltip"
         style={{ left: style.left, transform: style.transform, maxWidth: style.maxWidth }}
-        className={`absolute bottom-full mb-2 bg-surface-2 shadow-lift text-white text-xs rounded-lg px-3 py-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-10 w-max ${className}`}
+        className={cn(
+          'absolute bottom-full mb-2 bg-surface-2 shadow-lift text-white text-xs rounded-lg px-3 py-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-opacity z-10 w-max',
+          className
+        )}
       >
         <div className="text-center">
           <div className="font-semibold mb-1">{title}</div>

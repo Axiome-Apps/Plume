@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/cn';
 
 export type ButtonVariant = 'primary' | 'ghost' | 'link' | 'icon' | 'destructive';
 
@@ -21,9 +22,9 @@ const VARIANT: Record<ButtonVariant, string> = {
 };
 
 const SIZE = {
-  sm: 'h-8 px-3 text-[12.5px] rounded-md',
-  md: 'h-10 px-4 text-[13.5px] rounded-md',
-  lg: 'h-11 px-[18px] text-[14px] rounded-md',
+  sm: 'h-8 px-3 text-control-sm rounded-md',
+  md: 'h-10 px-4 text-control-md rounded-md',
+  lg: 'h-11 px-[18px] text-control-lg rounded-md',
 };
 
 const ICON_SIZE = {
@@ -41,10 +42,9 @@ const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const sizeClass = variant === 'icon' ? ICON_SIZE[size] : SIZE[size];
-  const widthClass = fullWidth ? 'w-full' : '';
   return (
     <button
-      className={`${BASE} ${VARIANT[variant]} ${sizeClass} ${widthClass} ${className}`}
+      className={cn(BASE, VARIANT[variant], sizeClass, fullWidth && 'w-full', className)}
       {...props}
     >
       {children}

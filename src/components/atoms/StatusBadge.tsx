@@ -1,4 +1,6 @@
-import type { ImageStatus } from '@/domain/image';
+import { cn } from '@/lib/cn';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { ImageStatus } from '@/domain/image/schema';
 
 interface StatusBadgeProps {
   status: ImageStatus;
@@ -13,5 +15,12 @@ const STATUS_COLORS: Record<ImageStatus, string> = {
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  return <div className={`w-2.5 h-2.5 rounded-full ${STATUS_COLORS[status]} ${className ?? ''}`} />;
+  const { t } = useTranslation();
+  return (
+    <div
+      role="img"
+      aria-label={t(`compression.${status}`)}
+      className={cn('w-2.5 h-2.5 rounded-full', STATUS_COLORS[status], className)}
+    />
+  );
 }

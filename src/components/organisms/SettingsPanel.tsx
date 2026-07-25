@@ -1,8 +1,12 @@
 import { FC, ReactNode, useMemo } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useImageStore } from '@/store/imageStore';
-import { Button, SegmentedControl, Tooltip } from '../atoms';
-import { LogoPlume, Stroke } from '../brand';
+import { Image } from '@/domain/image/entity';
+import Button from '@/components/atoms/Button';
+import { SegmentedControl } from '@/components/atoms/SegmentedControl';
+import { Tooltip } from '@/components/atoms/Tooltip';
+import LogoPlume from '@/components/brand/LogoPlume';
+import Stroke from '@/components/brand/Stroke';
 import type { CompressionLevelType, OutputFormatType } from '@/domain/compression/schema';
 
 const SettingsPanel: FC = () => {
@@ -14,22 +18,28 @@ const SettingsPanel: FC = () => {
   const setCompressionLevel = useImageStore(s => s.setCompressionLevel);
   const startCompression = useImageStore(s => s.startCompression);
 
-  const pending = useMemo(() => images.filter(i => i.isPending()), [images]);
+  const pending = useMemo(() => images.filter(i => Image.isPending(i)), [images]);
   const isPngOutput = compressionSettings.outputFormat === 'png';
-  const hasHEIC = useMemo(() => images.some(img => img.format.toUpperCase() === 'HEIC'), [images]);
+  const hasHEIC = useMemo(() => images.some(img => img.format === 'HEIC'), [images]);
 
-  const formatOptions: { value: OutputFormatType; label: string }[] = [
-    { value: 'keep', label: t('header.controls.format.keep') },
-    { value: 'webp', label: 'WebP' },
-    { value: 'jpeg', label: 'JPEG' },
-    { value: 'png', label: 'PNG' },
-  ];
+  const formatOptions: { value: OutputFormatType; label: string }[] = useMemo(
+    () => [
+      { value: 'keep', label: t('header.controls.format.keep') },
+      { value: 'webp', label: 'WebP' },
+      { value: 'jpeg', label: 'JPEG' },
+      { value: 'png', label: 'PNG' },
+    ],
+    [t]
+  );
 
-  const levelOptions: { value: CompressionLevelType; label: string }[] = [
-    { value: 'light', label: t('header.controls.level.light') },
-    { value: 'balanced', label: t('header.controls.level.balanced') },
-    { value: 'aggressive', label: t('header.controls.level.aggressive') },
-  ];
+  const levelOptions: { value: CompressionLevelType; label: string }[] = useMemo(
+    () => [
+      { value: 'light', label: t('header.controls.level.light') },
+      { value: 'balanced', label: t('header.controls.level.balanced') },
+      { value: 'aggressive', label: t('header.controls.level.aggressive') },
+    ],
+    [t]
+  );
 
   const ctaLabel = isProcessing
     ? t('header.compression.active')
@@ -50,6 +60,7 @@ const SettingsPanel: FC = () => {
             onChange={setOutputFormat}
             disabled={isProcessing}
             fullWidth
+            ariaLabel={t('settings.format')}
           />
         </Row>
 
@@ -71,6 +82,7 @@ const SettingsPanel: FC = () => {
             onChange={setCompressionLevel}
             disabled={isProcessing || isPngOutput}
             fullWidth
+            ariaLabel={t('settings.intensity')}
           />
         </Row>
       </section>
