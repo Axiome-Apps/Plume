@@ -149,7 +149,7 @@ describe('getProgressEstimation', () => {
   it('parses the estimated duration', async () => {
     backendReturns({ estimated_duration_ms: 1200, confidence: 0.8, sample_count: 42 });
 
-    await expect(getProgressEstimation('png', 'webp', 2048)).resolves.toEqual({
+    await expect(getProgressEstimation('png', 'webp', 2048, '/tmp/photo.png')).resolves.toEqual({
       estimated_duration_ms: 1200,
       confidence: 0.8,
       sample_count: 42,
@@ -157,21 +157,27 @@ describe('getProgressEstimation', () => {
   });
 
   // Field names inside a struct are not renamed by serde, so the request body
-  // stays snake_case even though the argument holding it is camelCase.
-  it('sends a snake_case request body', async () => {
+  // stays snake_case even though the argument holding it is camelCase. The
+  // backend derives pixel_count from file_path itself.
+  it('sends a snake_case request body carrying the file path', async () => {
     backendReturns({ estimated_duration_ms: 0, confidence: 0, sample_count: 0 });
 
-    await getProgressEstimation('png', 'webp', 2048);
+    await getProgressEstimation('png', 'webp', 2048, '/tmp/photo.png');
 
     expect(invokeMock).toHaveBeenCalledWith('get_progress_estimation', {
-      request: { input_format: 'png', output_format: 'webp', original_size: 2048 },
+      request: {
+        input_format: 'png',
+        output_format: 'webp',
+        original_size: 2048,
+        file_path: '/tmp/photo.png',
+      },
     });
   });
 
   it('rejects a confidence outside 0..1', async () => {
     backendReturns({ estimated_duration_ms: 1200, confidence: 1.5, sample_count: 42 });
 
-    await expect(getProgressEstimation('png', 'webp', 2048)).rejects.toThrow();
+    await expect(getProgressEstimation('png', 'webp', 2048, '/tmp/photo.png')).rejects.toThrow();
   });
 });
 

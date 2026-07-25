@@ -26,5 +26,5 @@ pub use pipeline::{CompressionOutcome, CompressionSummary, run_compression};
 // Statistics types and functions
 pub use stats::{
     CompressionStat, EstimationQuery, EstimationResult, calculate_confidence, estimate_compression,
-    get_size_range,
+    get_size_range, pixel_count_from_path,
 };

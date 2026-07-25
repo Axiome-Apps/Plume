@@ -79,9 +79,7 @@ export async function revealInFolder(filePath: string): Promise<void> {
  * domain event and never import `@tauri-apps/api` themselves. Returns the
  * unlisten function.
  */
-export async function onDragDrop(
-  handler: (event: DragDropEvent) => void
-): Promise<() => void> {
+export async function onDragDrop(handler: (event: DragDropEvent) => void): Promise<() => void> {
   const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow');
   return getCurrentWebviewWindow().onDragDropEvent(rawEvent => {
     let event: DragDropEvent;
@@ -108,7 +106,8 @@ export async function compressImage(
 export async function getProgressEstimation(
   inputFormat: string,
   outputFormat: string,
-  originalSize: number
+  originalSize: number,
+  filePath: string
 ): Promise<ProgressEstimationType> {
   return ProgressEstimationSchema.parse(
     await invokeCommand('get_progress_estimation', {
@@ -116,6 +115,7 @@ export async function getProgressEstimation(
         input_format: inputFormat,
         output_format: outputFormat,
         original_size: originalSize,
+        file_path: filePath,
       },
     })
   );
@@ -124,5 +124,7 @@ export async function getProgressEstimation(
 export async function getCompressionEstimation(
   request: EstimationQueryType
 ): Promise<EstimationResultType> {
-  return EstimationResultSchema.parse(await invokeCommand('get_compression_estimation', { request }));
+  return EstimationResultSchema.parse(
+    await invokeCommand('get_compression_estimation', { request })
+  );
 }

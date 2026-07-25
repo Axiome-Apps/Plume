@@ -12,7 +12,9 @@ use crate::domain::compression::error::CompressionError;
 use crate::domain::compression::formats::OutputFormat;
 use crate::domain::compression::naming::{CompressionLevel, resolve_output_path};
 use crate::domain::compression::settings::{CompressionSettings, DEFAULT_QUALITY};
-use crate::domain::compression::stats::{CompressionStat, create_stat_with_time};
+use crate::domain::compression::stats::{
+    CompressionStat, create_stat_with_time, pixel_count_from_path,
+};
 use crate::domain::file::{FileMetadata, validate_safe_path};
 
 /// Summary of a successful compression, mirrored by the frontend schema.
@@ -54,9 +56,7 @@ pub fn run_compression(
     validate_safe_path(&output_path)
         .map_err(|e| CompressionError::ProcessingError(format!("Invalid output path: {e}")))?;
 
-    let pixel_count = image::image_dimensions(file_path)
-        .map(|(w, h)| u64::from(w) * u64::from(h))
-        .ok();
+    let pixel_count = pixel_count_from_path(file_path);
 
     let started = Instant::now();
     let output = compress_file_to_file(file_path, output_path.as_path(), &settings)?;

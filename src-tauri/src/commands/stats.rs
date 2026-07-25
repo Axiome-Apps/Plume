@@ -9,7 +9,8 @@
 
 use crate::commands::CommandError;
 use crate::database::DatabaseManager;
-use crate::domain::{EstimationQuery, EstimationResult};
+use crate::domain::compression::pixel_count_from_path;
+use crate::domain::{EstimationQuery, EstimationResult, validate_safe_path};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -44,6 +45,7 @@ pub struct ProgressEstimationRequest {
     pub input_format: String,
     pub output_format: String,
     pub original_size: u64,
+    pub file_path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -58,12 +60,23 @@ pub async fn get_progress_estimation(
     request: ProgressEstimationRequest,
     db: State<'_, DatabaseManager>,
 ) -> Result<ProgressEstimationResult, CommandError> {
+    // Derive pixel_count on the backend from the file itself — the frontend
+    // never computes or carries dimensions. Reading the header stays within the
+    // filesystem allow-list; on any issue we fall back to size-range matching.
+    let pixel_count = match validate_safe_path(&request.file_path) {
+        Ok(()) => pixel_count_from_path(&request.file_path),
+        Err(error) => {
+            log::warn!("progress estimation: rejecting path for pixel_count: {error}");
+            None
+        }
+    };
+
     if let Some((avg_ms, count)) = db
         .get_time_estimation(
             &request.input_format,
             &request.output_format,
             request.original_size,
-            None, // pixel_count not available from frontend yet — DB matches by size_range fallback
+            pixel_count,
         )
         .map_err(CommandError::internal)?
     {

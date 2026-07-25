@@ -5,6 +5,7 @@
 use crate::domain::compression::formats::OutputFormat;
 use crate::domain::compression::settings::CompressionSettings;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompressionStat {
@@ -37,6 +38,15 @@ pub struct EstimationResult {
     pub ratio: f64,
     pub confidence: f64,
     pub sample_count: u32,
+}
+
+/// Total pixels (width × height) of an image, read from its header without
+/// decoding the whole file. Returns `None` when the dimensions cannot be read,
+/// so callers fall back to size-range matching rather than failing.
+pub fn pixel_count_from_path<P: AsRef<Path>>(path: P) -> Option<u64> {
+    image::image_dimensions(path)
+        .map(|(width, height)| u64::from(width) * u64::from(height))
+        .ok()
 }
 
 pub fn get_size_range(size_bytes: u64) -> String {
@@ -174,6 +184,13 @@ pub fn create_stat_with_time(
 #[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_pixel_count_from_path_returns_none_for_non_image() {
+        // A path that is not a readable image yields None so the estimation
+        // falls back to size-range matching rather than failing.
+        assert_eq!(pixel_count_from_path("/nonexistent/not_an_image.txt"), None);
+    }
 
     #[test]
     fn test_size_range_boundaries() {

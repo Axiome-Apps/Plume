@@ -95,7 +95,8 @@ async function runImageCompression(
       const estimation = await getProgressEstimation(
         image.format.toLowerCase(),
         outputFmt,
-        image.originalSize
+        image.originalSize,
+        image.path
       );
       estimatedDurationMs = estimation.estimated_duration_ms;
     } catch (error) {
