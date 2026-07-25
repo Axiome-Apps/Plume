@@ -34,7 +34,6 @@ TODO.md
 
 # Tauri build outputs
 src-tauri/target/
-src-tauri/Cargo.lock
 
 # Temporary files and caches
 *.tmp

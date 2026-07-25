@@ -43,6 +43,11 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'off', // Allow for Tauri APIs
+      // `type X` + `const X` (declaration merging) is the SSOT idiom for pure
+      // data + helpers. no-redeclare can't tell type space from value space, and
+      // the TypeScript compiler already rejects genuine redeclarations — so the
+      // rule is both redundant and in conflict here.
+      'no-redeclare': 'off',
 
       // React Hooks rules
       ...reactHooks.configs.recommended.rules,

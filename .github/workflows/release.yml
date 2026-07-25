@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version-file: .nvmrc
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -58,7 +58,7 @@ jobs:
             nasm
 
       - name: Install frontend dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       # The tag must match the 4 version files EXACTLY. Last barrier against a tag placed by
       # hand or left out of sync.
@@ -74,11 +74,14 @@ jobs:
       - name: Frontend tests
         run: pnpm test
 
+      # --locked here is the reproducibility barrier for the whole release: the gate must be
+      # green before any binary is built, so a Cargo.lock out of sync with Cargo.toml fails
+      # here and blocks the build matrix (which builds from the same committed lock).
       - name: Clippy (strict)
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --locked -- -D warnings
 
       - name: Rust tests
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
 
   # ── Builds: only after a green gate. ────────────────────────────────────────────────────
   build:
@@ -106,7 +109,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version-file: .nvmrc
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -150,8 +153,12 @@ jobs:
         run: choco install nasm -y
 
       - name: Install frontend dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
+      # The Rust build here goes through tauri-action → `tauri build`, which builds from the
+      # committed Cargo.lock. It has no --locked flag, but the gate job already ran
+      # `cargo {clippy,test} --locked` on the same commit, so a divergent lock never reaches
+      # this matrix.
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:

@@ -21,10 +21,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # Node version is pinned by .nvmrc (single source, read by `nvm use` locally too),
+      # not a floating `lts/*`. engines.node in package.json is the advisory compat floor.
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version-file: .nvmrc
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -35,8 +37,10 @@ jobs:
       - name: Version consistency guard
         run: node scripts/check-version.mjs
 
+      # --frozen-lockfile: CI consumes pnpm-lock.yaml as-is and fails if it diverges from
+      # package.json, never regenerating it silently (reproducibility invariant).
       - name: Install frontend dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm lint

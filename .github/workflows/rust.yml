@@ -59,5 +59,6 @@ jobs:
 
       # Clippy actually compiles the crate → catches build regressions.
       # `cargo test` (assertions) lives in the release gate, not here (basic tier).
+      # --locked: build against the committed Cargo.lock, fail if the manifest diverged.
       - name: Clippy
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --locked -- -D warnings
