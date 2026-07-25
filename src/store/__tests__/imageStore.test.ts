@@ -1,8 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useImageStore } from '../imageStore';
 import { AdaptiveProgressManager } from '@/domain/progress/adaptiveProgress';
 import type { ImageType } from '@/domain/image/schema';
-import { getFileInformation } from '@/lib/tauri';
+import {
+  getFileInformation,
+  compressImage as tauriCompressImage,
+  getProgressEstimation,
+} from '@/lib/tauri';
 import * as SizePrediction from '@/domain/size-prediction/service';
 import { toast } from 'sonner';
 
@@ -29,6 +33,8 @@ vi.mock('sonner', () => ({
 
 const getFileInformationMock = vi.mocked(getFileInformation);
 const getEstimationMock = vi.mocked(SizePrediction.getEstimation);
+const tauriCompressImageMock = vi.mocked(tauriCompressImage);
+const getProgressEstimationMock = vi.mocked(getProgressEstimation);
 
 const FALLBACK_ESTIMATION = { percent: 65, ratio: 0.35, confidence: 0.5, sample_count: 0 };
 
@@ -339,5 +345,76 @@ describe('startCompression guards', () => {
 
     expect(useImageStore.getState().compressionState).toBe('idle');
     expect(useImageStore.getState().isProcessing).toBe(false);
+  });
+});
+
+describe('compressImage', () => {
+  // The adaptive progress manager drives the 85→100 animation with setInterval,
+  // so the run only settles once its timers fire — hence fake timers plus a
+  // resolved IPC mock we can flush past.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    getProgressEstimationMock.mockReset();
+    getProgressEstimationMock.mockResolvedValue({
+      estimated_duration_ms: 500,
+      confidence: 0.9,
+      sample_count: 10,
+    });
+    tauriCompressImageMock.mockReset();
+    tauriCompressImageMock.mockResolvedValue({
+      original_size: 1000,
+      compressed_size: 400,
+      savings_percent: 60,
+      output_path: '/tmp/out.webp',
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('compresses only the targeted image, leaving the other pending images untouched', async () => {
+    useImageStore.setState({
+      images: [
+        makeImage({ id: 'img-1', path: '/tmp/photo1.png' }),
+        makeImage({ id: 'img-2', name: 'photo2.png', path: '/tmp/photo2.png' }),
+      ],
+    });
+
+    const run = useImageStore.getState().compressImage('img-2');
+    // Flush the awaited IPC microtasks and let the completion animation fire.
+    await vi.advanceTimersByTimeAsync(1000);
+    await run;
+
+    // The IPC ran exactly once, for the targeted image only.
+    expect(tauriCompressImageMock).toHaveBeenCalledTimes(1);
+    expect(tauriCompressImageMock).toHaveBeenCalledWith(
+      expect.objectContaining({ file_path: '/tmp/photo2.png' })
+    );
+
+    // The other pending image was never touched; the targeted one completed.
+    expect(requireImage(0).status).toBe('pending');
+    expect(requireImage(1).status).toBe('completed');
+    expect(useImageStore.getState().isProcessing).toBe(false);
+  });
+
+  it('does nothing while a run is already in progress', async () => {
+    useImageStore.setState({ isProcessing: true, images: [makeImage()] });
+
+    await useImageStore.getState().compressImage('img-1');
+
+    expect(tauriCompressImageMock).not.toHaveBeenCalled();
+    expect(requireImage().status).toBe('pending');
+  });
+
+  it('ignores an unknown id or an image that is not pending', async () => {
+    useImageStore.setState({
+      images: [makeImage({ status: 'completed', compressedSize: 400 })],
+    });
+
+    await useImageStore.getState().compressImage('img-1'); // completed, not pending
+    await useImageStore.getState().compressImage('nope'); // unknown
+
+    expect(tauriCompressImageMock).not.toHaveBeenCalled();
   });
 });

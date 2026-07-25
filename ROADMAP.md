@@ -10,10 +10,9 @@ The current version lives in `package.json` — the single source of truth, prop
 
 ## Bugs
 
-- [ ] "Reveal in Finder" does nothing on macOS (`tauri-plugin-opener` / `outputPath` issue)
-- [ ] "Open" buttons (folder icon) are not wired up — connect them or remove them
-- [ ] Quality slider stays active when the output format is PNG, although oxipng is always lossless
-- [ ] `compressImage(imageId)` compresses every pending image instead of the targeted one
+- [ ] Confirm "Reveal in Finder" works at runtime on macOS — the wiring is in place
+      (`revealInFolder` → `revealItemInDir`, `opener:allow-reveal-item-in-dir` capability), so this is
+      a manual verification, not a code fix. Close it once confirmed on a real macOS build
 
 ## Compression profiles
 
@@ -56,10 +55,10 @@ The current version lives in `package.json` — the single source of truth, prop
 
 ### Testing
 
-- [ ] Cover the `startCompression` run itself — the guards and every other store action are tested,
-      but the loop that drives a compression from start to finish is not. It interleaves the
-      progress manager's timers with an awaited IPC call, so it needs fake timers plus a
-      controllable `compressImage` promise
+- [ ] Cover the `startCompression` **batch loop** over several images — the single-image run is now
+      tested through `runImageCompression` (via the `compressImage` tests, fake timers + a resolved
+      IPC mock), but the loop that iterates every pending image and flips the batch to `completed` is
+      still not exercised with more than one image
 - [ ] Cover `size-prediction/service.ts` — its fallback table is the second answer to the question
       `commands/stats.rs` also answers, so a test would pin down what it is supposed to return
 

@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create, type StoreApi } from 'zustand';
 import { toast } from 'sonner';
 
 import { Image } from '@/domain/image/entity';
@@ -57,6 +57,136 @@ interface ImageStore {
 
   // Internal actions
   updateImageProgress: (imageId: string, progress: number) => void;
+}
+
+type ImageStoreSet = StoreApi<ImageStore>['setState'];
+type ImageStoreGet = StoreApi<ImageStore>['getState'];
+
+/**
+ * Compresses a single image end to end: status transitions, adaptive progress
+ * animation and the IPC call. A per-image failure is caught and surfaced here
+ * (toast + error status) so a batch loop can keep going. Shared by both
+ * `startCompression` (batch) and `compressImage` (single, targeted).
+ */
+async function runImageCompression(
+  image: Image,
+  compressionSettings: CompressionSettings,
+  set: ImageStoreSet,
+  get: ImageStoreGet
+): Promise<void> {
+  try {
+    // Mark the image as being processed
+    set(state => ({
+      images: state.images.map(img => (img.id === image.id ? Image.toProcessing(img, 0) : img)),
+    }));
+
+    // Resolve compression params for this image
+    const { quality, format: outputFormatForImage } = resolveCompressionParams(
+      compressionSettings.outputFormat,
+      compressionSettings.compressionLevel,
+      image.format
+    );
+
+    // Fetch the duration estimation from the DB (with heuristic fallback)
+    let estimatedDurationMs = 3000;
+    try {
+      const outputFmt =
+        outputFormatForImage === 'auto' ? image.format.toLowerCase() : outputFormatForImage;
+      const estimation = await getProgressEstimation(
+        image.format.toLowerCase(),
+        outputFmt,
+        image.originalSize
+      );
+      estimatedDurationMs = estimation.estimated_duration_ms;
+    } catch (error) {
+      // Non-blocking — progress estimation failed, keep the default.
+      console.error('startCompression: progress estimation failed, using default:', error);
+    }
+
+    // Create and start the adaptive progress manager
+    const progressManager = new AdaptiveProgressManager(image.id, estimatedDurationMs);
+
+    // Keep the manager around so it can be controlled later
+    set(state => ({
+      progressManagers: {
+        ...state.progressManagers,
+        [image.id]: progressManager,
+      },
+    }));
+
+    // Store pending completion data to apply after animation
+    let pendingResult: { compressedSize: number; outputPath: string } | null = null;
+
+    progressManager.start({
+      onProgress: (imageId, progress) => {
+        get().updateImageProgress(imageId, progress);
+      },
+      onComplete: imageId => {
+        // Animation 85→100 finished — now mark the image as completed
+        if (pendingResult) {
+          set(state => ({
+            images: state.images.map(img =>
+              img.id === imageId
+                ? Image.toCompleted(img, pendingResult!.compressedSize, pendingResult!.outputPath)
+                : img
+            ),
+          }));
+        }
+        // Clean up manager
+        set(state => ({
+          progressManagers: Object.fromEntries(
+            Object.entries(state.progressManagers).filter(([id]) => id !== imageId)
+          ),
+        }));
+      },
+      onError: (imageId, error) => {
+        console.error(`Compression progress error for ${imageId}:`, error);
+        set(state => ({
+          progressManagers: Object.fromEntries(
+            Object.entries(state.progressManagers).filter(([id]) => id !== imageId)
+          ),
+        }));
+      },
+    });
+
+    const summary = await tauriCompressImage({
+      file_path: image.path,
+      quality,
+      format: outputFormatForImage,
+      level: compressionSettings.compressionLevel,
+    });
+
+    // Signal completion to the adaptive manager -> triggers the 85->100 animation
+    const finalManager = get().progressManagers[image.id];
+    if (finalManager) {
+      finalManager.onCompressionCompleted();
+    }
+
+    pendingResult = {
+      compressedSize: summary.compressed_size,
+      outputPath: summary.output_path,
+    };
+
+    if (summary.savings_percent === 0) {
+      toast.info(translate('toasts.alreadyOptimized', { name: image.name }));
+    }
+  } catch (error) {
+    // A compression failure surfaces as a thrown CommandError.
+    const catchErrorManager = get().progressManagers[image.id];
+    if (catchErrorManager) {
+      catchErrorManager.error(error instanceof CommandError ? error.message : String(error));
+    }
+
+    set(state => ({
+      images: state.images.map(img => (img.id === image.id ? Image.toError(img) : img)),
+    }));
+    toast.error(
+      translate('toasts.compressionError', {
+        name: image.name,
+        reason: commandErrorMessage(error),
+      })
+    );
+  }
 }
 
 export const useImageStore = create<ImageStore>((set, get) => ({
@@ -199,119 +329,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
 
     try {
       for (const image of pendingImages) {
-        try {
-          // Mark the image as being processed
-          set(state => ({
-            images: state.images.map(img => (img.id === image.id ? Image.toProcessing(img, 0) : img)),
-          }));
-
-          // Resolve compression params for this image
-          const { quality, format: outputFormatForImage } = resolveCompressionParams(
-            compressionSettings.outputFormat,
-            compressionSettings.compressionLevel,
-            image.format
-          );
-
-          // Fetch the duration estimation from the DB (with heuristic fallback)
-          let estimatedDurationMs = 3000;
-          try {
-            const outputFmt =
-              outputFormatForImage === 'auto' ? image.format.toLowerCase() : outputFormatForImage;
-            const estimation = await getProgressEstimation(
-              image.format.toLowerCase(),
-              outputFmt,
-              image.originalSize
-            );
-            estimatedDurationMs = estimation.estimated_duration_ms;
-          } catch (error) {
-            // Non-blocking — progress estimation failed, keep the default.
-            console.error('startCompression: progress estimation failed, using default:', error);
-          }
-
-          // Create and start the adaptive progress manager
-          const progressManager = new AdaptiveProgressManager(image.id, estimatedDurationMs);
-
-          // Keep the manager around so it can be controlled later
-          set(state => ({
-            progressManagers: {
-              ...state.progressManagers,
-              [image.id]: progressManager,
-            },
-          }));
-
-          // Store pending completion data to apply after animation
-          let pendingResult: { compressedSize: number; outputPath: string } | null = null;
-
-          progressManager.start({
-            onProgress: (imageId, progress) => {
-              get().updateImageProgress(imageId, progress);
-            },
-            onComplete: imageId => {
-              // Animation 85→100 finished — now mark the image as completed
-              if (pendingResult) {
-                set(state => ({
-                  images: state.images.map(img =>
-                    img.id === imageId
-                      ? Image.toCompleted(img, pendingResult!.compressedSize, pendingResult!.outputPath)
-                      : img
-                  ),
-                }));
-              }
-              // Clean up manager
-              set(state => ({
-                progressManagers: Object.fromEntries(
-                  Object.entries(state.progressManagers).filter(([id]) => id !== imageId)
-                ),
-              }));
-            },
-            onError: (imageId, error) => {
-              console.error(`Compression progress error for ${imageId}:`, error);
-              set(state => ({
-                progressManagers: Object.fromEntries(
-                  Object.entries(state.progressManagers).filter(([id]) => id !== imageId)
-                ),
-              }));
-            },
-          });
-
-          const summary = await tauriCompressImage({
-            file_path: image.path,
-            quality,
-            format: outputFormatForImage,
-            level: compressionSettings.compressionLevel,
-          });
-
-          // Signal completion to the adaptive manager -> triggers the 85->100 animation
-          const finalManager = get().progressManagers[image.id];
-          if (finalManager) {
-            finalManager.onCompressionCompleted();
-          }
-
-          pendingResult = {
-            compressedSize: summary.compressed_size,
-            outputPath: summary.output_path,
-          };
-
-          if (summary.savings_percent === 0) {
-            toast.info(translate('toasts.alreadyOptimized', { name: image.name }));
-          }
-        } catch (error) {
-          // A compression failure surfaces as a thrown CommandError.
-          const catchErrorManager = get().progressManagers[image.id];
-          if (catchErrorManager) {
-            catchErrorManager.error(error instanceof CommandError ? error.message : String(error));
-          }
-
-          set(state => ({
-            images: state.images.map(img => (img.id === image.id ? Image.toError(img) : img)),
-          }));
-          toast.error(
-            translate('toasts.compressionError', {
-              name: image.name,
-              reason: commandErrorMessage(error),
-            })
-          );
-        }
+        await runImageCompression(image, compressionSettings, set, get);
       }
 
       set({ compressionState: 'completed' });
@@ -321,13 +339,20 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   },
 
   compressImage: async (imageId: string) => {
-    const { images } = get();
-    const image = images.find(img => img.id === imageId);
+    const { images, isProcessing, compressionSettings } = get();
+    if (isProcessing) return;
 
+    const image = images.find(img => img.id === imageId);
     if (!image || !Image.isPending(image)) return;
 
-    // Call startCompression directly; it handles the status transitions
-    await get().startCompression();
+    set({ isProcessing: true, compressionState: 'processing' });
+
+    try {
+      await runImageCompression(image, compressionSettings, set, get);
+      set({ compressionState: 'completed' });
+    } finally {
+      set({ isProcessing: false });
+    }
   },
 
   // Settings actions
@@ -422,7 +447,9 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   // Internal actions for state transitions
   updateImageProgress: (imageId: string, progress: number) => {
     set(state => ({
-      images: state.images.map(img => (img.id === imageId ? Image.updateProgress(img, progress) : img)),
+      images: state.images.map(img =>
+        img.id === imageId ? Image.updateProgress(img, progress) : img
+      ),
     }));
   },
 }));
