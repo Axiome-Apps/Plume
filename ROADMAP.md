@@ -8,12 +8,6 @@ The current version lives in `package.json` — the single source of truth, prop
 
 ---
 
-## Bugs
-
-- [ ] Confirm "Reveal in Finder" works at runtime on macOS — the wiring is in place
-      (`revealInFolder` → `revealItemInDir`, `opener:allow-reveal-item-in-dir` capability), so this is
-      a manual verification, not a code fix. Close it once confirmed on a real macOS build
-
 ## Compression profiles
 
 - [ ] Named presets replacing light / balanced / aggressive (e.g. Web, Archive, Print)
