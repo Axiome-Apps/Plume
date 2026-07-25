@@ -22,11 +22,6 @@ The current version lives in `package.json` — the single source of truth, prop
       once existed (`generate_output_path` / `make_unique_filename`) but was never wired up and has
       been removed; revisit together with output folder selection. `resolve_output_path` in
       `domain/compression/naming.rs` is the single place that decides where a file lands
-- [ ] Batch progress indicator — global "X of Y done"
-
-## Performance
-
-- [ ] Parallel compression for multi-image batches, with a concurrency limit
 
 ## Formats
 
