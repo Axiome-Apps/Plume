@@ -36,6 +36,19 @@ The current version lives in `package.json` — the single source of truth, prop
       and result cap (`MAX_SCAN_DEPTH` / `MAX_SCAN_RESULTS` in `domain/file/scan.rs`), and the
       compression concurrency (`CompressionLimiter`, half the cores). Persist across sessions.
 
+## Distribution & updates
+
+- [ ] In-app auto-update (Tauri updater) — decide **whether it fits the distribution model first**,
+      then implement. Tension: a Homebrew **cask** is managed by `brew upgrade`; an app that updates
+      itself out from under Homebrew drifts from what the cask believes is installed. The updater
+      earns its keep for **direct** downloads (DMG installed outside a cask, Windows `.msi`, Linux
+      AppImage), not for cask users. A workable shape is to gate the updater off for cask installs
+      and on for the rest. Prerequisites once decided: a signing keypair (`TAURI_SIGNING_PRIVATE_KEY`
+      secret + `pubkey` in `tauri.conf.json`), an `updater` config block with release endpoints, and
+      the `latest.json` manifest the release job currently skips ("Signature not found for the
+      updater JSON"). Until then, silencing that log is a one-liner (`includeUpdaterJson: false` on
+      the `tauri-action` step) — cosmetic, not required.
+
 ---
 
 ## Technical debt
