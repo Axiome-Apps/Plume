@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "tauri": "tauri",
+    "bump": "node scripts/bump.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
