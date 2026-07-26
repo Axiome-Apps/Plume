@@ -82,8 +82,16 @@ function resetStore() {
   });
 }
 
+// Several tests exercise best-effort fallbacks on purpose (a rejected IPC call),
+// and the store logs each via `console.error` inside its catch — the sanctioned
+// frontend channel. Silence it so the expected diagnostics do not leak onto the
+// CI stderr as alarming noise; tests that trigger a fallback assert on this spy
+// so the silence stays intentional rather than hiding a real regression.
+let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
   resetStore();
+  consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   getFileInformationMock.mockReset();
   getEstimationMock.mockReset();
   getEstimationMock.mockResolvedValue({
@@ -93,6 +101,10 @@ beforeEach(() => {
     sample_count: 10,
     is_learning: false,
   });
+});
+
+afterEach(() => {
+  consoleErrorSpy.mockRestore();
 });
 
 describe('currentView', () => {
@@ -161,6 +173,10 @@ describe('addImages', () => {
     expect(image.name).toBe('photo.png');
     expect(image.format).toBe('PNG');
     expect(image.originalSize).toBe(0);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'addImages: file info unavailable, using path fallback:',
+      expect.any(Error)
+    );
   });
 
   it('ignores a path that is already in the batch', async () => {
@@ -214,6 +230,10 @@ describe('addImages', () => {
 
     expect(useImageStore.getState().images).toHaveLength(1);
     expect(requireImage().estimatedCompression).toEqual(FALLBACK_ESTIMATION);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'addImages: estimation failed, using fallback:',
+      expect.any(Error)
+    );
   });
 
   it('gives every image its own id', async () => {
