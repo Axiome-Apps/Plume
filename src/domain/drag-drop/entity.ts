@@ -1,7 +1,5 @@
 import { DragDropEventSchema, type DragDropEventType } from './schema';
 
-const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'] as const;
-
 /**
  * Drag & drop event as pure data + helpers (declaration merging). The raw event
  * is parsed at the IPC boundary through `DragDropEvent.fromRaw`.
@@ -15,15 +13,11 @@ export const DragDropEvent = {
 
   isDrop: (event: DragDropEvent): boolean => event.payload.type === 'drop',
 
-  validImagePaths: (
-    event: DragDropEvent,
-    supported: readonly string[] = SUPPORTED_EXTENSIONS
-  ): string[] =>
-    (event.payload.paths ?? []).filter(path =>
-      supported.some(ext => path.toLowerCase().endsWith(ext.toLowerCase()))
-    ),
-
-  /** Valid image paths on a `drop` event, or `null` when the event is not a drop. */
-  processDrop: (event: DragDropEvent): string[] | null =>
-    DragDropEvent.isDrop(event) ? DragDropEvent.validImagePaths(event) : null,
+  /**
+   * Raw paths on a `drop` event (files and/or folders), or `null` when the event
+   * is not a drop. Filtering and folder expansion happen on the backend scanner
+   * (`scan_paths_for_images`) — the frontend does not inspect extensions.
+   */
+  dropPaths: (event: DragDropEvent): string[] | null =>
+    DragDropEvent.isDrop(event) ? (event.payload.paths ?? []) : null,
 } as const;

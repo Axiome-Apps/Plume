@@ -36,6 +36,7 @@
   "common": {
     "supported": "supported",
     "browse": "Browse",
+    "browseFolder": "Choose a folder",
     "import": "Import"
   },
   "compression": {
@@ -59,8 +60,9 @@
       "label": "Batch progress",
       "count": "{{done}} / {{total}}"
     },
-    "dropHintBefore": "Drop images here · or ",
-    "dropHintAction": "browse"
+    "dropHintBefore": "Drop images or a folder here · or ",
+    "dropHintAction": "browse",
+    "dropHintFolder": "a folder"
   },
   "settings": {
     "eyebrow": "Settings — applied to the batch",
@@ -93,7 +95,8 @@
   },
   "dialog": {
     "selectImages": "Select images",
-    "imagesFilter": "Images"
+    "imagesFilter": "Images",
+    "selectFolder": "Select a folder"
   },
   "a11y": {
     "selectLanguage": "Select language"
@@ -118,7 +121,9 @@
     "alreadyOptimized": "{{name}} is already optimized — original file kept",
     "compressionError": "{{name}}: {{reason}}",
     "unsupportedIgnored_one": "{{count}} unsupported file ignored",
-    "unsupportedIgnored_other": "{{count}} unsupported files ignored"
+    "unsupportedIgnored_other": "{{count}} unsupported files ignored",
+    "noImagesFound": "No images found",
+    "folderTruncated": "Large folder — first {{count}} images added"
   },
   "estimation": {
     "basedOnSamples_one": "Based on {{count}} similar compression",

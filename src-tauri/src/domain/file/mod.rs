@@ -6,6 +6,7 @@
 pub mod error;
 pub mod metadata;
 pub mod path;
+pub mod scan;
 
 // Re-export core types and functions for easy access
 pub use error::{FileError, FileResult};
@@ -13,6 +14,7 @@ pub use metadata::{
     FileMetadata, SUPPORTED_IMAGE_EXTENSIONS, file_exists, get_file_info, is_supported_extension,
 };
 pub use path::{get_file_stem, validate_safe_path};
+pub use scan::{ScanOutcome, collect_image_paths};
 
 /// Largest input accepted for compression
 const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024;

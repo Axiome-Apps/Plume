@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { toast } from 'sonner';
 import { DragDropEvent } from '@/domain/drag-drop/entity';
-import { translate } from '@/domain/i18n/translate';
 import { onDragDrop } from '@/lib/tauri';
 
 /**
@@ -17,14 +15,11 @@ export function useDragDropGlobal(onFilesDropped: (paths: string[]) => void) {
     let cancelled = false;
 
     onDragDrop(event => {
-      const validImagePaths = DragDropEvent.processDrop(event);
-      if (validImagePaths && validImagePaths.length > 0) {
-        const totalDropped = DragDropEvent.paths(event)?.length ?? 0;
-        const rejected = totalDropped - validImagePaths.length;
-        if (rejected > 0) {
-          toast.info(translate('toasts.unsupportedIgnored', { count: rejected }));
-        }
-        callbackRef.current(validImagePaths);
+      // Pass raw dropped paths (files and/or folders) straight through; the
+      // backend scanner filters and expands them, and reports nothing usable.
+      const paths = DragDropEvent.dropPaths(event);
+      if (paths && paths.length > 0) {
+        callbackRef.current(paths);
       }
     })
       .then(fn => {

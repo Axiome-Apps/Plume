@@ -36,6 +36,7 @@
   "common": {
     "supported": "supportés",
     "browse": "Parcourir",
+    "browseFolder": "Choisir un dossier",
     "import": "Importer"
   },
   "compression": {
@@ -59,8 +60,9 @@
       "label": "Progression du lot",
       "count": "{{done}} / {{total}}"
     },
-    "dropHintBefore": "Glisser des images ici · ou ",
-    "dropHintAction": "parcourir"
+    "dropHintBefore": "Glisser des images ou un dossier ici · ou ",
+    "dropHintAction": "parcourir",
+    "dropHintFolder": "un dossier"
   },
   "settings": {
     "eyebrow": "Réglages — appliqués au lot",
@@ -93,7 +95,8 @@
   },
   "dialog": {
     "selectImages": "Sélectionner des images",
-    "imagesFilter": "Images"
+    "imagesFilter": "Images",
+    "selectFolder": "Sélectionner un dossier"
   },
   "a11y": {
     "selectLanguage": "Choisir la langue"
@@ -118,7 +121,9 @@
     "alreadyOptimized": "{{name}} est déjà optimisé — fichier original conservé",
     "compressionError": "{{name}} : {{reason}}",
     "unsupportedIgnored_one": "{{count}} fichier non supporté ignoré",
-    "unsupportedIgnored_other": "{{count}} fichiers non supportés ignorés"
+    "unsupportedIgnored_other": "{{count}} fichiers non supportés ignorés",
+    "noImagesFound": "Aucune image trouvée",
+    "folderTruncated": "Dossier volumineux — {{count}} premières images ajoutées"
   },
   "estimation": {
     "basedOnSamples_one": "Basé sur {{count}} compression similaire",

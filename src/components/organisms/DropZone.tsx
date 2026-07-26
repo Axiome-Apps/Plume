@@ -1,25 +1,14 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import Button from '../atoms/Button';
 import { UploadIcon } from '@/components/icons/UploadIcon';
+import { FolderIcon } from '@/components/icons/FolderIcon';
 import { SUPPORTED_FORMATS_DISPLAY } from '@/domain/constants';
-import { selectImageFiles } from '@/lib/tauri';
-import { useImageStore } from '@/store/imageStore';
+import { useImageInput } from '@/hooks/useImageInput';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const DropZone: React.FC = () => {
   const { t } = useTranslation();
-  const handleExternalDrop = useImageStore(state => state.handleExternalDrop);
-
-  const handleFilesSelected = useCallback(async () => {
-    try {
-      const filePaths = await selectImageFiles();
-      if (filePaths.length > 0) {
-        handleExternalDrop(filePaths);
-      }
-    } catch (error) {
-      console.error('File selection failed:', error);
-    }
-  }, [handleExternalDrop]);
+  const { browseFiles, browseFolder } = useImageInput();
 
   return (
     <div
@@ -33,10 +22,16 @@ const DropZone: React.FC = () => {
         {SUPPORTED_FORMATS_DISPLAY} {t('common.supported')}
       </p>
 
-      <Button onClick={handleFilesSelected} size="lg">
-        <UploadIcon size={18} aria-hidden />
-        {t('common.browse')}
-      </Button>
+      <div className="flex items-center justify-center gap-3 flex-wrap">
+        <Button onClick={browseFiles} size="lg">
+          <UploadIcon size={18} aria-hidden />
+          {t('common.browse')}
+        </Button>
+        <Button onClick={browseFolder} size="lg" variant="ghost">
+          <FolderIcon size={18} aria-hidden />
+          {t('common.browseFolder')}
+        </Button>
+      </div>
     </div>
   );
 };

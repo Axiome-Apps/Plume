@@ -7,7 +7,14 @@ import {
 } from '@/domain/compression/schema';
 import { CommandError } from '@/domain/errors/commandError';
 import { DragDropEvent } from '@/domain/drag-drop/entity';
-import { FileInfoSchema, SelectedFilesSchema, type FileInfoType } from '@/domain/image/schema';
+import {
+  FileInfoSchema,
+  ScanOutcomeSchema,
+  SelectedFilesSchema,
+  SelectedFolderSchema,
+  type FileInfoType,
+  type ScanOutcomeType,
+} from '@/domain/image/schema';
 import { translate } from '@/domain/i18n/translate';
 import {
   EstimationResultSchema,
@@ -61,6 +68,21 @@ export async function selectImageFiles(): Promise<string[]> {
       filterLabel: translate('dialog.imagesFilter'),
     })
   );
+}
+
+export async function selectFolder(): Promise<string | null> {
+  return SelectedFolderSchema.parse(
+    await invokeCommand('select_folder', { title: translate('dialog.selectFolder') })
+  );
+}
+
+/**
+ * Expand dropped or picked paths (files and/or folders) into the supported image
+ * files they contain. The backend is the single filtering authority — the
+ * frontend passes raw paths and never inspects extensions itself.
+ */
+export async function scanPathsForImages(paths: string[]): Promise<ScanOutcomeType> {
+  return ScanOutcomeSchema.parse(await invokeCommand('scan_paths_for_images', { paths }));
 }
 
 export async function getFileInformation(filePath: string): Promise<FileInfoType> {

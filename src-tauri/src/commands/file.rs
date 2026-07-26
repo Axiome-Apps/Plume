@@ -1,5 +1,5 @@
 use crate::commands::CommandError;
-use crate::domain::{SUPPORTED_IMAGE_EXTENSIONS, get_file_info};
+use crate::domain::{SUPPORTED_IMAGE_EXTENSIONS, ScanOutcome, collect_image_paths, get_file_info};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tauri::AppHandle;
@@ -54,4 +54,33 @@ pub async fn get_file_information(file_path: String) -> Result<FileInfo, Command
         extension: metadata.extension,
         is_image: metadata.is_image,
     })
+}
+
+/// Native folder picker. The title comes from the frontend (interface text is
+/// translated there). Returns the chosen folder, or `None` if the user cancels.
+#[tauri::command]
+pub async fn select_folder(
+    app_handle: AppHandle,
+    title: String,
+) -> Result<Option<String>, CommandError> {
+    let folder = app_handle
+        .dialog()
+        .file()
+        .set_title(title)
+        .blocking_pick_folder();
+
+    Ok(folder
+        .and_then(|picked| picked.into_path().ok())
+        .map(|path| path.to_string_lossy().to_string()))
+}
+
+/// Expand dropped or picked paths (a mix of files and folders) into the flat,
+/// sorted list of supported image files. The single filtering authority for
+/// input — the frontend passes raw paths and never inspects extensions itself.
+/// The recursive walk is filesystem I/O, so it runs on the blocking pool.
+#[tauri::command]
+pub async fn scan_paths_for_images(paths: Vec<String>) -> Result<ScanOutcome, CommandError> {
+    tauri::async_runtime::spawn_blocking(move || collect_image_paths(&paths))
+        .await
+        .map_err(|e| CommandError::internal(format!("scan task failed: {e}")))
 }

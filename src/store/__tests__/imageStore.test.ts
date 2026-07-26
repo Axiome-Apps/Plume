@@ -6,6 +6,7 @@ import {
   getFileInformation,
   compressImage as tauriCompressImage,
   getProgressEstimation,
+  scanPathsForImages,
 } from '@/lib/tauri';
 import * as SizePrediction from '@/domain/size-prediction/service';
 import { toast } from 'sonner';
@@ -14,6 +15,7 @@ vi.mock('@/lib/tauri', () => ({
   getFileInformation: vi.fn(),
   compressImage: vi.fn(),
   getProgressEstimation: vi.fn(),
+  scanPathsForImages: vi.fn(),
 }));
 
 vi.mock('@/domain/size-prediction/service', () => ({
@@ -35,6 +37,7 @@ const getFileInformationMock = vi.mocked(getFileInformation);
 const getEstimationMock = vi.mocked(SizePrediction.getEstimation);
 const tauriCompressImageMock = vi.mocked(tauriCompressImage);
 const getProgressEstimationMock = vi.mocked(getProgressEstimation);
+const scanPathsForImagesMock = vi.mocked(scanPathsForImages);
 
 const FALLBACK_ESTIMATION = { percent: 65, ratio: 0.35, confidence: 0.5, sample_count: 0 };
 
@@ -510,5 +513,50 @@ describe('compressImage', () => {
     await useImageStore.getState().compressImage('nope'); // unknown
 
     expect(tauriCompressImageMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('handleExternalDrop', () => {
+  beforeEach(() => {
+    scanPathsForImagesMock.mockReset();
+  });
+
+  it('scans the input on the backend, then adds the resulting images', async () => {
+    scanPathsForImagesMock.mockResolvedValue({
+      images: ['/tmp/folder/a.png', '/tmp/folder/b.webp'],
+      truncated: false,
+    });
+
+    await useImageStore.getState().handleExternalDrop(['/tmp/folder']);
+
+    // The raw path is forwarded untouched; the backend does the filtering/expansion.
+    expect(scanPathsForImagesMock).toHaveBeenCalledWith(['/tmp/folder']);
+    expect(useImageStore.getState().images).toHaveLength(2);
+  });
+
+  it('warns and adds nothing when the scan finds no image', async () => {
+    scanPathsForImagesMock.mockResolvedValue({ images: [], truncated: false });
+
+    await useImageStore.getState().handleExternalDrop(['/tmp/empty']);
+
+    expect(useImageStore.getState().images).toHaveLength(0);
+    expect(toast.info).toHaveBeenCalledWith('toasts.noImagesFound');
+  });
+
+  it('warns when the scan was truncated but still adds what it got', async () => {
+    scanPathsForImagesMock.mockResolvedValue({ images: ['/tmp/big/a.png'], truncated: true });
+
+    await useImageStore.getState().handleExternalDrop(['/tmp/big']);
+
+    expect(useImageStore.getState().images).toHaveLength(1);
+    expect(toast.info).toHaveBeenCalledWith('toasts.folderTruncated:{"count":1}');
+  });
+
+  it('does not add anything when the scan fails', async () => {
+    scanPathsForImagesMock.mockRejectedValue(new Error('scan task failed'));
+
+    await useImageStore.getState().handleExternalDrop(['/tmp/x']);
+
+    expect(useImageStore.getState().images).toHaveLength(0);
   });
 });

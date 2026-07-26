@@ -42,6 +42,7 @@ export const TranslationKeysSchema = z.object({
   common: z.object({
     supported: z.string(),
     browse: z.string(),
+    browseFolder: z.string(),
     import: z.string(),
   }),
   compression: z.object({
@@ -67,6 +68,7 @@ export const TranslationKeysSchema = z.object({
     }),
     dropHintBefore: z.string(),
     dropHintAction: z.string(),
+    dropHintFolder: z.string(),
   }),
   settings: z.object({
     eyebrow: z.string(),
@@ -100,6 +102,7 @@ export const TranslationKeysSchema = z.object({
   dialog: z.object({
     selectImages: z.string(),
     imagesFilter: z.string(),
+    selectFolder: z.string(),
   }),
   a11y: z.object({
     selectLanguage: z.string(),
@@ -125,6 +128,8 @@ export const TranslationKeysSchema = z.object({
     compressionError: z.string(),
     unsupportedIgnored_one: z.string(),
     unsupportedIgnored_other: z.string(),
+    noImagesFound: z.string(),
+    folderTruncated: z.string(),
   }),
   estimation: z.object({
     basedOnSamples_one: z.string(),

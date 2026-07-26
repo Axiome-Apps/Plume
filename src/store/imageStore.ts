@@ -15,6 +15,7 @@ import {
   compressImage as tauriCompressImage,
   getFileInformation,
   getProgressEstimation,
+  scanPathsForImages,
 } from '@/lib/tauri';
 import { translate } from '@/domain/i18n/translate';
 
@@ -190,6 +191,78 @@ async function runImageCompression(
   }
 }
 
+/** How many images are enriched (metadata + estimation IPC) at once. */
+const ADD_IMAGES_CONCURRENCY = 8;
+
+/**
+ * Build one pending image from its path: backend metadata (name, size, format)
+ * plus a compression estimation, each best-effort with a fallback. Pure input →
+ * value, so a batch can run several in parallel.
+ */
+async function buildPendingImage(
+  filePath: string,
+  compressionSettings: CompressionSettings
+): Promise<Image> {
+  const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+
+  let fileName = filePath.split('/').pop() || filePath.split('\\').pop() || 'unknown';
+  let fileSize = 0;
+  let format = detectImageFormat(fileName);
+  try {
+    const fileInfo = await getFileInformation(filePath);
+    fileName = fileInfo.name;
+    fileSize = fileInfo.size;
+    format = imageFormatFromExtension(fileInfo.extension);
+  } catch (error) {
+    // Non-blocking — file info is best-effort; fall back to the path.
+    console.error('addImages: file info unavailable, using path fallback:', error);
+  }
+
+  let estimatedCompression;
+  try {
+    const resolved = resolveCompressionParams(
+      compressionSettings.outputFormat,
+      compressionSettings.compressionLevel,
+      format
+    );
+    const estimationOutputFormat =
+      resolved.format === 'auto' ? format.toLowerCase() : resolved.format;
+    const estimation = await SizePrediction.getEstimation(
+      format,
+      estimationOutputFormat,
+      fileSize,
+      resolved.quality,
+      resolved.lossy
+    );
+    estimatedCompression = {
+      percent: estimation.percent,
+      ratio: estimation.ratio,
+      confidence: estimation.confidence,
+      sample_count: estimation.sample_count,
+    };
+  } catch (error) {
+    // Non-blocking — estimation service failed, use default values.
+    console.error('addImages: estimation failed, using fallback:', error);
+    estimatedCompression = {
+      percent: 65,
+      ratio: 0.35,
+      confidence: 0.5,
+      sample_count: 0,
+    };
+  }
+
+  return {
+    id: tempId,
+    name: fileName,
+    path: filePath,
+    originalSize: fileSize,
+    format,
+    preview: `asset://localhost/${filePath}`,
+    status: 'pending',
+    estimatedCompression,
+  };
+}
+
 export const useImageStore = create<ImageStore>((set, get) => ({
   // Initial state
   images: [],
@@ -213,7 +286,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   // Image actions
   addImages: async (filePaths: string[]) => {
     try {
-      const { images } = get();
+      const { images, compressionSettings } = get();
       const existingPaths = new Set(images.map(img => img.path));
       const uniqueFilePaths = filePaths.filter(path => !existingPaths.has(path));
 
@@ -221,73 +294,15 @@ export const useImageStore = create<ImageStore>((set, get) => ({
         return;
       }
 
+      // Enrich with bounded concurrency: each image needs two IPC round-trips
+      // (metadata + estimation), so a folder of hundreds must not run serially.
       const newImages: Image[] = [];
-
-      for (const filePath of uniqueFilePaths) {
-        const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-
-        // The backend already resolved the name, extension and size — take them
-        // from there rather than parsing the path string again.
-        let fileName = filePath.split('/').pop() || filePath.split('\\').pop() || 'unknown';
-        let fileSize = 0;
-        let format = detectImageFormat(fileName);
-        try {
-          const fileInfo = await getFileInformation(filePath);
-          fileName = fileInfo.name;
-          fileSize = fileInfo.size;
-          format = imageFormatFromExtension(fileInfo.extension);
-        } catch (error) {
-          // Non-blocking — file info is best-effort; fall back to the path.
-          console.error('addImages: file info unavailable, using path fallback:', error);
-        }
-
-        // Fetch the compression estimation from the service
-        let estimatedCompression;
-        try {
-          const { compressionSettings: currentSettings } = get();
-          const resolved = resolveCompressionParams(
-            currentSettings.outputFormat,
-            currentSettings.compressionLevel,
-            format
-          );
-          const estimationOutputFormat =
-            resolved.format === 'auto' ? format.toLowerCase() : resolved.format;
-          const estimation = await SizePrediction.getEstimation(
-            format,
-            estimationOutputFormat,
-            fileSize,
-            resolved.quality,
-            resolved.lossy
-          );
-          // Extract the properties compatible with EstimationResultType
-          estimatedCompression = {
-            percent: estimation.percent,
-            ratio: estimation.ratio,
-            confidence: estimation.confidence,
-            sample_count: estimation.sample_count,
-          };
-        } catch (error) {
-          // Non-blocking — estimation service failed, use default values.
-          console.error('addImages: estimation failed, using fallback:', error);
-          estimatedCompression = {
-            percent: 65,
-            ratio: 0.35,
-            confidence: 0.5,
-            sample_count: 0,
-          };
-        }
-
-        const imageData: Image = {
-          id: tempId,
-          name: fileName,
-          path: filePath,
-          originalSize: fileSize,
-          format,
-          preview: `asset://localhost/${filePath}`,
-          status: 'pending',
-          estimatedCompression,
-        };
-        newImages.push(imageData);
+      for (let i = 0; i < uniqueFilePaths.length; i += ADD_IMAGES_CONCURRENCY) {
+        const chunk = uniqueFilePaths.slice(i, i + ADD_IMAGES_CONCURRENCY);
+        const built = await Promise.all(
+          chunk.map(filePath => buildPendingImage(filePath, compressionSettings))
+        );
+        newImages.push(...built);
       }
 
       set(state => ({
@@ -445,8 +460,28 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   },
 
   // Drag & drop actions
-  handleExternalDrop: async (filePaths: string[]) => {
-    await get().addImages(filePaths);
+  handleExternalDrop: async (inputPaths: string[]) => {
+    // The single input funnel for every mode (drop, file picker, folder picker):
+    // the backend expands folders and filters to supported images.
+    const outcome = await scanPathsForImages(inputPaths).catch(error => {
+      console.error('handleExternalDrop: scan failed:', error);
+      return null;
+    });
+    if (!outcome) return;
+
+    if (outcome.images.length === 0) {
+      if (inputPaths.length > 0) {
+        toast.info(translate('toasts.noImagesFound'));
+      }
+      return;
+    }
+
+    // The scan hit its cap and left images out — tell the user what was added.
+    if (outcome.truncated) {
+      toast.info(translate('toasts.folderTruncated', { count: outcome.images.length }));
+    }
+
+    await get().addImages(outcome.images);
   },
 
   // Internal actions for state transitions

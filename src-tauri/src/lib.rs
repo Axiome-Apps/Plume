@@ -17,7 +17,8 @@ use tauri::Manager;
 
 use commands::{
     CompressionLimiter, compress_image, get_compression_estimation, get_file_information,
-    get_progress_estimation, init_database, select_image_files,
+    get_progress_estimation, init_database, scan_paths_for_images, select_folder,
+    select_image_files,
 };
 use database::DatabaseManager;
 
@@ -44,6 +45,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             compress_image,
             select_image_files,
+            select_folder,
+            scan_paths_for_images,
             get_file_information,
             get_compression_estimation,
             get_progress_estimation,

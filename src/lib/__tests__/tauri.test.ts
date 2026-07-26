@@ -9,6 +9,8 @@ import {
   getProgressEstimation,
   initDatabase,
   revealInFolder,
+  scanPathsForImages,
+  selectFolder,
   selectImageFiles,
 } from '../tauri';
 
@@ -51,6 +53,54 @@ describe('selectImageFiles', () => {
     backendReturns([1, 2]);
 
     await expect(selectImageFiles()).rejects.toThrow();
+  });
+});
+
+describe('selectFolder', () => {
+  it('returns the chosen folder path', async () => {
+    backendReturns('/tmp/photos');
+
+    await expect(selectFolder()).resolves.toBe('/tmp/photos');
+  });
+
+  it('returns null when the user cancels', async () => {
+    backendReturns(null);
+
+    await expect(selectFolder()).resolves.toBeNull();
+  });
+
+  it('supplies the dialog title from the frontend', async () => {
+    backendReturns(null);
+
+    await selectFolder();
+
+    expect(invokeMock).toHaveBeenCalledWith('select_folder', {
+      title: 'translated:dialog.selectFolder',
+    });
+  });
+});
+
+describe('scanPathsForImages', () => {
+  it('forwards the raw paths and returns the scanned outcome', async () => {
+    backendReturns({ images: ['/tmp/photos/a.png', '/tmp/photos/b.webp'], truncated: false });
+
+    await expect(scanPathsForImages(['/tmp/photos'])).resolves.toEqual({
+      images: ['/tmp/photos/a.png', '/tmp/photos/b.webp'],
+      truncated: false,
+    });
+    expect(invokeMock).toHaveBeenCalledWith('scan_paths_for_images', { paths: ['/tmp/photos'] });
+  });
+
+  it('parses the truncated flag when the scan hit its cap', async () => {
+    backendReturns({ images: ['/tmp/photos/a.png'], truncated: true });
+
+    await expect(scanPathsForImages(['/tmp/photos'])).resolves.toMatchObject({ truncated: true });
+  });
+
+  it('rejects a payload missing the truncated flag', async () => {
+    backendReturns({ images: ['/tmp/x.png'] });
+
+    await expect(scanPathsForImages(['/tmp/x'])).rejects.toThrow();
   });
 });
 

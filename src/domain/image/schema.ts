@@ -33,6 +33,18 @@ export const FileInfoSchema = z.object({
 
 export const SelectedFilesSchema = z.array(z.string());
 
+// select_folder returns the chosen folder path, or null when the user cancels.
+export const SelectedFolderSchema = z.string().nullable();
+
+// IPC contract — mirrors ScanOutcome in src-tauri/src/domain/file/scan.rs.
+// `truncated` is true when the scan hit the result cap and left images out.
+export const ScanOutcomeSchema = z.object({
+  images: z.array(z.string()),
+  truncated: z.boolean(),
+});
+
+export type ScanOutcomeType = z.infer<typeof ScanOutcomeSchema>;
+
 // Main types - convention: SchemaName + Type
 export type ImageType = z.infer<typeof ImageSchema>;
 export type ImageStatus = ImageType['status'];

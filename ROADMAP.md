@@ -16,7 +16,9 @@ The current version lives in `package.json` — the single source of truth, prop
 
 ## Input & output
 
-- [ ] Accept an entire folder as input (recursive scan, filtered by supported extensions)
+- [ ] Loading feedback while images are being added — scanning a folder then enriching each image
+      (metadata + estimation) takes a moment; show a loader/skeleton so the UI does not look idle
+      between the click/drop and the rows appearing
 - [ ] Output folder selection — choose where compressed files are written
 - [ ] Collision-safe output naming (never overwrite an existing file → `photo (1).webp`). Scaffolding
       once existed (`generate_output_path` / `make_unique_filename`) but was never wired up and has
@@ -27,6 +29,12 @@ The current version lives in `package.json` — the single source of truth, prop
 
 - [ ] AVIF support
 - [ ] Evaluate JPEG XL
+
+## Preferences & configuration
+
+- [ ] Preferences/settings menu exposing the currently-hardcoded limits: folder-scan depth backstop
+      and result cap (`MAX_SCAN_DEPTH` / `MAX_SCAN_RESULTS` in `domain/file/scan.rs`), and the
+      compression concurrency (`CompressionLimiter`, half the cores). Persist across sessions.
 
 ---
 

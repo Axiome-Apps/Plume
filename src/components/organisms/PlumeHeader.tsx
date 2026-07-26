@@ -1,29 +1,21 @@
-import { FC, useCallback } from 'react';
+import { FC } from 'react';
 import Button from '@/components/atoms/Button';
 import { LanguageSelector } from '@/components/atoms/LanguageSelector';
 import LogoPlume from '@/components/brand/LogoPlume';
 import Stroke from '@/components/brand/Stroke';
 import { UploadIcon } from '@/components/icons/UploadIcon';
+import { FolderIcon } from '@/components/icons/FolderIcon';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useImageInput } from '@/hooks/useImageInput';
 import { useImageStore } from '@/store/imageStore';
 import { Image } from '@/domain/image/entity';
-import { selectImageFiles } from '@/lib/tauri';
 
 const PlumeHeader: FC = () => {
   const { t } = useTranslation();
   const images = useImageStore(s => s.images);
-  const handleExternalDrop = useImageStore(s => s.handleExternalDrop);
+  const { browseFiles, browseFolder } = useImageInput();
 
   const pending = images.filter(i => Image.isPending(i)).length;
-
-  const browse = useCallback(async () => {
-    try {
-      const paths = await selectImageFiles();
-      if (paths.length > 0) handleExternalDrop(paths);
-    } catch (error) {
-      console.error('File selection failed:', error);
-    }
-  }, [handleExternalDrop]);
 
   const tagline =
     pending > 0
@@ -45,9 +37,17 @@ const PlumeHeader: FC = () => {
 
       <div className="flex items-center gap-2 shrink-0">
         <LanguageSelector />
-        <Button variant="ghost" onClick={browse}>
+        <Button variant="ghost" onClick={browseFiles}>
           <UploadIcon size={16} aria-hidden />
           {t('common.import')}
+        </Button>
+        <Button
+          variant="icon"
+          onClick={browseFolder}
+          title={t('common.browseFolder')}
+          aria-label={t('common.browseFolder')}
+        >
+          <FolderIcon size={16} aria-hidden />
         </Button>
       </div>
     </header>

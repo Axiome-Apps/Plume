@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useImageStore } from '@/store/imageStore';
 import { useTranslation } from '@/hooks/useTranslation';
-import { revealInFolder, selectImageFiles } from '@/lib/tauri';
+import { useImageInput } from '@/hooks/useImageInput';
+import { revealInFolder } from '@/lib/tauri';
 import ImageRow from '../molecules/ImageRow';
 import BatchKpiCard from './BatchKpiCard';
 import { BatchProgress } from './BatchProgress';
@@ -14,16 +15,7 @@ const ImageList: React.FC = () => {
   const images = useImageStore(state => state.images);
   const compressImage = useImageStore(state => state.compressImage);
   const removeImage = useImageStore(state => state.removeImage);
-  const handleExternalDrop = useImageStore(state => state.handleExternalDrop);
-
-  const browse = useCallback(async () => {
-    try {
-      const paths = await selectImageFiles();
-      if (paths.length > 0) handleExternalDrop(paths);
-    } catch (error) {
-      console.error('File selection failed:', error);
-    }
-  }, [handleExternalDrop]);
+  const { browseFiles, browseFolder } = useImageInput();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-5 items-start">
@@ -59,14 +51,24 @@ const ImageList: React.FC = () => {
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={browse}
-            className="m-4 px-4 py-3 w-[calc(100%-2rem)] border border-dashed border-line-2 rounded-md caption text-fg-3 hover:text-fg hover:border-primary-light transition-colors text-center cursor-pointer bg-transparent"
-          >
+          <div className="m-4 px-4 py-3 w-[calc(100%-2rem)] border border-dashed border-line-2 rounded-md caption text-fg-3 transition-colors text-center">
             {t('batch.dropHintBefore')}
-            <span className="text-primary-light font-semibold">{t('batch.dropHintAction')}</span>
-          </button>
+            <button
+              type="button"
+              onClick={browseFiles}
+              className="text-primary-light font-semibold hover:underline cursor-pointer bg-transparent"
+            >
+              {t('batch.dropHintAction')}
+            </button>
+            {' · '}
+            <button
+              type="button"
+              onClick={browseFolder}
+              className="text-primary-light font-semibold hover:underline cursor-pointer bg-transparent"
+            >
+              {t('batch.dropHintFolder')}
+            </button>
+          </div>
         </div>
 
         <CompressionSuccess />

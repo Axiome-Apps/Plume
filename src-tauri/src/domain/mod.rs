@@ -12,6 +12,6 @@ pub use compression::{
 
 // File domain exports
 pub use file::{
-    SUPPORTED_IMAGE_EXTENSIONS, get_file_info, get_file_stem, is_supported_extension,
-    validate_image_file, validate_safe_path,
+    SUPPORTED_IMAGE_EXTENSIONS, ScanOutcome, collect_image_paths, get_file_info, get_file_stem,
+    is_supported_extension, validate_image_file, validate_safe_path,
 };
