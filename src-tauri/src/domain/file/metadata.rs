@@ -3,6 +3,18 @@ use crate::domain::file::path::validate_safe_path;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+/// Single source of truth for the image extensions Plume can compress. The file
+/// picker filter, the `is_supported_image` guard and the folder scanner all
+/// derive from this list, so they can never drift apart. (The frontend keeps its
+/// own typed SSOT in `domain/constants.ts`; without shared codegen the two sides
+/// are synced by hand — this is the single Rust-side point.)
+pub const SUPPORTED_IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "webp", "heic", "heif"];
+
+/// Whether a bare, lowercased extension is one Plume can compress.
+pub fn is_supported_extension(extension: &str) -> bool {
+    SUPPORTED_IMAGE_EXTENSIONS.contains(&extension)
+}
+
 /// Check whether a path points to an existing file
 pub fn file_exists<P: AsRef<Path>>(path: P) -> bool {
     path.as_ref().exists() && path.as_ref().is_file()
@@ -67,12 +79,10 @@ impl FileMetadata {
     /// Check if file is a supported image format
     pub fn is_supported_image(&self) -> bool {
         self.is_image
-            && self.extension.as_ref().is_some_and(|ext| {
-                matches!(
-                    ext.as_str(),
-                    "jpg" | "jpeg" | "png" | "webp" | "heic" | "heif"
-                )
-            })
+            && self
+                .extension
+                .as_ref()
+                .is_some_and(|ext| is_supported_extension(ext))
     }
 }
 
@@ -81,6 +91,16 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::TempDir;
+
+    #[test]
+    fn test_is_supported_extension_matches_the_ssot() {
+        for ext in SUPPORTED_IMAGE_EXTENSIONS {
+            assert!(is_supported_extension(ext), "{ext} should be supported");
+        }
+        assert!(!is_supported_extension("gif"));
+        assert!(!is_supported_extension("txt"));
+        assert!(!is_supported_extension("PNG")); // callers pass a lowercased ext
+    }
 
     #[test]
     fn test_metadata_from_path() {

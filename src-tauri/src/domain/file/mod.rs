@@ -9,7 +9,9 @@ pub mod path;
 
 // Re-export core types and functions for easy access
 pub use error::{FileError, FileResult};
-pub use metadata::{FileMetadata, file_exists, get_file_info};
+pub use metadata::{
+    FileMetadata, SUPPORTED_IMAGE_EXTENSIONS, file_exists, get_file_info, is_supported_extension,
+};
 pub use path::{get_file_stem, validate_safe_path};
 
 /// Largest input accepted for compression

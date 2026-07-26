@@ -1,5 +1,5 @@
 use crate::commands::CommandError;
-use crate::domain::get_file_info;
+use crate::domain::{SUPPORTED_IMAGE_EXTENSIONS, get_file_info};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tauri::AppHandle;
@@ -16,10 +16,7 @@ pub async fn select_image_files(
     let files = app_handle
         .dialog()
         .file()
-        .add_filter(
-            filter_label,
-            &["png", "jpg", "jpeg", "webp", "heic", "heif"],
-        )
+        .add_filter(filter_label, SUPPORTED_IMAGE_EXTENSIONS)
         .set_title(title)
         .blocking_pick_files();
 
